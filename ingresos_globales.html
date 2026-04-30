@@ -1,0 +1,296 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finanzas Jaddy Studio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #050505; color: #ffffff; overflow-x: hidden; }
+        .glass-panel { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(249, 115, 22, 0.3); border-radius: 10px; }
+        
+        #financeModal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #050505;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .progress-bar-container { background: rgba(255,255,255,0.05); border-radius: 100px; height: 16px; overflow: hidden; position: relative; }
+        .progress-bar-fill { height: 100%; transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); background: linear-gradient(90deg, #f97316, #fb923c); box-shadow: 0 0 20px rgba(249, 115, 22, 0.4); }
+        
+        .success-glow { animation: success-pulse 2s infinite; }
+        @keyframes success-pulse {
+            0% { box-shadow: 0 0 0px rgba(16, 185, 129, 0); }
+            50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.4); border-color: #10b981; }
+            100% { box-shadow: 0 0 0px rgba(16, 185, 129, 0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen p-4 lg:p-10">
+
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <header class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-black uppercase italic tracking-tighter">Jaddy <span class="text-orange-500">Studio</span></h1>
+                <p class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Finanzas & Control Personal</p>
+            </div>
+            <button onclick="toggleFinance(true)" class="bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 p-3 rounded-2xl border border-orange-500/20 transition-all">
+                <i data-lucide="line-chart" class="w-5 h-5"></i>
+            </button>
+        </header>
+
+        <!-- Balance y Meta Manual -->
+        <div id="mainBalanceCard" class="glass-panel p-8 rounded-[2.5rem] mb-6 border-l-4 border-emerald-500 transition-all duration-500">
+            <div class="flex flex-col md:flex-row justify-between items-start gap-6 mb-8">
+                <div>
+                    <p class="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-1">Balance Neto (Caja Real)</p>
+                    <h2 id="mainNetBalance" class="text-5xl font-black italic tracking-tighter text-emerald-400">$0.00</h2>
+                </div>
+                <div class="bg-white/5 p-4 rounded-3xl border border-white/5">
+                    <p class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-2 text-center">Configurar Meta de Ingreso</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-bold text-neutral-500">$</span>
+                        <input type="number" id="inputGoal" onchange="updateManualGoal(this.value)" placeholder="Ej: 100" class="bg-transparent text-xl font-black text-white outline-none w-24 border-b border-white/10 focus:border-orange-500 transition-all">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visualización de Meta -->
+            <div class="space-y-3">
+                <div class="flex justify-between items-end">
+                    <span id="goalLabelText" class="text-[10px] font-black uppercase tracking-widest text-neutral-400">Progreso de Ingresos</span>
+                    <span id="goalStatusBadge" class="text-[10px] font-black uppercase px-2 py-1 rounded-md bg-white/5 text-neutral-500 italic tracking-tighter">Esperando Meta...</span>
+                </div>
+                <div class="progress-bar-container">
+                    <div id="goalProgressBar" class="progress-bar-fill" style="width: 0%"></div>
+                </div>
+                <p id="goalRemainingText" class="text-[9px] font-bold text-neutral-500 uppercase italic"></p>
+            </div>
+        </div>
+
+        <!-- Registro de Gastos -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="glass-panel p-8 rounded-[2.5rem]">
+                <h3 class="text-sm font-black uppercase italic mb-6 flex items-center gap-2 text-red-500">
+                    <i data-lucide="minus-circle" class="w-4 h-4"></i> Registrar Gasto
+                </h3>
+                <form id="expenseForm" class="space-y-4">
+                    <input type="text" id="expReason" placeholder="Motivo del gasto..." class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-red-500/50 text-sm" required>
+                    <input type="number" id="expAmount" step="0.01" placeholder="Monto ($)" class="w-full bg-white/5 border border-white/10 p-4 rounded-2xl outline-none focus:border-red-500/50 text-sm" required>
+                    <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-2xl transition-all uppercase italic text-xs tracking-widest">
+                        Guardar Gasto
+                    </button>
+                </form>
+            </div>
+
+            <div class="glass-panel p-8 rounded-[2.5rem]">
+                <h3 class="text-sm font-black uppercase italic mb-6 flex items-center gap-2 text-emerald-500">
+                    <i data-lucide="history" class="w-4 h-4"></i> Actividad Reciente
+                </h3>
+                <div id="miniFeed" class="space-y-3 max-h-[160px] overflow-y-auto custom-scrollbar pr-2 text-sm">
+                    <!-- Items -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Análisis -->
+    <div id="financeModal" class="animate-in fade-in duration-300">
+        <div class="max-w-5xl mx-auto p-6 md:p-12">
+            <div class="flex justify-between items-center mb-12">
+                <h2 class="text-4xl font-black uppercase italic tracking-tighter">Flujo de <span class="text-orange-500">Caja</span></h2>
+                <button onclick="toggleFinance(false)" class="bg-white/5 hover:bg-white/10 p-4 rounded-full border border-white/10">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="space-y-4">
+                    <div class="glass-panel p-6 rounded-3xl"><p class="text-[10px] uppercase font-black text-blue-400">Ventas Beats</p><h4 id="mBeats" class="text-2xl font-black">$0</h4></div>
+                    <div class="glass-panel p-6 rounded-3xl"><p class="text-[10px] uppercase font-black text-emerald-400">Ingresos VIP</p><h4 id="mVIP" class="text-2xl font-black">$0</h4></div>
+                    <div class="glass-panel p-6 rounded-3xl bg-red-500/5"><p class="text-[10px] uppercase font-black text-red-500">Gastos Totales</p><h4 id="mExp" class="text-2xl font-black">$0</h4></div>
+                </div>
+                <div class="lg:col-span-2 glass-panel p-8 rounded-[3rem] min-h-[300px]">
+                    <canvas id="bigChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
+            authDomain: "jaddy-estudio.firebaseapp.com",
+            projectId: "jaddy-estudio",
+            storageBucket: "jaddy-estudio.firebasestorage.app",
+            messagingSenderId: "968903268866",
+            appId: "1:968903268866:web:e2b6895e8acff18178e51b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        let state = { inBeats: 0, inVIP: 0, expenses: 0, history: [], goal: 0 };
+        let chart;
+
+        // Cambiar Meta Manualmente
+        window.updateManualGoal = async (val) => {
+            const num = parseFloat(val);
+            if(!isNaN(num)) {
+                state.goal = num;
+                await setDoc(doc(db, 'configuracion', 'meta_actual'), { valor: num });
+                updateUI();
+            }
+        };
+
+        window.toggleFinance = (show) => {
+            document.getElementById('financeModal').style.display = show ? 'block' : 'none';
+            if(show) renderChart();
+        };
+
+        // Escuchar Meta
+        onSnapshot(doc(db, 'configuracion', 'meta_actual'), (doc) => {
+            if (doc.exists()) {
+                state.goal = doc.data().valor;
+                document.getElementById('inputGoal').value = state.goal;
+                updateUI();
+            }
+        });
+
+        // Guardar Gasto
+        document.getElementById('expenseForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const reason = document.getElementById('expReason').value;
+            const amount = parseFloat(document.getElementById('expAmount').value);
+            await addDoc(collection(db, "gastos"), { reason, amount, createdAt: serverTimestamp() });
+            e.target.reset();
+        });
+
+        function updateUI() {
+            const totalIncome = state.inBeats + state.inVIP;
+            const net = totalIncome - state.expenses;
+            
+            document.getElementById('mainNetBalance').innerText = `$${net.toLocaleString()}`;
+            
+            // Lógica de Meta
+            const progress = state.goal > 0 ? Math.min((totalIncome / state.goal) * 100, 100) : 0;
+            const bar = document.getElementById('goalProgressBar');
+            const badge = document.getElementById('goalStatusBadge');
+            const remText = document.getElementById('goalRemainingText');
+            const card = document.getElementById('mainBalanceCard');
+
+            bar.style.width = `${progress}%`;
+            
+            if (state.goal <= 0) {
+                badge.innerText = "DEFINE UNA META";
+                badge.className = "text-[10px] font-black uppercase px-2 py-1 rounded-md bg-white/5 text-neutral-500 italic tracking-tighter";
+                card.classList.remove('success-glow');
+            } else if (totalIncome >= state.goal) {
+                badge.innerText = "¡META LOGRADA!";
+                badge.className = "text-[10px] font-black uppercase px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-400 italic tracking-tighter";
+                remText.innerText = `EXCEDENTE: +$${(totalIncome - state.goal).toLocaleString()}`;
+                card.classList.add('success-glow');
+                bar.style.background = "linear-gradient(90deg, #10b981, #34d399)";
+            } else {
+                badge.innerText = "EN PROGRESO";
+                badge.className = "text-[10px] font-black uppercase px-2 py-1 rounded-md bg-orange-500/20 text-orange-400 italic tracking-tighter";
+                remText.innerText = `FALTAN $${(state.goal - totalIncome).toLocaleString()} PARA TU META`;
+                card.classList.remove('success-glow');
+                bar.style.background = "linear-gradient(90deg, #f97316, #fb923c)";
+            }
+
+            // Sync Modal
+            document.getElementById('mBeats').innerText = `$${state.inBeats.toLocaleString()}`;
+            document.getElementById('mVIP').innerText = `$${state.inVIP.toLocaleString()}`;
+            document.getElementById('mExp').innerText = `$${state.expenses.toLocaleString()}`;
+
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('miniFeed');
+            container.innerHTML = '';
+            state.history.sort((a,b) => b.date - a.date).slice(0, 5).forEach(item => {
+                const isExp = item.type === 'expense';
+                container.innerHTML += `
+                    <div class="flex justify-between items-center p-3 bg-white/5 rounded-xl border border-white/5">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 rounded-full ${isExp ? 'bg-red-500' : 'bg-emerald-500'}"></div>
+                            <div>
+                                <p class="text-[10px] font-black uppercase">${item.label}</p>
+                                <p class="text-[7px] text-neutral-500 uppercase">${item.cat}</p>
+                            </div>
+                        </div>
+                        <p class="font-black italic ${isExp ? 'text-red-400' : 'text-emerald-400'}">${isExp ? '-' : '+'}$${item.amount}</p>
+                    </div>`;
+            });
+            lucide.createIcons();
+        }
+
+        function renderChart() {
+            const ctx = document.getElementById('bigChart').getContext('2d');
+            if (chart) chart.destroy();
+            chart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Beats', 'VIP', 'Gastos'],
+                    datasets: [{
+                        data: [state.inBeats, state.inVIP, state.expenses],
+                        backgroundColor: ['#3b82f6', '#10b981', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#fff', font: { family: 'Inter', weight: 'bold', size: 10 } } } } }
+            });
+        }
+
+        // Listeners
+        onSnapshot(collection(db, 'gastos'), s => {
+            state.expenses = 0;
+            s.forEach(d => {
+                state.expenses += parseFloat(d.data().amount || 0);
+                state.history = state.history.filter(h => h.id !== d.id);
+                state.history.push({ id: d.id, type: 'expense', label: d.data().reason, amount: d.data().amount, cat: 'EGRESO', date: d.data().createdAt?.toDate() || new Date() });
+            });
+            updateUI();
+        });
+        onSnapshot(collection(db, 'ventas'), s => {
+            state.inBeats = 0;
+            s.forEach(d => {
+                state.inBeats += parseFloat(d.data().amount || 0);
+                state.history = state.history.filter(h => h.id !== d.id);
+                state.history.push({ id: d.id, type: 'income', label: d.data().beatName || 'Venta', amount: d.data().amount, cat: 'BEAT', date: d.data().createdAt?.toDate() || new Date() });
+            });
+            updateUI();
+        });
+        onSnapshot(collection(db, 'artistasVIP'), s => {
+            state.inVIP = 0;
+            s.forEach(d => {
+                state.inVIP += parseFloat(d.data().abono || 0);
+                state.history = state.history.filter(h => h.id !== d.id);
+                state.history.push({ id: d.id, type: 'income', label: d.data().artistName || 'VIP', amount: d.data().abono, cat: 'PROD', date: d.data().updatedAt?.toDate() || new Date() });
+            });
+            updateUI();
+        });
+
+    </script>
+</body>
+</html>
+
+```
+
