@@ -21,6 +21,9 @@
         }
         input:focus, select:focus { border-color: #f97316 !important; }
         .glass-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); }
+        
+        #activityFeed::-webkit-scrollbar { width: 4px; }
+        #activityFeed::-webkit-scrollbar-thumb { background: #ea580c; border-radius: 10px; }
     </style>
 </head>
 <body>
@@ -28,70 +31,112 @@
     <div id="app">
         <!-- Navegación -->
         <nav class="p-5 border-b border-white/5 bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
-            <div class="max-w-6xl mx-auto flex justify-between items-center">
+            <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <div class="flex items-center gap-4">
-                    <a href="admin.html" class="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center hover:bg-orange-600 transition-all">
-                        <i data-lucide="arrow-left" class="text-white w-5 h-5"></i>
-                    </a>
+                    <div class="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/10">
+                        <i data-lucide="shield-check" class="text-orange-500 w-5 h-5"></i>
+                    </div>
                     <div>
                         <h1 class="text-lg font-black uppercase italic tracking-tighter text-white leading-none">Panel VIP</h1>
-                        <p class="text-[8px] font-bold text-orange-500 uppercase tracking-widest mt-1">Control de Membresías</p>
+                        <p class="text-[8px] font-bold text-orange-500 uppercase tracking-widest mt-1">Jaddy Studio Elite</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-3">
-                    <button onclick="toggleForm()" class="px-5 py-2.5 bg-orange-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
+                    <button onclick="toggleForm()" class="px-5 py-2.5 bg-orange-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-orange-500 transition-all">
                         <i data-lucide="user-plus" class="w-4 h-4"></i> NUEVO ARTISTA
                     </button>
                 </div>
             </div>
         </nav>
 
-        <main class="max-w-6xl mx-auto p-6 pt-10">
-            <!-- Formulario de Registro -->
-            <section id="artistForm" class="hidden mb-12 glass-card p-8 rounded-[2.5rem] border-orange-500/20 border">
-                <h2 class="text-xl font-black uppercase italic tracking-tighter mb-8 flex items-center gap-3 text-white">
-                    <i data-lucide="shield-check" class="text-orange-500"></i> Registrar Artista en el Sello
-                </h2>
-                <form id="saveArtistForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="space-y-4">
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase px-1">Identidad</label>
-                        <input type="text" id="artistName" placeholder="Nombre Artístico" required>
-                        <input type="text" id="realName" placeholder="Nombre Real" required>
-                        <input type="text" id="idCard" placeholder="Cédula / ID (Opcional)">
-                    </div>
-                    <div class="space-y-4">
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase px-1">Contacto y Ubicación</label>
-                        <input type="text" id="phone" placeholder="Número de Teléfono" required>
-                        <input type="text" id="location" placeholder="Ciudad / País" required>
-                        <input type="email" id="artistEmail" placeholder="Correo para Acceso VIP" required>
-                    </div>
-                    <div class="space-y-4">
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase px-1">Suscripción</label>
-                        <select id="plan" required>
-                            <option value="basico">PLAN BÁSICO (Solo Beats)</option>
-                            <option value="premium">PLAN PREMIUM (Grabación + Beats)</option>
-                            <option value="elite">PLAN ELITE (Producción Completa)</option>
-                            <option value="cortesia">CORTESÍA / SOCIO</option>
-                        </select>
-                        <input type="text" id="vipCode" placeholder="Código de Acceso VIP" class="font-mono text-orange-500">
-                    </div>
-                    <button type="submit" class="md:col-span-2 lg:col-span-3 bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-orange-500 hover:text-white transition-all">
-                        <i data-lucide="save" class="w-5 h-5"></i> GUARDAR ARTISTA EN BASE DE DATOS
-                    </button>
-                </form>
-            </section>
+        <main class="max-w-7xl mx-auto p-6 pt-10 grid grid-cols-1 lg:grid-cols-4 gap-8">
+            
+            <div class="lg:col-span-3">
+                <!-- Formulario de Registro -->
+                <section id="artistForm" class="hidden mb-12 glass-card p-8 rounded-[2.5rem] border-orange-500/20 border">
+                    <h2 class="text-xl font-black uppercase italic tracking-tighter mb-8 flex items-center gap-3 text-white">
+                        <i data-lucide="database" class="text-orange-500"></i> Registrar Artista VIP
+                    </h2>
+                    <form id="saveArtistForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="space-y-4">
+                            <label class="text-[10px] font-bold text-neutral-500 uppercase px-1">Identidad</label>
+                            <input type="text" id="artistName" placeholder="Nombre Artístico" required>
+                            <input type="text" id="realName" placeholder="Nombre Real" required>
+                            <input type="text" id="idCard" placeholder="Cédula / ID">
+                        </div>
+                        <div class="space-y-4">
+                            <label class="text-[10px] font-bold text-neutral-500 uppercase px-1">Suscripción & Contacto</label>
+                            <select id="plan" required>
+                                <option value="BÁSICO">PLAN BÁSICO (Solo Beats)</option>
+                                <option value="PREMIUM">PLAN PREMIUM (Grabación + Beats)</option>
+                                <option value="ELITE">PLAN ELITE (Producción Completa)</option>
+                                <option value="CORTESÍA">CORTESÍA / SOCIO</option>
+                            </select>
+                            <input type="text" id="phone" placeholder="WhatsApp / Teléfono">
+                            <input type="text" id="vipCode" placeholder="Código VIP" class="font-mono text-orange-500">
+                        </div>
+                        <div class="space-y-4">
+                            <label class="text-[10px] font-bold text-neutral-500 uppercase px-1">Finanzas & Límites</label>
+                            <input type="number" id="limit" placeholder="Límite de Descargas (Ej: 10)" required>
+                            <input type="number" id="totalCost" placeholder="Costo Total ($)" required>
+                            <input type="number" id="initialDeposit" placeholder="Abono Inicial ($)" required>
+                        </div>
+                        <button type="submit" class="md:col-span-2 lg:col-span-3 bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:bg-orange-500 hover:text-white transition-all">
+                            <i data-lucide="save" class="w-5 h-5"></i> GUARDAR EN SISTEMA
+                        </button>
+                    </form>
+                </section>
 
-            <!-- Lista de Artistas -->
-            <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white mb-8">Artistas Registrados</h2>
-            <div id="artistsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Se cargan dinámicamente -->
+                <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white mb-8">Artistas Activos</h2>
+                <div id="artistsList" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Se cargan dinámicamente -->
+                </div>
+            </div>
+
+            <!-- ACTIVIDAD RECIENTE -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-28">
+                    <h2 class="text-sm font-black uppercase italic tracking-tighter text-orange-500 mb-6 flex items-center gap-2">
+                        <i data-lucide="activity" class="w-4 h-4"></i> Actividad VIP
+                    </h2>
+                    <div id="activityFeed" class="space-y-4 max-h-[70vh] overflow-y-auto pr-2">
+                        <!-- Actividad dinámica -->
+                    </div>
+                </div>
             </div>
         </main>
     </div>
 
+    <!-- MODAL REGISTRAR DESCARGA -->
+    <div id="modalDescarga" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+        <div class="glass-card w-full max-w-md p-8 rounded-[2rem] border border-orange-500/30">
+            <h2 class="text-xl font-black uppercase italic text-white mb-2 text-center">Registrar Descarga</h2>
+            <p id="labelDescarga" class="text-orange-500 text-[10px] font-bold uppercase mb-6 tracking-widest text-center"></p>
+            <input type="hidden" id="idDescarga">
+            <input type="text" id="pistaNombre" placeholder="¿Qué canción bajó?" class="mb-6">
+            <div class="flex gap-3">
+                <button onclick="confirmarDescarga()" class="flex-1 bg-orange-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest">Confirmar</button>
+                <button onclick="closeModal('modalDescarga')" class="flex-1 bg-white/5 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL ABONAR -->
+    <div id="modalAbono" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+        <div class="glass-card w-full max-sm p-8 rounded-[2rem] border border-emerald-500/30">
+            <h2 class="text-xl font-black uppercase italic text-white mb-6 text-center">Realizar Abono</h2>
+            <input type="hidden" id="idAbono">
+            <input type="number" id="montoAbono" placeholder="Monto ($)" class="mb-6">
+            <div class="flex gap-3">
+                <button onclick="confirmarAbono()" class="flex-1 bg-emerald-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest text-white">Aceptar</button>
+                <button onclick="closeModal('modalAbono')" class="flex-1 bg-white/5 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, updateDoc, getDoc, serverTimestamp, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -105,69 +150,131 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        window.toggleForm = () => {
-            document.getElementById('artistForm').classList.toggle('hidden');
-        };
+        // CONEXIÓN DIRECTA A TU COLECCIÓN ORIGINAL
+        const artistasRef = collection(db, 'artistasVIP');
+        const activityRef = collection(db, 'actividadReciente');
 
-        // Generar código VIP aleatorio si está vacío
-        document.getElementById('vipCode').value = 'VIP-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+        window.toggleForm = () => document.getElementById('artistForm').classList.toggle('hidden');
+        window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
+
+        // Código VIP
+        const genCode = () => 'VIP-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+        document.getElementById('vipCode').value = genCode();
 
         // Guardar Artista
         document.getElementById('saveArtistForm').onsubmit = async (e) => {
             e.preventDefault();
             try {
-                await addDoc(collection(db, 'artistasVIP'), {
+                await addDoc(artistasRef, {
                     artistName: document.getElementById('artistName').value,
                     realName: document.getElementById('realName').value,
                     idCard: document.getElementById('idCard').value,
                     phone: document.getElementById('phone').value,
-                    location: document.getElementById('location').value,
-                    email: document.getElementById('artistEmail').value,
                     plan: document.getElementById('plan').value,
                     vipCode: document.getElementById('vipCode').value,
+                    limit: parseInt(document.getElementById('limit').value) || 0,
+                    costo: parseFloat(document.getElementById('totalCost').value) || 0,
+                    abono: parseFloat(document.getElementById('initialDeposit').value) || 0,
+                    descargas: 0,
                     createdAt: serverTimestamp()
                 });
                 e.target.reset();
                 toggleForm();
-                alert("Artista registrado con éxito");
-            } catch (err) {
-                alert("Error al registrar: " + err.message);
+                document.getElementById('vipCode').value = genCode();
+            } catch (err) { console.error(err); }
+        };
+
+        // Descargas
+        window.openDescarga = (id, nombre) => {
+            document.getElementById('idDescarga').value = id;
+            document.getElementById('labelDescarga').innerText = nombre;
+            document.getElementById('pistaNombre').value = "";
+            document.getElementById('modalDescarga').classList.remove('hidden');
+        };
+
+        window.confirmarDescarga = async () => {
+            const id = document.getElementById('idDescarga').value;
+            const pista = document.getElementById('pistaNombre').value || "Pista s/n";
+            const docRef = doc(db, 'artistasVIP', id);
+            const snap = await getDoc(docRef);
+            
+            if(snap.exists()){
+                const d = snap.data();
+                await updateDoc(docRef, { descargas: (d.descargas || 0) + 1 });
+                await addDoc(activityRef, {
+                    artista: d.artistName,
+                    pista: pista,
+                    fecha: serverTimestamp()
+                });
+                closeModal('modalDescarga');
             }
         };
 
-        // Cargar Artistas en tiempo real
-        onSnapshot(collection(db, 'artistasVIP'), (snap) => {
+        // Abonos
+        window.openAbono = (id) => {
+            document.getElementById('idAbono').value = id;
+            document.getElementById('montoAbono').value = "";
+            document.getElementById('modalAbono').classList.remove('hidden');
+        };
+
+        window.confirmarAbono = async () => {
+            const id = document.getElementById('idAbono').value;
+            const monto = parseFloat(document.getElementById('montoAbono').value);
+            if(!monto) return;
+            const docRef = doc(db, 'artistasVIP', id);
+            const snap = await getDoc(docRef);
+            if(snap.exists()){
+                await updateDoc(docRef, { abono: (snap.data().abono || 0) + monto });
+                closeModal('modalAbono');
+            }
+        };
+
+        // Escuchar Artistas
+        onSnapshot(artistasRef, (snap) => {
             const list = document.getElementById('artistsList');
             list.innerHTML = '';
             
             snap.forEach(docSnap => {
                 const a = docSnap.data();
+                const deuda = (a.costo || 0) - (a.abono || 0);
                 const card = document.createElement('div');
-                card.className = "glass-card p-6 rounded-3xl border border-white/5 relative overflow-hidden group";
+                card.className = "glass-card p-6 rounded-[2rem] border border-white/5 relative group";
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-6">
-                        <div class="w-12 h-12 bg-orange-600/20 rounded-2xl flex items-center justify-center">
+                        <div class="w-12 h-12 bg-orange-600/10 rounded-2xl flex items-center justify-center border border-orange-500/20">
                             <i data-lucide="user" class="text-orange-500 w-6 h-6"></i>
                         </div>
-                        <span class="text-[8px] font-black uppercase px-3 py-1 bg-white/5 rounded-full text-neutral-400 border border-white/5">${a.plan}</span>
-                    </div>
-                    <h3 class="font-black uppercase italic text-xl text-white mb-1 tracking-tighter">${a.artistName}</h3>
-                    <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-widest mb-4">${a.realName}</p>
-                    
-                    <div class="space-y-2 mb-6">
-                        <div class="flex items-center gap-2 text-[10px] font-bold text-neutral-400">
-                            <i data-lucide="phone" class="w-3 h-3 text-orange-500"></i> ${a.phone}
-                        </div>
-                        <div class="flex items-center gap-2 text-[10px] font-bold text-neutral-400">
-                            <i data-lucide="map-pin" class="w-3 h-3 text-orange-500"></i> ${a.location}
-                        </div>
-                        <div class="flex items-center gap-2 text-[10px] font-bold text-orange-500 bg-orange-500/5 p-2 rounded-lg border border-orange-500/10">
-                            <i data-lucide="key" class="w-3 h-3"></i> COD: ${a.vipCode}
+                        <div class="text-right">
+                            <span class="text-[8px] font-black uppercase px-3 py-1 bg-white/5 rounded-full text-orange-500 border border-orange-500/20">${a.plan || 'N/A'}</span>
+                            <p class="text-[10px] font-mono text-neutral-500 mt-2 tracking-tighter">${a.vipCode || ''}</p>
                         </div>
                     </div>
 
-                    <button onclick="deleteArtist('${docSnap.id}')" class="w-full py-3 bg-red-500/10 text-red-500 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all opacity-0 group-hover:opacity-100">
-                        Eliminar Artista
+                    <h3 class="font-black uppercase italic text-xl text-white mb-1 tracking-tighter">${a.artistName}</h3>
+                    <p class="text-[9px] text-neutral-500 font-bold uppercase tracking-widest mb-6">${a.realName || ''}</p>
+                    
+                    <div class="grid grid-cols-2 gap-3 mb-6">
+                        <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
+                            <p class="text-[8px] font-bold text-neutral-500 uppercase mb-1">Downloads</p>
+                            <p class="text-sm font-black ${(a.descargas || 0) >= (a.limit || 1) ? 'text-red-500' : 'text-white'}">${a.descargas || 0} <span class="text-neutral-600 text-[10px]">/ ${a.limit || 0}</span></p>
+                        </div>
+                        <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
+                            <p class="text-[8px] font-bold text-neutral-500 uppercase mb-1">Pendiente</p>
+                            <p class="text-sm font-black ${deuda > 0 ? 'text-orange-500' : 'text-emerald-500'}">$${deuda}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-2">
+                        <button onclick="openDescarga('${docSnap.id}', '${a.artistName}')" class="flex-1 py-3 bg-orange-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-orange-500 transition-all">
+                            Descarga
+                        </button>
+                        <button onclick="openAbono('${docSnap.id}')" class="flex-1 py-3 bg-emerald-600/10 text-emerald-500 border border-emerald-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white transition-all">
+                            Abonar
+                        </button>
+                    </div>
+
+                    <button onclick="deleteArtist('${docSnap.id}')" class="w-full mt-4 py-2 text-red-900 text-[8px] font-black uppercase hover:text-red-500 transition-all opacity-0 group-hover:opacity-100">
+                        Eliminar Registro
                     </button>
                 `;
                 list.appendChild(card);
@@ -175,11 +282,31 @@
             lucide.createIcons();
         });
 
+        // Actividad Reciente
+        const qAct = query(activityRef, orderBy('fecha', 'desc'), limit(15));
+        onSnapshot(qAct, (snap) => {
+            const feed = document.getElementById('activityFeed');
+            feed.innerHTML = '';
+            snap.forEach(docSnap => {
+                const act = docSnap.data();
+                const div = document.createElement('div');
+                div.className = "p-4 rounded-2xl bg-white/5 border border-white/5 mb-3";
+                div.innerHTML = `
+                    <div class="flex justify-between items-start mb-1">
+                        <p class="text-[9px] font-black text-orange-500 uppercase italic">${act.artista}</p>
+                        <p class="text-[7px] text-neutral-600">${act.fecha ? new Date(act.fecha.seconds * 1000).toLocaleTimeString() : ''}</p>
+                    </div>
+                    <p class="text-[10px] text-neutral-300">Bajó: <span class="text-white italic">"${act.pista}"</span></p>
+                `;
+                feed.appendChild(div);
+            });
+        });
+
         window.deleteArtist = async (id) => {
-            if(confirm("¿Seguro que deseas eliminar este artista del sistema VIP?")) {
+            if(confirm("¿Seguro que deseas eliminar este artista?")) {
                 await deleteDoc(doc(db, 'artistasVIP', id));
             }
-        }
+        };
 
         lucide.createIcons();
     </script>
