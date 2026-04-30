@@ -1,0 +1,250 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jaddy Master | Launcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background: #000; 
+            color: #fff; 
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        /* Fondo con efecto de profundidad */
+        .bg-glow {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% -10%, #1a1a1a 0%, #000 80%);
+            z-index: -1;
+        }
+        /* Tarjetas de aplicaciones estilo Premium */
+        .app-card {
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 28px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            backdrop-filter: blur(12px);
+        }
+        .app-card:hover {
+            transform: translateY(-8px);
+            border-color: #ea580c;
+            background: rgba(234, 88, 12, 0.05);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        /* Panel Lateral de Administración */
+        .admin-sidebar {
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0a0a0a;
+            border-left: 1px solid rgba(255,255,255,0.1);
+        }
+        .input-dark {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 14px;
+            width: 100%;
+            color: white;
+            outline: none;
+            font-size: 14px;
+        }
+        .input-dark:focus { border-color: #ea580c; background: rgba(255,255,255,0.05); }
+        
+        .status-pulse {
+            width: 8px; height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #22c55e;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body class="p-6 md:p-16">
+    <div class="bg-glow"></div>
+
+    <!-- HEADER DE COMANDO -->
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-20">
+        <div class="flex items-center gap-5">
+            <div class="w-14 h-14 bg-orange-600 rounded-2xl flex items-center justify-center font-black italic text-3xl shadow-2xl shadow-orange-600/30">J</div>
+            <div>
+                <h1 class="text-3xl font-black uppercase italic tracking-tighter leading-none">Jaddy <span class="text-orange-500 text-4xl">Master</span></h1>
+                <div class="flex items-center gap-2 mt-2">
+                    <div class="status-pulse"></div>
+                    <p class="text-[9px] font-black text-neutral-500 uppercase tracking-[0.4em]">SISTEMA OPERATIVO CENTRAL</p>
+                </div>
+            </div>
+        </div>
+        
+        <button onclick="toggleAdmin()" class="flex items-center gap-3 px-8 py-4 bg-white/5 rounded-2xl border border-white/10 hover:bg-orange-600 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest group">
+            <i data-lucide="settings" class="w-4 h-4 text-orange-500 group-hover:text-white"></i> Configurar Apps
+        </button>
+    </header>
+
+    <!-- GRILLA DE APLICACIONES (DINÁMICA) -->
+    <div id="apps-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <!-- Cargando skeleton -->
+        <div class="app-card h-72 flex flex-col items-center justify-center gap-4 opacity-20">
+            <div class="w-12 h-12 bg-white/10 rounded-full animate-bounce"></div>
+            <p class="text-[10px] font-black uppercase tracking-widest">Iniciando Servidores...</p>
+        </div>
+    </div>
+
+    <!-- PANEL DE CONTROL LATERAL -->
+    <div id="admin-sidebar" class="fixed inset-y-0 right-0 w-full md:w-[450px] admin-sidebar z-50 translate-x-full shadow-2xl p-10 overflow-y-auto">
+        <div class="flex justify-between items-center mb-12">
+            <div>
+                <h2 class="text-2xl font-black uppercase italic leading-none">Admin <span class="text-orange-500">Center</span></h2>
+                <p class="text-[9px] text-neutral-600 font-bold uppercase mt-2 tracking-widest">Añadir o Eliminar Proyectos</p>
+            </div>
+            <button onclick="toggleAdmin()" class="p-3 hover:bg-white/5 rounded-full text-neutral-500"><i data-lucide="x"></i></button>
+        </div>
+
+        <!-- Formulario para agregar apps -->
+        <form id="add-app-form" class="space-y-6 bg-white/5 p-6 rounded-3xl border border-white/5 mb-10">
+            <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase text-neutral-500 tracking-widest ml-1">Nombre de la Aplicación</label>
+                <input type="text" id="app-name" class="input-dark" placeholder="Ej: Marketplace de Beats" required>
+            </div>
+            <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase text-neutral-500 tracking-widest ml-1">URL (Enlace de GitHub Pages)</label>
+                <input type="url" id="app-url" class="input-dark" placeholder="https://..." required>
+            </div>
+            <div class="space-y-2">
+                <label class="text-[10px] font-black uppercase text-neutral-500 tracking-widest ml-1">Icono (Ej: music, dollar-sign, users)</label>
+                <input type="text" id="app-icon" class="input-dark" placeholder="music" value="layers">
+            </div>
+            <button type="submit" class="w-full bg-orange-600 py-4 rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-orange-500 transition-all shadow-xl shadow-orange-600/20">
+                Registrar en el Master
+            </button>
+        </form>
+
+        <!-- Lista de gestión -->
+        <div class="space-y-4">
+            <h3 class="text-[10px] font-black uppercase text-neutral-500 tracking-widest ml-1">Aplicaciones Instaladas</h3>
+            <div id="admin-list" class="space-y-3">
+                <!-- Se llena con JS -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        // CONFIGURACIÓN DE FIREBASE (TU LLAVE MAESTRA)
+        const firebaseConfig = {
+            apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
+            authDomain: "jaddy-estudio.firebaseapp.com",
+            projectId: "jaddy-estudio",
+            appId: "1:968903268866:web:e2b6895e8acff18178e51b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // FUNCIONES DE UI
+        window.toggleAdmin = () => {
+            const sidebar = document.getElementById('admin-sidebar');
+            sidebar.classList.toggle('translate-x-full');
+        };
+
+        // ESCUCHAR CAMBIOS EN LAS APPS
+        onSnapshot(collection(db, 'apps_master'), (snapshot) => {
+            const container = document.getElementById('apps-container');
+            const adminList = document.getElementById('admin-list');
+            
+            if (snapshot.empty) {
+                container.innerHTML = `
+                    <div class="col-span-full py-32 text-center opacity-30 border-2 border-dashed border-white/5 rounded-[3rem]">
+                        <i data-lucide="layout-grid" class="w-16 h-16 mx-auto mb-6 text-neutral-500"></i>
+                        <p class="font-black uppercase tracking-[0.3em] text-[11px]">No hay aplicaciones activas en el sistema</p>
+                    </div>
+                `;
+                adminList.innerHTML = `<p class="text-[10px] text-neutral-700 italic">No hay apps registradas...</p>`;
+            } else {
+                let html = "";
+                let adminHtml = "";
+                snapshot.forEach(docSnap => {
+                    const data = docSnap.data();
+                    const id = docSnap.id;
+                    
+                    html += `
+                        <a href="${data.url}" target="_blank" class="app-card p-10 flex flex-col justify-between h-80 group relative overflow-hidden">
+                            <div class="absolute -right-6 -bottom-6 opacity-5 group-hover:opacity-10 transition-all duration-700 rotate-12">
+                                <i data-lucide="${data.icon || 'layers'}" class="w-48 h-48"></i>
+                            </div>
+                            <div class="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-orange-500 group-hover:bg-orange-600 group-hover:text-white transition-all duration-300">
+                                <i data-lucide="${data.icon || 'layers'}" class="w-7 h-7"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-black uppercase italic tracking-tighter leading-tight mb-2">${data.name}</h3>
+                                <div class="flex items-center gap-2">
+                                    <span class="px-2 py-1 bg-white/5 text-neutral-500 rounded text-[8px] font-black uppercase tracking-widest">v1.0</span>
+                                    <p class="text-[9px] text-orange-500 font-bold uppercase tracking-widest">Abrir Dashboard</p>
+                                </div>
+                            </div>
+                        </a>
+                    `;
+
+                    adminHtml += `
+                        <div class="flex justify-between items-center p-5 bg-white/5 rounded-2xl border border-white/5 hover:border-white/10 transition-all">
+                            <div>
+                                <p class="text-[10px] font-black uppercase tracking-widest">${data.name}</p>
+                                <p class="text-[8px] text-neutral-600 font-bold truncate w-40 mt-1">${data.url}</p>
+                            </div>
+                            <button onclick="deleteApp('${id}')" class="w-10 h-10 flex items-center justify-center text-neutral-600 hover:text-red-500 hover:bg-red-500/10 rounded-xl transition-all">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+                adminList.innerHTML = adminHtml;
+            }
+            lucide.createIcons();
+        });
+
+        // REGISTRAR NUEVA APP
+        document.getElementById('add-app-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerText;
+            btn.innerText = "REGISTRANDO...";
+            btn.disabled = true;
+            
+            try {
+                await addDoc(collection(db, 'apps_master'), {
+                    name: document.getElementById('app-name').value,
+                    url: document.getElementById('app-url').value,
+                    icon: document.getElementById('app-icon').value,
+                    createdAt: serverTimestamp()
+                });
+                e.target.reset();
+                toggleAdmin();
+            } catch (err) { alert("Error: " + err.message); }
+            finally { 
+                btn.innerText = originalText; 
+                btn.disabled = false;
+            }
+        };
+
+        // ELIMINAR APP
+        window.deleteApp = async (id) => {
+            if(confirm("¿Seguro que quieres eliminar esta aplicación del Launcher Maestro?")) {
+                await deleteDoc(doc(db, 'apps_master', id));
+            }
+        };
+
+        lucide.createIcons();
+    </script>
+</body>
+</html>
+
+```
+  
