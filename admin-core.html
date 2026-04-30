@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jaddy Studio - Admins Core</title>
+    <title>Jaddy Studio - Admins Core Sync</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -20,6 +20,22 @@
             backdrop-filter: blur(10px);
         }
         .glow-orange { box-shadow: 0 0 20px rgba(249, 115, 22, 0.2); }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(249, 115, 22, 0.3); border-radius: 10px; }
+        .animate-spin-slow { animation: spin 8s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        
+        select, input {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            color: white !important;
+        }
+
+        /* Estilos para el catálogo expandido */
+        #catalogOverlay {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -33,52 +49,136 @@
                 <div>
                     <h1 class="text-xl font-black uppercase italic tracking-tighter leading-none">Admins Core</h1>
                     <p class="text-[9px] font-bold text-orange-500 uppercase tracking-[0.3em] mt-1.5 flex items-center gap-2">
-                        <span class="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span> Control en Tiempo Real
+                        <span class="w-1.5 h-1.5 bg-orange-500 rounded-full animate-pulse"></span> Sistema de Control
                     </p>
                 </div>
             </div>
             
             <div class="text-right">
-                <p class="text-[8px] font-black text-neutral-500 uppercase tracking-widest">Flujo de Caja Total</p>
+                <p class="text-[8px] font-black text-neutral-500 uppercase tracking-widest">Balance General</p>
                 <p id="totalRevenueDisplay" class="text-xl font-black text-white italic tracking-tighter">$0.00</p>
             </div>
         </div>
     </nav>
 
     <main class="max-w-[1600px] mx-auto p-6 lg:p-10">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+        <!-- Dashboard Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-12">
             <div class="glass-panel p-8 rounded-[2rem]">
                 <p class="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-2">Artistas VIP</p>
                 <h2 id="totalArtists" class="text-4xl font-black italic">0</h2>
             </div>
-            <div class="glass-panel p-8 rounded-[2rem] md:col-span-2">
-                <p class="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-2">Estado del Sistema</p>
-                <div class="flex items-center gap-4 mt-2">
-                    <div class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[9px] font-bold text-emerald-500 uppercase">Conectado a Firebase</div>
+            <div class="glass-panel p-8 rounded-[2rem]">
+                <p class="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-2">Beats Registrados</p>
+                <h2 id="totalBeats" class="text-4xl font-black italic text-orange-500">0</h2>
+            </div>
+            <div class="glass-panel p-8 rounded-[2rem] md:col-span-2 flex items-center justify-between">
+                <div>
+                    <p class="text-[9px] font-black text-neutral-500 uppercase tracking-widest mb-2">Gestión de Ventas</p>
+                    <div class="px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-[9px] font-bold text-emerald-500 uppercase w-fit">Base de Datos Activa</div>
                 </div>
+                <button onclick="window.openSaleModal()" class="px-8 py-4 bg-orange-600 hover:bg-orange-500 rounded-xl text-[10px] font-black uppercase italic transition-all glow-orange flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Registrar Nueva Venta
+                </button>
             </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div class="lg:col-span-2 space-y-6">
-                <h3 class="text-lg font-black uppercase italic tracking-tighter text-white px-2">Monitoreo de Artistas</h3>
-                <div id="monitorGrid" class="grid grid-cols-1 gap-4">
-                    <!-- Las tarjetas se cargan aquí -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            <!-- Artistas Section -->
+            <div class="lg:col-span-4 space-y-6">
+                <h3 class="text-lg font-black uppercase italic tracking-tighter text-white px-2 flex items-center gap-2">
+                    <i data-lucide="users" class="w-5 h-5 text-orange-500"></i> Artistas VIP
+                </h3>
+                <div id="monitorGrid" class="grid grid-cols-1 gap-4 max-h-[600px] overflow-y-auto custom-scrollbar pr-2"></div>
+            </div>
+
+            <!-- Catálogo Botón -->
+            <div class="lg:col-span-4 space-y-6">
+                <h3 class="text-lg font-black uppercase italic tracking-tighter text-white px-2 flex items-center gap-2">
+                    <i data-lucide="music" class="w-5 h-5 text-orange-500"></i> Catálogo Actual
+                </h3>
+                <div onclick="window.toggleCatalog(true)" class="glass-panel p-10 rounded-[2.5rem] border-dashed border-white/10 hover:border-orange-500/50 transition-all cursor-pointer group flex flex-col items-center justify-center gap-4 text-center">
+                    <div class="w-20 h-20 bg-orange-600/10 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <i data-lucide="layers" class="w-10 h-10 text-orange-500"></i>
+                    </div>
+                    <div>
+                        <p id="catalogCount" class="text-2xl font-black italic mb-1">0 Pistas</p>
+                        <p class="text-[9px] font-black text-neutral-500 uppercase tracking-widest">Click para ver inventario completo</p>
+                    </div>
                 </div>
             </div>
 
-            <div class="space-y-6">
-                <h3 class="text-lg font-black uppercase italic tracking-tighter text-white px-2">Log del Sistema</h3>
-                <div id="activityLog" class="glass-panel p-6 rounded-[2.5rem] h-[500px] overflow-y-auto space-y-4">
-                    <div class="text-[10px] text-neutral-500 uppercase font-bold">Iniciando escucha de datos...</div>
-                </div>
+            <!-- Ventas Section -->
+            <div class="lg:col-span-4 space-y-6">
+                <h3 class="text-lg font-black uppercase italic tracking-tighter text-white px-2 flex items-center gap-2">
+                    <i data-lucide="shopping-cart" class="w-5 h-5 text-orange-500"></i> Historial de Ventas
+                </h3>
+                <div id="activityLog" class="glass-panel p-2 rounded-[2.5rem] h-[600px] overflow-y-auto custom-scrollbar"></div>
             </div>
         </div>
     </main>
 
+    <!-- PANTALLA COMPLETA: Catálogo -->
+    <div id="catalogOverlay" class="fixed inset-0 bg-black z-[110] hidden flex flex-col p-6 lg:p-12 overflow-hidden">
+        <div class="max-w-[1400px] mx-auto w-full flex-1 flex flex-col">
+            <div class="flex justify-between items-center mb-10">
+                <div class="flex items-center gap-6">
+                    <button onclick="window.toggleCatalog(false)" class="w-12 h-12 rounded-full border border-white/10 flex items-center justify-center hover:bg-white/5 transition-all">
+                        <i data-lucide="arrow-left" class="w-6 h-6"></i>
+                    </button>
+                    <div>
+                        <h2 class="text-4xl font-black italic uppercase tracking-tighter">Inventario de Beats</h2>
+                        <p class="text-xs font-bold text-orange-500 uppercase tracking-widest mt-1">Gestión de Catálogo en Tiempo Real</p>
+                    </div>
+                </div>
+                <div class="relative w-72">
+                   <input type="text" id="catalogSearch" placeholder="BUSCAR PISTA..." class="w-full rounded-full py-4 px-6 text-[10px] font-black uppercase italic bg-white/5 border border-white/10 focus:border-orange-500 focus:outline-none">
+                   <i data-lucide="search" class="w-4 h-4 absolute right-5 top-1/2 -translate-y-1/2 text-neutral-500"></i>
+                </div>
+            </div>
+
+            <div id="beatsGridFull" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 overflow-y-auto custom-scrollbar pr-4 flex-1">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Venta -->
+    <div id="saleModal" class="hidden fixed inset-0 bg-black/95 backdrop-blur-md z-[120] flex items-center justify-center p-6">
+        <div class="glass-panel w-full max-w-md p-8 rounded-[2.5rem] border-orange-500/30">
+            <h2 id="modalTitle" class="text-2xl font-black italic uppercase tracking-tighter mb-6">Registrar Venta</h2>
+            <input type="hidden" id="editSaleId">
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-black uppercase text-neutral-500 block mb-2">Pista Relacionada</label>
+                    <select id="beatSelector" class="w-full rounded-xl p-4 text-white focus:outline-none focus:border-orange-500 appearance-none cursor-pointer">
+                        <option value="" disabled selected>Cargando catálogo...</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-neutral-500 block mb-2">Categoría de Venta</label>
+                    <select id="saleType" class="w-full rounded-xl p-4 text-white focus:outline-none focus:border-orange-500">
+                        <option value="Licencia Estándar">Licencia Estándar</option>
+                        <option value="Licencia Premium">Licencia Premium</option>
+                        <option value="Venta Exclusiva">Venta Exclusiva</option>
+                        <option value="Personalización">Personalización / Mix</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase text-neutral-500 block mb-2">Monto Neto ($)</label>
+                    <input type="number" id="saleAmount" step="0.01" class="w-full rounded-xl p-4 text-white focus:outline-none focus:border-orange-500">
+                </div>
+                <div class="flex gap-3 pt-4">
+                    <button onclick="window.closeSaleModal()" class="flex-1 py-4 bg-white/5 rounded-xl font-bold uppercase text-[10px] hover:bg-white/10">Cancelar</button>
+                    <button id="confirmSaleBtn" class="flex-1 py-4 bg-orange-600 rounded-xl font-bold uppercase text-[10px] hover:bg-orange-500 glow-orange">Guardar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, updateDoc, doc, addDoc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -92,53 +192,209 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // AQUÍ ESTÁ EL CAMBIO: Apuntamos directamente a tu colección principal
         const artistasRef = collection(db, 'artistasVIP');
+        const beatsRef = collection(db, 'beats');
+        const ventasRef = collection(db, 'ventas');
 
+        let totalArtistasMoney = 0;
+        let totalBeatsMoney = 0;
+        let currentBeats = [];
+        let currentSales = [];
+
+        // UI Helpers
+        window.toggleCatalog = (show) => {
+            const overlay = document.getElementById('catalogOverlay');
+            if(show) {
+                overlay.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            } else {
+                overlay.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        };
+
+        // Sync Artistas
         onSnapshot(query(artistasRef, orderBy('updatedAt', 'desc')), (snapshot) => {
             const grid = document.getElementById('monitorGrid');
-            const totalArtistsEl = document.getElementById('totalArtists');
-            const totalRevenueEl = document.getElementById('totalRevenueDisplay');
-            const log = document.getElementById('activityLog');
-            
             grid.innerHTML = '';
-            let totalMoney = 0;
-            let count = 0;
-
+            totalArtistasMoney = 0;
             snapshot.forEach(docSnap => {
                 const a = docSnap.data();
-                count++;
-                // Sumamos el abono que tiene cada artista
-                totalMoney += parseFloat(a.abono || 0);
-
+                totalArtistasMoney += parseFloat(a.abono || 0);
                 const card = document.createElement('div');
-                card.className = "glass-panel p-6 rounded-3xl flex items-center justify-between group";
-                card.innerHTML = `
-                    <div class="flex items-center gap-5">
-                        <div class="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10">
-                             <i data-lucide="mic" class="text-orange-500 w-6 h-6"></i>
-                        </div>
-                        <div>
-                            <h4 class="font-black italic uppercase text-lg text-white tracking-tighter leading-none">${a.artistName}</h4>
-                            <p class="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-1">${a.plan || 'Plan VIP'}</p>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-[8px] font-black text-neutral-500 uppercase mb-1 italic">Monto Abonado</p>
-                        <p class="text-2xl font-black text-emerald-500 italic tracking-tighter leading-none">$${(a.abono || 0).toLocaleString()}</p>
-                    </div>
-                `;
+                card.className = "glass-panel p-5 rounded-2xl flex justify-between items-center border-l-4 border-l-orange-500";
+                card.innerHTML = `<div><h4 class="font-black italic uppercase text-sm">${a.artistName || 'Artista'}</h4><p class="text-[8px] font-bold text-neutral-500 uppercase">${a.plan || 'VIP'}</p></div><p class="text-sm font-black text-emerald-500 italic">$${(a.abono || 0).toLocaleString()}</p>`;
                 grid.appendChild(card);
             });
+            document.getElementById('totalArtists').innerText = snapshot.size;
+            updateGlobalRevenue();
+        });
 
-            totalArtistsEl.innerText = count;
-            totalRevenueEl.innerText = `$${totalMoney.toLocaleString()}`;
+        // Sync Beats (Catálogo)
+        onSnapshot(query(beatsRef, orderBy('createdAt', 'desc')), (snapshot) => {
+            const fullGrid = document.getElementById('beatsGridFull');
+            const selector = document.getElementById('beatSelector');
+            const catalogCount = document.getElementById('catalogCount');
             
-            const time = new Date().toLocaleTimeString();
-            log.innerHTML = `<div class="p-3 border-b border-white/5"><p class="text-[9px] font-black text-orange-500 uppercase">${time}</p><p class="text-[10px] text-white">Sincronizados ${count} artistas exitosamente.</p></div>` + log.innerHTML;
+            fullGrid.innerHTML = '';
+            selector.innerHTML = '<option value="" disabled selected>Selecciona una pista...</option>';
+            currentBeats = [];
+
+            snapshot.forEach(docSnap => {
+                const b = docSnap.data();
+                const id = docSnap.id;
+                const nombrePista = b.title || 'Sin Título';
+                const isSold = b.status === 'Vendido';
+                
+                currentBeats.push({ id, ...b, displayName: nombrePista });
+
+                // Option for modal
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = nombrePista;
+                selector.appendChild(option);
+
+                // Full Grid Card
+                const card = document.createElement('div');
+                card.className = `glass-panel p-6 rounded-[2rem] flex flex-col border ${isSold ? 'border-red-500/20 opacity-60' : 'border-white/5 hover:border-orange-500/30'} transition-all group`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
+                            <i data-lucide="disc" class="w-5 h-5 ${isSold ? 'text-red-500' : 'text-orange-500 animate-spin-slow'}"></i>
+                        </div>
+                        <span class="text-[8px] font-black uppercase px-2 py-1 rounded ${isSold ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}">${isSold ? 'VENDIDO' : 'DISPONIBLE'}</span>
+                    </div>
+                    <h4 class="text-sm font-black uppercase italic mb-1 truncate">${nombrePista}</h4>
+                    <p class="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mb-6">PROD. ${b.producer || 'JADDY'}</p>
+                    <button onclick="window.handleCatalogSale('${id}')" class="w-full py-3 bg-white/5 rounded-xl text-[9px] font-black uppercase italic group-hover:bg-orange-600 group-hover:text-white transition-all">Vender Ahora</button>
+                `;
+                fullGrid.appendChild(card);
+            });
             
+            catalogCount.innerText = `${currentBeats.length} Pistas`;
+            document.getElementById('totalBeats').innerText = currentBeats.length;
             lucide.createIcons();
         });
+
+        window.handleCatalogSale = (id) => {
+            window.toggleCatalog(false);
+            window.openSaleModal(id);
+        };
+
+        // Sync Ventas
+        onSnapshot(query(ventasRef, orderBy('createdAt', 'desc')), (snapshot) => {
+            const log = document.getElementById('activityLog');
+            log.innerHTML = '';
+            totalBeatsMoney = 0;
+            currentSales = [];
+            
+            snapshot.forEach(docSnap => {
+                const v = { id: docSnap.id, ...docSnap.data() };
+                currentSales.push(v);
+                totalBeatsMoney += parseFloat(v.amount || 0);
+                
+                const item = document.createElement('div');
+                item.className = "p-4 border-b border-white/5 hover:bg-white/[0.01] group relative transition-all";
+                item.innerHTML = `
+                    <div class="flex justify-between items-center mb-1">
+                        <p class="text-[10px] font-black text-orange-500 uppercase italic">${v.beatName}</p>
+                        <p class="text-[11px] font-black text-emerald-500">$${v.amount}</p>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-[8px] px-2 py-0.5 bg-white/5 rounded text-neutral-400 font-bold uppercase">${v.type}</span>
+                        <div class="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="window.editSale('${v.id}')" class="text-neutral-500 hover:text-orange-500"><i data-lucide="edit-3" class="w-3 h-3"></i></button>
+                            <button onclick="window.deleteSale('${v.id}')" class="text-neutral-500 hover:text-red-500"><i data-lucide="trash-2" class="w-3 h-3"></i></button>
+                        </div>
+                    </div>
+                `;
+                log.appendChild(item);
+            });
+            updateGlobalRevenue();
+            lucide.createIcons();
+        });
+
+        // Búsqueda en catálogo
+        document.getElementById('catalogSearch').addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            const cards = document.getElementById('beatsGridFull').children;
+            Array.from(cards).forEach(card => {
+                const title = card.querySelector('h4').innerText.toLowerCase();
+                card.style.display = title.includes(term) ? 'flex' : 'none';
+            });
+        });
+
+        function updateGlobalRevenue() {
+            const total = totalArtistasMoney + totalBeatsMoney;
+            document.getElementById('totalRevenueDisplay').innerText = `$${total.toLocaleString()}`;
+        }
+
+        window.openSaleModal = (selectedBeatId = null) => {
+            document.getElementById('saleModal').classList.remove('hidden');
+            document.getElementById('modalTitle').innerText = 'Registrar Venta';
+            document.getElementById('editSaleId').value = '';
+            document.getElementById('saleAmount').value = '';
+            if (selectedBeatId) document.getElementById('beatSelector').value = selectedBeatId;
+        };
+
+        window.closeSaleModal = () => {
+            document.getElementById('saleModal').classList.add('hidden');
+        };
+
+        window.editSale = (id) => {
+            const sale = currentSales.find(s => s.id === id);
+            if (!sale) return;
+            document.getElementById('modalTitle').innerText = 'Editar Venta';
+            document.getElementById('editSaleId').value = id;
+            document.getElementById('beatSelector').value = sale.beatId;
+            document.getElementById('saleType').value = sale.type;
+            document.getElementById('saleAmount').value = sale.amount;
+            document.getElementById('saleModal').classList.remove('hidden');
+        };
+
+        window.deleteSale = async (id) => {
+            if(confirm('¿Deseas eliminar este registro de venta?')) {
+                try {
+                    await deleteDoc(doc(db, 'ventas', id));
+                } catch (e) { console.error(e); }
+            }
+        };
+
+        document.getElementById('confirmSaleBtn').addEventListener('click', async () => {
+            const saleId = document.getElementById('editSaleId').value;
+            const beatId = document.getElementById('beatSelector').value;
+            const type = document.getElementById('saleType').value;
+            const amount = parseFloat(document.getElementById('saleAmount').value);
+            
+            if (!beatId || isNaN(amount)) return;
+            const beatData = currentBeats.find(b => b.id === beatId);
+
+            try {
+                if (saleId) {
+                    await updateDoc(doc(db, 'ventas', saleId), {
+                        beatId,
+                        beatName: beatData.displayName,
+                        type,
+                        amount,
+                        updatedAt: serverTimestamp()
+                    });
+                } else {
+                    await addDoc(ventasRef, {
+                        beatId,
+                        beatName: beatData.displayName,
+                        type,
+                        amount,
+                        createdAt: serverTimestamp()
+                    });
+                    if (type === 'Venta Exclusiva') {
+                        await updateDoc(doc(db, 'beats', beatId), { status: 'Vendido' });
+                    }
+                }
+                closeSaleModal();
+            } catch (e) { console.error(e); }
+        });
+
+        window.onload = () => lucide.createIcons();
     </script>
 </body>
 </html>
