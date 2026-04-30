@@ -65,11 +65,29 @@
 
     <main class="max-w-6xl mx-auto space-y-12">
         
-        <!-- SECCIÓN 1: PRODUCCIÓN MUSICAL -->
+        <!-- SECCIÓN 1: FINANZAS Y RENTABILIDAD -->
         <section>
-            <h2 class="dept-title text-xs font-black uppercase tracking-widest text-neutral-400 mb-6">Departamento de Producción</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <h2 class="dept-title text-xs font-black uppercase tracking-widest text-neutral-400 mb-6">Finanzas y Reportes Globales</h2>
+            <div class="card-module p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center gap-8 border-orange-500/30">
+                <div class="w-20 h-20 bg-orange-500/10 rounded-3xl flex items-center justify-center text-orange-500">
+                    <i data-lucide="trending-up" class="w-10 h-10"></i>
+                </div>
+                <div class="flex-1 text-center md:text-left">
+                    <h3 class="text-xl font-black italic uppercase mb-2">Panel Jaddy CORE</h3>
+                    <p class="text-neutral-500 text-sm max-w-md">Control de rentabilidad, ingresos de todas tus Apps y registro de gastos operativos desde Miami.</p>
+                </div>
+                <a href="admin-core.html" class="px-8 py-4 bg-orange-500 text-black font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-white transition-all shadow-lg shadow-orange-500/20 text-center">
+                    Abrir Dashboard Core
+                </a>
+            </div>
+        </section>
+
+        <!-- SECCIÓN 2: PRODUCCIÓN Y VENTAS -->
+        <section>
+            <h2 class="dept-title text-xs font-black uppercase tracking-widest text-neutral-400 mb-6">Operaciones y Marketplace</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
+                <!-- MARKETPLACE ADMIN -->
                 <a href="AdminBeats.html" class="card-module p-6 rounded-[2rem] group">
                     <div class="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center text-orange-500 mb-6">
                         <i data-lucide="music" class="w-6 h-6"></i>
@@ -79,23 +97,6 @@
                     <span class="text-orange-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">Abrir Módulo <i data-lucide="chevron-right" class="w-4 h-4"></i></span>
                 </a>
 
-                <!-- Espacio para Distribución -->
-                <div class="card-module p-6 rounded-[2rem] opacity-50 border-dashed">
-                    <div class="w-12 h-12 bg-neutral-800 rounded-2xl flex items-center justify-center text-neutral-500 mb-6">
-                        <i data-lucide="globe" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-lg font-black italic uppercase mb-2">Distribución</h3>
-                    <p class="text-neutral-600 text-xs leading-relaxed mb-6">Control de lanzamientos en plataformas digitales.</p>
-                    <span class="text-neutral-600 text-[10px] font-black uppercase tracking-widest italic">Pendiente por mudar...</span>
-                </div>
-            </div>
-        </section>
-
-        <!-- SECCIÓN 2: LEGAL Y VENTAS -->
-        <section>
-            <h2 class="dept-title text-xs font-black uppercase tracking-widest text-neutral-400 mb-6">Legal, Ventas y Licencias</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                
                 <!-- ASISTENTE DE VENTAS -->
                 <a href="AsistenteVentas.html" class="card-module p-6 rounded-[2rem] group border-blue-500/20">
                     <div class="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-500 mb-6">
@@ -106,30 +107,22 @@
                     <span class="text-blue-500 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">Abrir Módulo <i data-lucide="chevron-right" class="w-4 h-4"></i></span>
                 </a>
 
-                <div class="card-module p-6 rounded-[2rem] opacity-50 border-dashed">
-                    <div class="w-12 h-12 bg-neutral-800 rounded-2xl flex items-center justify-center text-neutral-500 mb-6">
-                        <i data-lucide="file-text" class="w-6 h-6"></i>
-                    </div>
-                    <h3 class="text-lg font-black italic uppercase mb-2">Contratos PDF</h3>
-                    <p class="text-neutral-600 text-xs leading-relaxed mb-6">Generador automático de firmas y acuerdos legales.</p>
-                </div>
             </div>
         </section>
 
-        <!-- SECCIÓN 3: FINANZAS -->
+        <!-- SECCIÓN 3: DOCUMENTACIÓN -->
         <section>
-            <h2 class="dept-title text-xs font-black uppercase tracking-widest text-neutral-400 mb-6">Finanzas y Reportes</h2>
-            <div class="card-module p-8 rounded-[2.5rem] flex flex-col md:flex-row items-center gap-8">
-                <div class="w-20 h-20 bg-green-500/10 rounded-3xl flex items-center justify-center text-green-500">
-                    <i data-lucide="trending-up" class="w-10 h-10"></i>
+            <h2 class="dept-title text-xs font-black uppercase tracking-widest text-neutral-400 mb-6">Archivo Legal</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="card-module p-6 rounded-[2rem] opacity-50 border-dashed flex items-center gap-6">
+                    <div class="w-12 h-12 bg-neutral-800 rounded-2xl flex items-center justify-center text-neutral-500">
+                        <i data-lucide="file-text" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-black italic uppercase">Generador de Contratos PDF</h3>
+                        <p class="text-neutral-600 text-[10px] leading-relaxed italic">Integrado próximamente con Asistente de Ventas</p>
+                    </div>
                 </div>
-                <div class="flex-1 text-center md:text-left">
-                    <h3 class="text-xl font-black italic uppercase mb-2">Panel de Ingresos</h3>
-                    <p class="text-neutral-500 text-sm max-w-md">Visualiza tus ganancias por venta de beats y servicios de estudio en un solo lugar.</p>
-                </div>
-                <button class="px-8 py-4 bg-white text-black font-black uppercase text-[10px] tracking-widest rounded-2xl hover:bg-green-500 hover:text-white transition-all">
-                    Configurar Módulo
-                </button>
             </div>
         </section>
 
