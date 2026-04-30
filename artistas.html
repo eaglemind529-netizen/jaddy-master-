@@ -27,7 +27,6 @@
         .progress-bar-bg { background: rgba(255, 255, 255, 0.05); height: 6px; border-radius: 10px; overflow: hidden; }
         .progress-bar-fill { background: linear-gradient(90deg, #f97316, #fb923c); height: 100%; transition: width 0.5s ease; }
 
-        /* Tabs discretos para el historial */
         .tab-btn { padding-bottom: 8px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; transition: all 0.3s; border-bottom: 2px solid transparent; color: #525252; }
         .tab-btn.active { color: #f97316; border-color: #f97316; }
     </style>
@@ -83,40 +82,32 @@
         </main>
     </div>
 
-    <!-- Modal Unificado: Contrato + Historial -->
+    <!-- Modal Unificado -->
     <div id="modalContrato" class="hidden fixed inset-0 bg-black/95 backdrop-blur-xl z-[100] flex items-center justify-center p-4">
         <div class="glass-card w-full max-w-2xl p-8 rounded-[2.5rem] border border-white/10 max-h-[90vh] flex flex-col">
             <div class="flex justify-between items-center mb-4">
                 <h2 id="modalTitle" class="text-2xl font-black uppercase italic text-white tracking-tighter"></h2>
                 <button onclick="closeModal('modalContrato')" class="text-neutral-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
-            
-            <!-- Selector de Tabs -->
             <div class="flex gap-6 mb-6 border-b border-white/5">
                 <button id="tabContrato" onclick="switchTab('contrato')" class="tab-btn active">Contrato</button>
                 <button id="tabHistorial" onclick="switchTab('historial')" class="tab-btn">Historial de Ciclos</button>
             </div>
-
-            <!-- Contenido: Contrato -->
             <div id="contentContrato" class="flex flex-col flex-1 overflow-hidden">
                 <div id="pdfAction" class="mb-4"></div>
                 <div class="overflow-y-auto bg-black/50 p-6 rounded-2xl border border-white/5 flex-1 custom-scrollbar">
                     <pre id="modalContent" class="text-sm text-neutral-300 whitespace-pre-wrap font-sans leading-relaxed"></pre>
                 </div>
             </div>
-
-            <!-- Contenido: Historial -->
             <div id="contentHistorial" class="hidden flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-2">
-                <div id="historyContainer" class="space-y-3">
-                    <!-- Cards de historial se cargan aquí -->
-                </div>
+                <div id="historyContainer" class="space-y-3"></div>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, setDoc, updateDoc, deleteDoc, getDoc, serverTimestamp, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -130,6 +121,30 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const artistasRef = collection(db, 'artistasVIP');
+
+        // --- BRIDGE CONFIG (Configuración del Monitor Central) ---
+        // Este ID debe ser el mismo que usas en tu Dashboard
+        const masterAppId = 'jaddy-master-v3'; 
+        
+        // Función puente para enviar datos al Monitor Central
+        const syncToMonitor = async (id, name, revenue) => {
+            try {
+                // Guardamos en la ruta que el Command Center está escuchando
+                const monitorRef = doc(db, 'artifacts', masterAppId, 'public', 'data', 'music_stats', id);
+                await setDoc(monitorRef, {
+                    name: name,
+                    revenue: revenue,
+                    updatedAt: serverTimestamp()
+                }, { merge: true });
+            } catch (e) { console.error("Bridge Sync Error:", e); }
+        };
+
+        const deleteFromMonitor = async (id) => {
+            try {
+                await deleteDoc(doc(db, 'artifacts', masterAppId, 'public', 'data', 'music_stats', id));
+            } catch (e) { console.error(e); }
+        };
+        // ---------------------------------------------------------
 
         window.openCreateForm = () => {
             document.getElementById('editId').value = '';
@@ -165,13 +180,11 @@
             }
         };
 
-        // FUNCIÓN RENOVAR CICLO (Guarda historial y limpia la tarjeta)
         window.renovarCiclo = async (id, nombre, actuales, abono, costo) => {
-            const confirmar = confirm(`¿Estás seguro de RENOVAR el ciclo de ${nombre}? Se guardará el registro de ${actuales} pistas y abono de $${abono}.`);
+            const confirmar = confirm(`¿Estás seguro de RENOVAR el ciclo de ${nombre}?`);
             if (!confirmar) return;
 
             try {
-                // 1. Guardar en subcolección de historial
                 const histRef = collection(db, 'artistasVIP', id, 'historial');
                 await addDoc(histRef, {
                     pistasUsadas: actuales,
@@ -181,18 +194,18 @@
                     timestamp: serverTimestamp()
                 });
 
-                // 2. Resetear valores en el documento principal
                 await updateDoc(doc(db, 'artistasVIP', id), {
                     descargas: 0,
                     abono: 0,
-                    createdAt: serverTimestamp(), // Reinicia la cuenta regresiva de 30 días
+                    createdAt: serverTimestamp(),
                     updatedAt: serverTimestamp()
                 });
+                
+                // Sincronizar reinicio de abono al monitor
+                await syncToMonitor(id, nombre, 0);
 
                 alert("Ciclo renovado con éxito.");
-            } catch (error) {
-                console.error("Error al renovar:", error);
-            }
+            } catch (error) { console.error("Error al renovar:", error); }
         };
 
         window.editarArtista = async (id) => {
@@ -214,7 +227,10 @@
         };
 
         window.eliminarArtista = async (id) => {
-            if(confirm("¿Eliminar este registro permanentemente?")) await deleteDoc(doc(db, 'artistasVIP', id));
+            if(confirm("¿Eliminar este registro permanentemente?")) {
+                await deleteDoc(doc(db, 'artistasVIP', id));
+                await deleteFromMonitor(id); // Eliminar también del monitor central
+            }
         };
 
         window.verContrato = async (id, nombre, texto, pdf) => {
@@ -223,28 +239,24 @@
             const pdfAction = document.getElementById('pdfAction');
             pdfAction.innerHTML = pdf ? `<a href="${pdf}" target="_blank" class="text-orange-500 font-black text-[10px] uppercase underline flex items-center gap-1"><i data-lucide="external-link" class="w-3 h-3"></i> Abrir Contrato PDF</a>` : '';
             
-            // Cargar Historial
             const historyContainer = document.getElementById('historyContainer');
-            historyContainer.innerHTML = '<p class="text-[10px] font-bold text-neutral-600 uppercase tracking-widest text-center py-10">Buscando historial...</p>';
+            historyContainer.innerHTML = '<p class="text-center py-10">Buscando historial...</p>';
             
             const q = query(collection(db, 'artistasVIP', id, 'historial'), orderBy('timestamp', 'desc'));
             onSnapshot(q, (snapshot) => {
                 historyContainer.innerHTML = '';
-                if(snapshot.empty) {
-                    historyContainer.innerHTML = '<p class="text-[10px] font-bold text-neutral-600 uppercase tracking-widest text-center py-10">No hay ciclos anteriores grabados.</p>';
-                }
+                if(snapshot.empty) historyContainer.innerHTML = '<p class="text-center py-10">No hay ciclos anteriores.</p>';
                 snapshot.forEach(doc => {
                     const h = doc.data();
                     const div = document.createElement('div');
                     div.className = "bg-white/5 p-4 rounded-2xl border border-white/5 flex justify-between items-center";
                     div.innerHTML = `
                         <div>
-                            <p class="text-[10px] font-black text-orange-500 uppercase tracking-tighter">${h.fechaCierre}</p>
-                            <p class="text-[9px] text-neutral-400 font-bold uppercase">${h.pistasUsadas} Pistas Grabadas</p>
+                            <p class="text-[10px] font-black text-orange-500 uppercase">${h.fechaCierre}</p>
+                            <p class="text-[9px] text-neutral-400 font-bold uppercase">${h.pistasUsadas} Pistas</p>
                         </div>
                         <div class="text-right">
                             <p class="text-xs font-black text-white">$${h.pagoRealizado}</p>
-                            <p class="text-[8px] text-neutral-500 font-bold uppercase tracking-widest">Abonado de $${h.costoTotal}</p>
                         </div>
                     `;
                     historyContainer.appendChild(div);
@@ -272,10 +284,12 @@
 
             if (editId) {
                 await updateDoc(doc(db, 'artistasVIP', editId), data);
+                await syncToMonitor(editId, data.artistName, data.abono); // Sincroniza al monitor
             } else {
                 data.descargas = 0;
                 data.createdAt = serverTimestamp();
-                await addDoc(artistasRef, data);
+                const newDoc = await addDoc(artistasRef, data);
+                await syncToMonitor(newDoc.id, data.artistName, data.abono); // Sincroniza al monitor
             }
             closeForm();
         };
@@ -298,44 +312,35 @@
                             <i data-lucide="user" class="text-white w-5 h-5"></i>
                         </div>
                         <div class="flex gap-1">
-                             <button onclick="renovarCiclo('${id}', '${a.artistName}', ${a.descargas}, ${a.abono}, ${a.costo})" title="Renovar Ciclo" class="p-2 text-neutral-500 hover:text-orange-500 transition-colors"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
-                             <button onclick="editarArtista('${id}')" class="p-2 text-neutral-500 hover:text-white transition-colors"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
-                             <button onclick="eliminarArtista('${id}')" class="p-2 text-neutral-500 hover:text-red-500 transition-colors"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                             <button onclick="renovarCiclo('${id}', '${a.artistName}', ${a.descargas}, ${a.abono}, ${a.costo})" class="p-2 text-neutral-500 hover:text-orange-500"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
+                             <button onclick="editarArtista('${id}')" class="p-2 text-neutral-500 hover:text-white"><i data-lucide="edit-2" class="w-4 h-4"></i></button>
+                             <button onclick="eliminarArtista('${id}')" class="p-2 text-neutral-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
                     </div>
-
                     <h3 class="font-black uppercase italic text-lg text-white mb-0 tracking-tighter">${a.artistName}</h3>
                     <p class="text-[9px] text-orange-500 font-bold uppercase tracking-widest mb-4">${a.plan}</p>
-                    
                     <div class="mb-6 p-4 bg-black/40 rounded-2xl border border-white/5">
                         <div class="flex justify-between items-end mb-2">
                             <p class="text-[8px] font-bold text-neutral-500 uppercase tracking-widest">Escala de Uso</p>
-                            <p class="text-[10px] font-black text-white">${a.descargas} / ${a.limit} pistas</p>
+                            <p class="text-[10px] font-black text-white">${a.descargas} / ${a.limit}</p>
                         </div>
-                        <div class="progress-bar-bg mb-3">
-                            <div class="progress-bar-fill" style="width: ${perc}%"></div>
-                        </div>
+                        <div class="progress-bar-bg mb-3"><div class="progress-bar-fill" style="width: ${perc}%"></div></div>
                         <div class="flex justify-between items-center pt-2 border-t border-white/5">
-                            <div class="flex items-center gap-2">
-                                <i data-lucide="clock" class="w-3 h-3 text-orange-500"></i>
-                                <p class="text-[8px] font-bold text-neutral-500 uppercase tracking-widest">Vence en:</p>
-                            </div>
+                            <p class="text-[8px] font-bold text-neutral-500 uppercase tracking-widest">Vence en:</p>
                             <p class="text-[10px] font-black text-orange-500">${diasRestantes}</p>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-2 gap-3 mb-4">
                         <div class="bg-black/40 p-3 rounded-2xl border border-white/5">
-                            <p class="text-[8px] font-bold text-neutral-500 uppercase mb-1 tracking-widest">Deuda</p>
+                            <p class="text-[8px] font-bold text-neutral-500 uppercase tracking-widest">Deuda</p>
                             <p class="text-sm font-black ${deuda > 0 ? 'text-orange-500' : 'text-emerald-500'}">$${deuda}</p>
                         </div>
-                        <button onclick="usarPista('${id}', ${a.descargas}, ${a.limit})" class="bg-orange-600/10 hover:bg-orange-600 p-3 rounded-2xl border border-orange-500/20 text-orange-500 hover:text-white transition-all text-center">
+                        <button onclick="usarPista('${id}', ${a.descargas}, ${a.limit})" class="bg-orange-600/10 p-3 rounded-2xl border border-orange-500/20 text-orange-500 hover:bg-orange-600 hover:text-white transition-all text-center">
                              <p class="text-[8px] font-black uppercase tracking-widest">+ Usar Pista</p>
                         </button>
                     </div>
-
                     <button onclick="verContrato('${id}', '${a.artistName}', \`${(a.contractText || '').replace(/\n/g, '\\n')}\`, '${a.pdfLink || ''}')" 
-                        class="w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[9px] font-black uppercase tracking-widest transition-all border border-white/5 flex items-center justify-center gap-2">
+                        class="w-full py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[9px] font-black uppercase tracking-widest border border-white/5 flex items-center justify-center gap-2">
                         <i data-lucide="file-text" class="w-4 h-4 text-orange-500"></i> Ver Legal e Historial
                     </button>
                 `;
