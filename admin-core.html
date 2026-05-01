@@ -30,6 +30,7 @@
             background: linear-gradient(145deg, #161616 0%, #0c0c0c 100%);
             border: 1px solid var(--border-color);
         }
+        .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #333 transparent; }
         .custom-scrollbar::-webkit-scrollbar { width: 5px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
         
@@ -37,31 +38,30 @@
             background: var(--orange-primary);
             box-shadow: 0 4px 20px rgba(255, 94, 0, 0.3);
         }
-        input, select, textarea {
-            background-color: #000 !important;
-            color: white !important;
-            border: 1px solid #222 !important;
+        .btn-finance {
+            background: rgba(255, 94, 0, 0.1);
+            border: 1px solid rgba(255, 94, 0, 0.2);
+            color: var(--orange-primary);
         }
-        input:focus, select:focus { border-color: var(--orange-primary) !important; outline: none; }
-        
-        /* Mini Audio Player Styles */
-        .audio-preview {
-            background: #000;
-            border-radius: 12px;
-            padding: 8px;
-            margin-top: 8px;
-            border: 1px solid #222;
+        .btn-finance:hover { background: rgba(255, 94, 0, 0.2); }
+
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 100px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
         }
-        audio::-webkit-media-controls-panel {
-            background-color: #111;
+
+        .delete-btn {
+            opacity: 0;
+            transition: opacity 0.2s;
         }
-        audio::-webkit-media-controls-play-button,
-        audio::-webkit-media-controls-current-time-display,
-        audio::-webkit-media-controls-time-remaining-display,
-        audio::-webkit-media-controls-timeline,
-        audio::-webkit-media-controls-volume-slider,
-        audio::-webkit-media-controls-mute-button {
-            filter: invert(1) hue-rotate(180deg) brightness(1.5);
+        .sale-item:hover .delete-btn {
+            opacity: 1;
+        }
+        @media (max-width: 768px) {
+            .delete-btn { opacity: 1; }
         }
     </style>
 </head>
@@ -75,18 +75,24 @@
                 </div>
                 <h1 class="text-lg font-extrabold tracking-tighter uppercase italic">Jaddy Studio</h1>
             </div>
-            <div class="flex gap-3">
-                <button id="addArtistBtn" class="bg-white/5 border border-white/10 px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-white/10 transition-all">
+            
+            <div class="flex gap-3 items-center">
+                <a href="ingresos_globales.html" class="btn-finance px-4 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-wider flex items-center gap-2 transition-all">
+                    <i data-lucide="line-chart" class="w-4 h-4"></i> Balance Global
+                </a>
+                
+                <div class="h-6 w-[1px] bg-white/10 mx-2"></div>
+
+                <button class="bg-white/5 border border-white/10 px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-white/10 transition-all">
                     + Producción
                 </button>
-                <button id="mainSaleBtn" class="btn-primary px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 hover:brightness-110 transition-all">
-                    <i data-lucide="shopping-cart" class="w-4 h-4"></i> Venta de Beat
+                <button class="btn-primary px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 hover:brightness-110 transition-all">
+                    <i data-lucide="shopping-cart" class="w-4 h-4"></i> Venta Beat
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- METRICS -->
     <section class="w-full px-6 pt-8 pb-4">
         <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             <div class="stat-card p-6 rounded-3xl flex items-center gap-5">
@@ -94,7 +100,7 @@
                     <i data-lucide="wallet" class="text-emerald-500 w-7 h-7"></i>
                 </div>
                 <div>
-                    <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] mb-1">Recaudado Total</p>
+                    <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] mb-1">Recaudado (Proyectos)</p>
                     <h2 id="totalRevenueDisplay" class="text-3xl font-black text-emerald-400 italic leading-none">$0.00</h2>
                 </div>
             </div>
@@ -109,7 +115,7 @@
                 </div>
             </div>
 
-            <div id="catalogTrigger" class="stat-card p-6 rounded-3xl flex items-center justify-between cursor-pointer group">
+            <div class="stat-card p-6 rounded-3xl flex items-center justify-between group">
                 <div class="flex items-center gap-5">
                     <div class="w-14 h-14 bg-orange-500/10 rounded-2xl flex items-center justify-center border border-orange-500/20">
                         <i data-lucide="disc-3" class="text-orange-500 w-7 h-7"></i>
@@ -119,7 +125,6 @@
                         <h2 id="catalogCount" class="text-2xl font-black italic leading-none">0 Activos</h2>
                     </div>
                 </div>
-                <i data-lucide="chevron-right" class="text-neutral-700"></i>
             </div>
         </div>
     </section>
@@ -128,158 +133,25 @@
         <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
             <div class="lg:col-span-4 space-y-6">
                 <h3 class="text-[10px] font-black uppercase text-neutral-500 tracking-[0.3em] px-2 flex items-center gap-2">
-                    <i data-lucide="users" class="w-4 h-4"></i> Producción en Curso
+                    <i data-lucide="users" class="w-4 h-4"></i> Producción VIP
                 </h3>
-                <div id="monitorGrid" class="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-2">
-                    <div class="p-10 text-center text-neutral-600 font-bold uppercase text-[10px]">Cargando artistas...</div>
-                </div>
+                <div id="monitorGrid" class="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-2"></div>
             </div>
 
             <div class="lg:col-span-8 space-y-6">
                 <h3 class="text-[10px] font-black uppercase text-neutral-500 tracking-[0.3em] px-2 flex items-center gap-2">
-                    <i data-lucide="history" class="w-4 h-4"></i> Registro de Ventas de Beats
+                    <i data-lucide="history" class="w-4 h-4"></i> Ventas de Beats Recientes
                 </h3>
-                <div id="activityLog" class="glass-panel overflow-hidden min-h-[400px]">
-                    <div class="p-20 text-center text-neutral-600 font-bold uppercase text-[10px]">Sin ventas registradas</div>
+                <div class="glass-panel overflow-hidden">
+                    <div id="activityLog" class="divide-y divide-[#1a1a1a]"></div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- MODAL VENTA BEATS -->
-    <div id="saleModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md z-[600] flex items-center justify-center p-4 overflow-y-auto">
-        <div class="glass-panel w-full max-w-2xl p-8 shadow-2xl my-10">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-black italic uppercase text-orange-500">Venta de Beat</h2>
-                <button onclick="document.getElementById('saleModal').classList.add('hidden')" class="text-neutral-500 hover:text-white"><i data-lucide="x"></i></button>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">Nombre del Cliente</label>
-                        <input type="text" id="saleClientName" placeholder="Ej: Anuel AA" class="w-full rounded-xl p-4 font-bold text-sm">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">Beat Seleccionado</label>
-                        <select id="beatSelector" class="w-full rounded-xl p-4 font-bold text-sm"></select>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">Tipo de Pago</label>
-                        <select id="salePayType" class="w-full rounded-xl p-4 font-bold text-sm" onchange="toggleSaleCreditFields()">
-                            <option value="Contado">Pago al Contado</option>
-                            <option value="Crédito">Venta a Crédito / Cuotas</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">Precio Total ($)</label>
-                        <input type="number" id="saleTotal" placeholder="0.00" class="w-full rounded-xl p-4 font-bold text-emerald-400">
-                    </div>
-                    
-                    <div id="saleAbonoContainer" class="hidden space-y-4 p-4 border border-orange-500/20 rounded-2xl bg-orange-500/5">
-                        <h4 class="text-[10px] font-black text-orange-500 uppercase italic">Cronograma de Cuotas</h4>
-                        <div>
-                            <label class="text-[9px] font-bold text-orange-300 uppercase">Abono Inicial</label>
-                            <input type="number" id="saleAbono" placeholder="0.00" class="w-full rounded-xl p-3 text-sm text-orange-500 font-black">
-                        </div>
-                        <div class="grid grid-cols-1 gap-2">
-                            <label class="text-[9px] font-bold text-neutral-500 uppercase italic">Fechas de Pago (Opcional)</label>
-                            <input type="date" id="cuota1" class="w-full rounded-lg p-2 text-xs">
-                            <input type="date" id="cuota2" class="w-full rounded-lg p-2 text-xs">
-                            <input type="date" id="cuota3" class="w-full rounded-lg p-2 text-xs">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <button id="confirmSaleBtn" class="w-full py-5 btn-primary rounded-2xl font-black uppercase italic mt-8 hover:brightness-125 transition-all">
-                Registrar Venta
-            </button>
-        </div>
-    </div>
-
-    <!-- MODAL PRODUCCIÓN -->
-    <div id="artistModal" class="hidden fixed inset-0 bg-black/90 backdrop-blur-md z-[600] flex items-center justify-center p-4 overflow-y-auto">
-        <div class="glass-panel w-full max-w-3xl p-8 shadow-2xl my-10">
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-black italic uppercase text-white">Nueva Producción</h2>
-                <button onclick="document.getElementById('artistModal').classList.add('hidden')" class="text-neutral-500 hover:text-white"><i data-lucide="x"></i></button>
-            </div>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="space-y-4">
-                    <div>
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">Nombre del Artista</label>
-                        <input type="text" id="artistName" placeholder="Nombre Artístico" class="w-full rounded-xl p-4 font-bold text-sm">
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">Enlace de Audio (Google Drive / Dropbox)</label>
-                        <input type="url" id="artistLink" placeholder="Pega el enlace compartido aquí..." class="w-full rounded-xl p-4 font-bold text-xs text-orange-400">
-                        <p class="text-[8px] text-neutral-600 mt-1 italic">El sistema habilitará un reproductor si el link es válido.</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">Precio Total ($)</label>
-                            <input type="number" id="artistTotal" placeholder="0.00" class="w-full rounded-xl p-4 font-bold text-white/80">
-                        </div>
-                        <div>
-                            <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">Abono Hoy ($)</label>
-                            <input type="number" id="artistAbono" placeholder="0.00" class="w-full rounded-xl p-4 font-bold text-emerald-400">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block mb-1">Detalles / Notas</label>
-                        <textarea id="artistNotes" rows="3" placeholder="Detalles del proyecto..." class="w-full rounded-xl p-4 font-bold text-sm"></textarea>
-                    </div>
-                </div>
-
-                <div class="bg-white/5 p-6 rounded-3xl border border-white/5 space-y-4">
-                    <h4 class="text-[10px] font-black text-orange-500 uppercase tracking-widest italic flex items-center gap-2">
-                        <i data-lucide="calendar"></i> Cronograma de Cuotas (Opcional)
-                    </h4>
-                    <p class="text-[9px] text-neutral-500 font-bold uppercase leading-relaxed">Define fechas de pago tentativas.</p>
-                    
-                    <div class="space-y-3">
-                        <div>
-                            <label class="text-[9px] font-bold text-neutral-600 uppercase">Cuota 1</label>
-                            <input type="date" id="artistCuota1" class="w-full rounded-xl p-3 text-sm">
-                        </div>
-                        <div>
-                            <label class="text-[9px] font-bold text-neutral-600 uppercase">Cuota 2</label>
-                            <input type="date" id="artistCuota2" class="w-full rounded-xl p-3 text-sm">
-                        </div>
-                        <div>
-                            <label class="text-[9px] font-bold text-neutral-600 uppercase">Cuota 3</label>
-                            <input type="date" id="artistCuota3" class="w-full rounded-xl p-3 text-sm">
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <button id="saveArtistBtn" class="w-full py-5 bg-white text-black rounded-2xl font-black uppercase italic mt-8 hover:bg-orange-500 hover:text-white transition-all shadow-xl">
-                Iniciar Proyecto
-            </button>
-        </div>
-    </div>
-
-    <!-- CATALOGO -->
-    <div id="catalogOverlay" class="fixed inset-0 bg-black z-[400] hidden flex flex-col">
-        <div class="p-8 border-b border-white/5 flex items-center justify-between">
-            <button onclick="document.getElementById('catalogOverlay').classList.add('hidden')" class="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
-                <i data-lucide="chevron-left"></i> Volver
-            </button>
-            <h3 class="text-xl font-black italic uppercase">Inventario de Beats</h3>
-            <div class="w-10"></div>
-        </div>
-        <div id="beatsGridFull" class="p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 overflow-y-auto flex-1"></div>
-    </div>
-
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, addDoc, updateDoc, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -287,213 +159,104 @@
             projectId: "jaddy-estudio",
             storageBucket: "jaddy-estudio.firebasestorage.app",
             messagingSenderId: "968903268866",
-            appId: "1:968903268866:web:e2b6895e8acff18178e51b"
+            appId: "1:968903268866:web:e2b6895e8acff18178e51b",
+            measurementId: "G-SBBXXDD3TV"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        
-        const artistasRef = collection(db, 'artistasVIP');
-        const beatsRef = collection(db, 'beats');
-        const ventasRef = collection(db, 'ventas');
 
-        let totals = { prodRecaudado: 0, prodDeuda: 0, beatsRecaudado: 0, beatsDeuda: 0 };
-        let currentBeats = [];
-
-        // UI Helpers
-        document.getElementById('addArtistBtn').onclick = () => document.getElementById('artistModal').classList.remove('hidden');
-        document.getElementById('mainSaleBtn').onclick = () => document.getElementById('saleModal').classList.remove('hidden');
-        document.getElementById('catalogTrigger').onclick = () => document.getElementById('catalogOverlay').classList.remove('hidden');
-
-        // Función para transformar links de Drive/Dropbox a enlaces directos de audio
-        function getDirectAudioLink(url) {
-            if (!url) return null;
-            let directUrl = url;
-            
-            // Google Drive
-            if (url.includes('drive.google.com')) {
-                const fileId = url.match(/\/d\/(.+?)\//) || url.match(/id=(.+?)(&|$)/);
-                if (fileId) directUrl = `https://docs.google.com/uc?export=download&id=${fileId[1]}`;
+        // Función global para eliminar ventas
+        window.deleteSale = async (id) => {
+            if(confirm("¿Estás seguro de eliminar esta venta? Esta acción no se puede deshacer.")) {
+                try {
+                    await deleteDoc(doc(db, "ventas", id));
+                } catch (error) {
+                    console.error("Error al eliminar:", error);
+                }
             }
-            // Dropbox
-            else if (url.includes('dropbox.com')) {
-                directUrl = url.replace('www.dropbox.com', 'dl.dropboxusercontent.com').replace('?dl=0', '').replace('?dl=1', '');
-            }
-            
-            return directUrl;
-        }
+        };
 
-        // Snapshot Artistas
-        onSnapshot(query(artistasRef, orderBy('updatedAt', 'desc')), (snap) => {
+        // Monitoreo VIP
+        onSnapshot(collection(db, "artistasVIP"), (snapshot) => {
             const grid = document.getElementById('monitorGrid');
             grid.innerHTML = '';
-            totals.prodRecaudado = 0;
-            totals.prodDeuda = 0;
+            let totalDeuda = 0;
 
-            snap.forEach(d => {
-                const a = d.data();
-                const abono = parseFloat(a.abono || 0);
-                const total = parseFloat(a.totalPrice || 0);
+            snapshot.forEach((doc) => {
+                const data = doc.data();
+                const abono = parseFloat(data.abono || 0);
+                const total = parseFloat(data.totalProyecto || 0);
                 const deuda = total - abono;
-                const directLink = getDirectAudioLink(a.link);
+                totalDeuda += deuda;
 
-                totals.prodRecaudado += abono;
-                totals.prodDeuda += deuda;
-
-                grid.innerHTML += `
-                    <div class="glass-panel p-5 flex flex-col gap-3 group relative overflow-hidden">
-                        <div class="flex justify-between items-start">
-                            <div>
-                                <p class="text-[10px] font-black text-orange-500 uppercase tracking-widest">${a.artistName}</p>
-                                <p class="text-[8px] text-neutral-600 font-bold uppercase italic">${a.notes || 'Producción'}</p>
-                            </div>
-                            <button onclick="deleteData('artistasVIP', '${d.id}')" class="opacity-0 group-hover:opacity-100 text-neutral-700 hover:text-red-500 transition-all">
-                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            </button>
+                const card = document.createElement('div');
+                card.className = 'glass-panel p-5 border-l-4 ' + (deuda > 0 ? 'border-red-500' : 'border-emerald-500');
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <h4 class="font-bold text-sm uppercase italic">${data.artistName}</h4>
+                            <p class="text-[9px] text-neutral-500 uppercase font-bold">${data.projectName || 'Sin nombre'}</p>
                         </div>
-                        
-                        ${directLink ? `
-                            <div class="audio-preview">
-                                <p class="text-[7px] text-neutral-500 uppercase font-black mb-1 flex items-center gap-1">
-                                    <i data-lucide="music" class="w-2 h-2"></i> Preview Audio
-                                </p>
-                                <audio controls class="w-full h-8">
-                                    <source src="${directLink}" type="audio/mpeg">
-                                    <source src="${directLink}" type="audio/wav">
-                                    Tu navegador no soporta audio.
-                                </audio>
-                                <a href="${a.link}" target="_blank" class="text-[7px] text-orange-400 underline mt-1 block">Ver en nube</a>
-                            </div>
-                        ` : ''}
-
-                        <div class="flex justify-between items-end mt-2 pt-2 border-t border-white/5">
-                            <div>
-                                <p class="text-[8px] text-neutral-500 font-bold uppercase">Deuda</p>
-                                <p class="text-xs font-black italic ${deuda > 0 ? 'text-red-400' : 'text-emerald-400'}">
-                                    $${deuda.toLocaleString()}
-                                </p>
-                            </div>
-                            <div class="text-right">
-                                <p class="text-[8px] text-neutral-500 font-bold uppercase">Total</p>
-                                <p class="text-sm font-black text-white">$${total.toLocaleString()}</p>
-                            </div>
+                        <span class="status-badge ${deuda > 0 ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}">
+                            ${deuda > 0 ? 'Deuda: $' + deuda : 'Pagado'}
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-end">
+                        <p class="text-[10px] font-black text-neutral-400">$${abono} / $${total}</p>
+                        <div class="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden">
+                            <div class="h-full bg-orange-500" style="width: ${(abono/total)*100}%"></div>
                         </div>
-                    </div>`;
+                    </div>
+                `;
+                grid.appendChild(card);
             });
-            updateGlobalRevenue();
-            lucide.createIcons();
+            document.getElementById('totalDebtDisplay').innerText = `$${totalDeuda.toLocaleString()}`;
         });
 
-        // Catálogo Beats logic
-        onSnapshot(query(beatsRef, orderBy('createdAt', 'desc')), (snap) => {
-            const grid = document.getElementById('beatsGridFull');
-            const sel = document.getElementById('beatSelector');
-            grid.innerHTML = '';
-            sel.innerHTML = '<option value="">Elegir Beat...</option>';
-            currentBeats = [];
-            snap.forEach(d => {
-                const b = {id: d.id, ...d.data()};
-                currentBeats.push(b);
-                sel.innerHTML += `<option value="${b.id}">${b.title}</option>`;
-                grid.innerHTML += `
-                    <div class="glass-panel p-5 bg-neutral-900/50">
-                        <p class="font-black italic uppercase text-sm">${b.title}</p>
-                        <button onclick="quickSale('${b.id}')" class="w-full mt-4 py-2 bg-orange-600 rounded-lg text-[10px] font-black uppercase">Vender</button>
-                    </div>`;
-            });
-            document.getElementById('catalogCount').innerText = `${snap.size} Activos`;
-            lucide.createIcons();
-        });
-
-        window.quickSale = (id) => {
-            document.getElementById('catalogOverlay').classList.add('hidden');
-            document.getElementById('saleModal').classList.remove('hidden');
-            document.getElementById('beatSelector').value = id;
-        };
-
-        // Ventas logic
-        onSnapshot(query(ventasRef, orderBy('createdAt', 'desc')), (snap) => {
+        // Ventas de Beats con opción de eliminar
+        const qVentas = query(collection(db, "ventas"), orderBy("createdAt", "desc"));
+        onSnapshot(qVentas, (snapshot) => {
             const log = document.getElementById('activityLog');
             log.innerHTML = '';
-            totals.beatsRecaudado = 0;
-            totals.beatsDeuda = 0;
-            snap.forEach(d => {
-                const v = d.data();
-                const total = parseFloat(v.amount || 0);
-                const abono = parseFloat(v.abono || total);
-                totals.beatsRecaudado += abono;
-                totals.beatsDeuda += (total - abono);
-                log.innerHTML += `<div class="p-6 border-b border-white/5 flex justify-between items-center">
-                    <div class="flex flex-col gap-1">
-                        <span class="text-[10px] font-black uppercase text-orange-500">${v.clientName}</span>
-                        <p class="text-sm font-black italic uppercase">${v.beatName}</p>
+            let totalVentas = 0;
+
+            snapshot.forEach((documento) => {
+                const data = documento.data();
+                const id = documento.id;
+                totalVentas += parseFloat(data.amount || 0);
+
+                const item = document.createElement('div');
+                item.className = 'sale-item p-4 flex justify-between items-center hover:bg-white/[0.02] transition-colors group';
+                item.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 bg-blue-500/10 rounded-lg flex items-center justify-center">
+                            <i data-lucide="music" class="text-blue-400 w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <p class="text-[11px] font-bold uppercase italic">${data.beatName}</p>
+                            <p class="text-[9px] text-neutral-500 uppercase">${data.customerName || 'Cliente'}</p>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-lg font-black text-emerald-400">$${abono.toLocaleString()}</p>
+                    <div class="flex items-center gap-6">
+                        <div class="text-right">
+                            <p class="text-emerald-400 font-black italic">+$${data.amount}</p>
+                            <p class="text-[8px] text-neutral-600 uppercase font-bold">${data.licenseType || 'MP3'}</p>
+                        </div>
+                        <button onclick="deleteSale('${id}')" class="delete-btn p-2 hover:bg-red-500/20 rounded-lg text-red-500 transition-all">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
                     </div>
-                </div>`;
+                `;
+                log.appendChild(item);
             });
-            updateGlobalRevenue();
+            document.getElementById('totalRevenueDisplay').innerText = `$${totalVentas.toLocaleString()}`;
+            lucide.createIcons();
         });
 
-        // Guardar Producción
-        document.getElementById('saveArtistBtn').onclick = async () => {
-            const name = document.getElementById('artistName').value;
-            const abono = parseFloat(document.getElementById('artistAbono').value) || 0;
-            const total = parseFloat(document.getElementById('artistTotal').value) || 0;
-            const link = document.getElementById('artistLink').value;
-            const notes = document.getElementById('artistNotes').value;
-
-            if(!name || isNaN(total)) return;
-
-            await addDoc(artistasRef, {
-                artistName: name,
-                abono: abono,
-                totalPrice: total,
-                link: link,
-                notes: notes,
-                updatedAt: serverTimestamp()
-            });
-
-            document.getElementById('artistModal').classList.add('hidden');
-            document.querySelectorAll('#artistModal input, #artistModal textarea').forEach(i => i.value = '');
-        };
-
-        // Guardar Venta
-        document.getElementById('confirmSaleBtn').onclick = async () => {
-            const bId = document.getElementById('beatSelector').value;
-            const client = document.getElementById('saleClientName').value;
-            const total = parseFloat(document.getElementById('saleTotal').value);
-            const abono = document.getElementById('salePayType').value === 'Crédito' ? parseFloat(document.getElementById('saleAbono').value) : total;
-            
-            if(!bId || !client || isNaN(total)) return;
-            const beat = currentBeats.find(b => b.id === bId);
-            
-            await addDoc(ventasRef, {
-                beatId: bId,
-                beatName: beat?.title,
-                clientName: client,
-                amount: total,
-                abono: abono,
-                createdAt: serverTimestamp()
-            });
-            
-            document.getElementById('saleModal').classList.add('hidden');
-        };
-
-        function updateGlobalRevenue() {
-            document.getElementById('totalRevenueDisplay').innerText = `$${(totals.prodRecaudado + totals.beatsRecaudado).toLocaleString()}`;
-            document.getElementById('totalDebtDisplay').innerText = `$${(totals.prodDeuda + totals.beatsDeuda).toLocaleString()}`;
-        }
-
-        window.deleteData = async (coll, id) => {
-            if(confirm('¿Eliminar?')) await deleteDoc(doc(db, coll, id));
-        };
-
-        window.toggleSaleCreditFields = () => {
-            const isCredit = document.getElementById('salePayType').value === 'Crédito';
-            document.getElementById('saleAbonoContainer').classList.toggle('hidden', !isCredit);
-        };
+        onSnapshot(collection(db, "beats"), (snapshot) => {
+            document.getElementById('catalogCount').innerText = `${snapshot.size} Activos`;
+        });
 
         window.onload = () => lucide.createIcons();
     </script>
