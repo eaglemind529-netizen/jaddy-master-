@@ -25,11 +25,30 @@
         .progress-bar-fill { background: linear-gradient(90deg, #f97316, #fb923c); height: 100%; transition: width 0.5s ease; }
         .tab-btn { padding-bottom: 8px; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; transition: all 0.3s; border-bottom: 2px solid transparent; color: #525252; }
         .tab-btn.active { color: #f97316; border-color: #f97316; }
+        
+        /* Modal simple para abono rápido */
+        .modal-overlay { background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); }
     </style>
 </head>
 <body>
 
     <div id="app">
+        <!-- Modal de Abono Rápido -->
+        <div id="quickAbonoModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 modal-overlay">
+            <div class="glass-card p-8 rounded-[2.5rem] border-orange-500/30 border w-full max-w-sm">
+                <h2 class="text-xl font-black uppercase italic tracking-tighter text-orange-500 mb-2">Registrar Pago</h2>
+                <p id="abonoTargetName" class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-6"></p>
+                <input type="hidden" id="quickAbonoId">
+                <div class="space-y-4">
+                    <input type="number" id="quickAbonoAmount" placeholder="Monto a abonar $" autofocus>
+                    <div class="flex gap-3">
+                        <button onclick="closeQuickAbono()" class="flex-1 py-3 bg-white/5 text-white rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/5">CANCELAR</button>
+                        <button onclick="saveQuickAbono()" class="flex-1 py-3 bg-orange-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest">CONFIRMAR</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <nav class="p-5 border-b border-white/5 bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <div class="flex items-center gap-4">
@@ -62,7 +81,10 @@
                             <input type="number" id="limit" placeholder="Límite de Pistas" required>
                             <input type="number" id="totalCost" placeholder="Costo Mensual $" required>
                         </div>
-                        <input type="number" id="initialDeposit" placeholder="Abono Inicial $">
+                        <div class="relative">
+                             <input type="number" id="initialDeposit" placeholder="Abono Actual $">
+                             <p class="text-[7px] text-neutral-500 uppercase mt-1 px-2">Este valor se suma al total abonado</p>
+                        </div>
                     </div>
                     <div class="space-y-4">
                         <input type="text" id="pdfLink" placeholder="Link PDF del Contrato">
@@ -84,7 +106,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, addDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, addDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -106,7 +128,7 @@
             await setDoc(monitorRef, { name, revenue: parseFloat(revenue) || 0, updatedAt: serverTimestamp() }, { merge: true });
         };
 
-        // RENDERIZADO DE LA LISTA (Aquí es donde aparecen tus artistas)
+        // RENDERIZADO DE LA LISTA
         onSnapshot(query(artistasRef, orderBy('updatedAt', 'desc')), (snap) => {
             const list = document.getElementById('artistsList');
             list.innerHTML = '';
@@ -122,15 +144,18 @@
                 const perc = ((a.descargas || 0) / (a.limit || 1)) * 100;
                 
                 const card = document.createElement('div');
-                card.className = "glass-card p-6 rounded-[2rem] border border-white/5";
+                card.className = "glass-card p-6 rounded-[2rem] border border-white/5 relative group";
                 card.innerHTML = `
                     <div class="flex justify-between mb-4">
                         <div class="w-10 h-10 bg-white/5 rounded-xl flex items-center justify-center border border-white/10">
                             <i data-lucide="user" class="text-white w-5 h-5"></i>
                         </div>
                         <div class="flex gap-2">
-                             <button onclick="window.renovarCiclo('${id}', '${a.artistName}', ${a.descargas}, ${a.abono}, ${a.costo})" class="text-neutral-500 hover:text-orange-500"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
-                             <button onclick="window.eliminarArtista('${id}')" class="text-neutral-500 hover:text-red-500"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                             <button onclick="window.openQuickAbono('${id}', '${a.artistName}')" class="w-8 h-8 flex items-center justify-center bg-orange-600/10 text-orange-500 rounded-lg hover:bg-orange-600 hover:text-white transition-all" title="Abono Rápido">
+                                <i data-lucide="plus" class="w-4 h-4"></i>
+                             </button>
+                             <button onclick="window.editarArtista('${id}')" class="text-neutral-500 hover:text-blue-500 p-2"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
+                             <button onclick="window.eliminarArtista('${id}')" class="text-neutral-500 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                         </div>
                     </div>
                     <h3 class="font-black uppercase italic text-lg text-white tracking-tighter">${a.artistName}</h3>
@@ -159,11 +184,77 @@
             lucide.createIcons();
         });
 
-        // Funciones Globales para los botones
-        window.closeForm = () => document.getElementById('artistForm').classList.add('hidden');
+        // Funciones Globales
+        window.closeForm = () => {
+            document.getElementById('artistForm').classList.add('hidden');
+            document.getElementById('editId').value = '';
+            document.getElementById('formTitle').innerText = 'Registro de Artista';
+        };
+
         window.openCreateForm = () => {
             document.getElementById('saveArtistForm').reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('formTitle').innerText = 'Registro de Artista';
             document.getElementById('artistForm').classList.remove('hidden');
+        };
+
+        // LÓGICA DE ABONO RÁPIDO
+        window.openQuickAbono = (id, name) => {
+            document.getElementById('quickAbonoId').value = id;
+            document.getElementById('abonoTargetName').innerText = name;
+            document.getElementById('quickAbonoAmount').value = '';
+            document.getElementById('quickAbonoModal').classList.remove('hidden');
+        };
+
+        window.closeQuickAbono = () => {
+            document.getElementById('quickAbonoModal').classList.add('hidden');
+        };
+
+        window.saveQuickAbono = async () => {
+            const id = document.getElementById('quickAbonoId').value;
+            const amount = parseFloat(document.getElementById('quickAbonoAmount').value) || 0;
+            
+            if (amount <= 0) {
+                closeQuickAbono();
+                return;
+            }
+
+            const docRef = doc(db, 'artistasVIP', id);
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+                const currentData = docSnap.data();
+                const newAbono = (currentData.abono || 0) + amount;
+                
+                await updateDoc(docRef, {
+                    abono: newAbono,
+                    updatedAt: serverTimestamp()
+                });
+                
+                await syncToMonitor(id, currentData.artistName, newAbono);
+            }
+            
+            closeQuickAbono();
+        };
+
+        window.editarArtista = async (id) => {
+            const docRef = doc(db, 'artistasVIP', id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('editId').value = id;
+                document.getElementById('artistName').value = data.artistName;
+                document.getElementById('plan').value = data.plan;
+                document.getElementById('limit').value = data.limit;
+                document.getElementById('totalCost').value = data.costo;
+                document.getElementById('initialDeposit').value = 0; 
+                document.getElementById('pdfLink').value = data.pdfLink || '';
+                document.getElementById('contractText').value = data.contractText || '';
+                
+                document.getElementById('formTitle').innerText = 'Editar Artista / Añadir Abono';
+                document.getElementById('artistForm').classList.remove('hidden');
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            }
         };
 
         window.eliminarArtista = async (id) => {
@@ -175,17 +266,34 @@
 
         document.getElementById('saveArtistForm').onsubmit = async (e) => {
             e.preventDefault();
-            const data = {
+            const editId = document.getElementById('editId').value;
+            const nuevoAbonoInput = parseFloat(document.getElementById('initialDeposit').value) || 0;
+            
+            const dataBase = {
                 artistName: document.getElementById('artistName').value,
                 plan: document.getElementById('plan').value,
                 limit: parseInt(document.getElementById('limit').value),
                 costo: parseFloat(document.getElementById('totalCost').value),
-                abono: parseFloat(document.getElementById('initialDeposit').value) || 0,
-                descargas: 0,
+                pdfLink: document.getElementById('pdfLink').value,
+                contractText: document.getElementById('contractText').value,
                 updatedAt: serverTimestamp()
             };
-            const newDoc = await addDoc(artistasRef, data);
-            await syncToMonitor(newDoc.id, data.artistName, data.abono);
+
+            if (editId) {
+                const docRef = doc(db, 'artistasVIP', editId);
+                const docSnap = await getDoc(docRef);
+                const abonoActual = docSnap.data().abono || 0;
+                
+                dataBase.abono = abonoActual + nuevoAbonoInput;
+                await updateDoc(docRef, dataBase);
+                await syncToMonitor(editId, dataBase.artistName, dataBase.abono);
+            } else {
+                dataBase.abono = nuevoAbonoInput;
+                dataBase.descargas = 0;
+                const newDoc = await addDoc(artistasRef, dataBase);
+                await syncToMonitor(newDoc.id, dataBase.artistName, dataBase.abono);
+            }
+            
             closeForm();
         };
 
