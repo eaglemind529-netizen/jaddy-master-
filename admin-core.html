@@ -60,6 +60,68 @@
         .sale-item:hover .delete-btn {
             opacity: 1;
         }
+
+        /* Modals Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-content {
+            background: #0f0f0f;
+            border: 1px solid #222;
+            width: 100%;
+            max-width: 450px;
+            border-radius: 32px;
+            padding: 32px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        input, select {
+            background: #000 !important;
+            border: 1px solid #222 !important;
+            color: white !important;
+            border-radius: 12px !important;
+            padding: 12px !important;
+            outline: none !important;
+            font-size: 13px !important;
+        }
+        input:focus { border-color: var(--orange-primary) !important; }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #666;
+            cursor: pointer;
+        }
+        .checkbox-container input {
+            width: 18px !important;
+            height: 18px !important;
+            padding: 0 !important;
+            cursor: pointer;
+        }
+
+        /* Conditional Sections */
+        .credit-fields {
+            display: none;
+            border-top: 1px solid #1a1a1a;
+            padding-top: 1rem;
+            margin-top: 0.5rem;
+        }
+
         @media (max-width: 768px) {
             .delete-btn { opacity: 1; }
         }
@@ -83,10 +145,10 @@
                 
                 <div class="h-6 w-[1px] bg-white/10 mx-2"></div>
 
-                <button class="bg-white/5 border border-white/10 px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-white/10 transition-all">
+                <button onclick="openModal('vipModal')" class="bg-white/5 border border-white/10 px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider hover:bg-white/10 transition-all">
                     + Producción
                 </button>
-                <button class="btn-primary px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 hover:brightness-110 transition-all">
+                <button onclick="openModal('saleModal')" class="btn-primary px-5 py-2.5 rounded-xl text-[11px] font-bold uppercase tracking-wider flex items-center gap-2 hover:brightness-110 transition-all">
                     <i data-lucide="shopping-cart" class="w-4 h-4"></i> Venta Beat
                 </button>
             </div>
@@ -100,7 +162,7 @@
                     <i data-lucide="wallet" class="text-emerald-500 w-7 h-7"></i>
                 </div>
                 <div>
-                    <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] mb-1">Recaudado (Proyectos)</p>
+                    <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-[0.2em] mb-1">Recaudado (Efectivo Real)</p>
                     <h2 id="totalRevenueDisplay" class="text-3xl font-black text-emerald-400 italic leading-none">$0.00</h2>
                 </div>
             </div>
@@ -149,9 +211,88 @@
         </div>
     </main>
 
+    <!-- SALE MODAL -->
+    <div id="saleModal" class="modal-overlay">
+        <div class="modal-content animate-in zoom-in duration-200 custom-scrollbar">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-black uppercase italic tracking-tighter">Nueva <span class="text-orange-500">Venta</span></h2>
+                <button onclick="closeModal('saleModal')" class="text-neutral-500 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <form id="saleForm" class="space-y-4">
+                <input type="text" id="beatName" placeholder="Nombre del Beat" class="w-full" required>
+                <input type="text" id="customerName" placeholder="Nombre del Cliente" class="w-full" required>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="saleAmount" placeholder="Monto Total ($)" class="w-full" required>
+                    <select id="licenseType" class="w-full">
+                        <option value="MP3">MP3</option>
+                        <option value="WAV">WAV</option>
+                        <option value="STEMS">STEMS</option>
+                        <option value="EXCLUSIVA">EXCLUSIVA</option>
+                    </select>
+                </div>
+                
+                <div class="flex flex-col gap-3 py-2">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="hasRecording"> Incluye Grabación
+                    </label>
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="isCreditSale" onchange="toggleCreditFields('saleCreditFields', this.checked)"> Venta a Crédito
+                    </label>
+                </div>
+
+                <div id="saleCreditFields" class="credit-fields space-y-4">
+                    <input type="text" id="songNameSale" placeholder="Nombre del Tema / Canción" class="w-full">
+                    <div class="grid grid-cols-2 gap-3">
+                        <input type="number" id="amountPaidSale" placeholder="Abonó ($)" class="w-full">
+                        <div class="flex flex-col">
+                            <label class="text-[8px] uppercase font-bold text-neutral-500 mb-1 ml-1">Fecha Compromiso Pago</label>
+                            <input type="date" id="dueDateSale" class="w-full">
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full btn-primary py-3 rounded-xl font-bold uppercase italic text-xs tracking-widest mt-2">Registrar Venta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- VIP MODAL -->
+    <div id="vipModal" class="modal-overlay">
+        <div class="modal-content animate-in zoom-in duration-200 custom-scrollbar">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-black uppercase italic tracking-tighter">Nueva <span class="text-orange-500">Producción</span></h2>
+                <button onclick="closeModal('vipModal')" class="text-neutral-500 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <form id="vipForm" class="space-y-4">
+                <input type="text" id="artistName" placeholder="Nombre del Artista" class="w-full" required>
+                <input type="text" id="projectName" placeholder="Nombre del Proyecto / EP" class="w-full" required>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="number" id="totalProject" placeholder="Total Proyecto ($)" class="w-full" required>
+                    <input type="number" id="abonoInitial" placeholder="Abono Inicial ($)" class="w-full" required>
+                </div>
+                
+                <div class="py-2">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="isCreditVip" onchange="toggleCreditFields('vipCreditFields', this.checked)"> Trabajo a Crédito
+                    </label>
+                </div>
+
+                <div id="vipCreditFields" class="credit-fields space-y-4">
+                    <input type="text" id="songNameVip" placeholder="Nombre del Tema Específico" class="w-full">
+                    <div class="flex flex-col">
+                        <label class="text-[8px] uppercase font-bold text-neutral-500 mb-1 ml-1">Fecha Límite para Liquidar</label>
+                        <input type="date" id="dueDateVip" class="w-full">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full btn-primary py-3 rounded-xl font-bold uppercase italic text-xs tracking-widest mt-2">Crear Proyecto</button>
+            </form>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -166,29 +307,97 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Función global para eliminar ventas
+        // UI Functions
+        window.openModal = (id) => document.getElementById(id).style.display = 'flex';
+        window.closeModal = (id) => {
+            document.getElementById(id).style.display = 'none';
+            const creditFields = document.querySelectorAll('.credit-fields');
+            creditFields.forEach(f => f.style.display = 'none');
+        };
+
+        window.toggleCreditFields = (containerId, isChecked) => {
+            document.getElementById(containerId).style.display = isChecked ? 'block' : 'none';
+        };
+
+        // Sale Registration
+        document.getElementById('saleForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const isCredit = document.getElementById('isCreditSale').checked;
+            const data = {
+                beatName: document.getElementById('beatName').value,
+                customerName: document.getElementById('customerName').value,
+                amount: parseFloat(document.getElementById('saleAmount').value),
+                licenseType: document.getElementById('licenseType').value,
+                hasRecording: document.getElementById('hasRecording').checked,
+                isCredit: isCredit,
+                createdAt: serverTimestamp()
+            };
+
+            if (isCredit) {
+                data.songName = document.getElementById('songNameSale').value;
+                data.amountPaid = parseFloat(document.getElementById('amountPaidSale').value || 0);
+                data.dueDate = document.getElementById('dueDateSale').value;
+            }
+
+            await addDoc(collection(db, "ventas"), data);
+            e.target.reset();
+            closeModal('saleModal');
+        };
+
+        // VIP Registration
+        document.getElementById('vipForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const isCredit = document.getElementById('isCreditVip').checked;
+            const data = {
+                artistName: document.getElementById('artistName').value,
+                projectName: document.getElementById('projectName').value,
+                totalProyecto: parseFloat(document.getElementById('totalProject').value),
+                abono: parseFloat(document.getElementById('abonoInitial').value),
+                isCredit: isCredit,
+                updatedAt: serverTimestamp()
+            };
+
+            if (isCredit) {
+                data.songName = document.getElementById('songNameVip').value;
+                data.dueDate = document.getElementById('dueDateVip').value;
+            }
+
+            await addDoc(collection(db, "artistasVIP"), data);
+            e.target.reset();
+            closeModal('vipModal');
+        };
+
+        // Delete Sale
         window.deleteSale = async (id) => {
-            if(confirm("¿Estás seguro de eliminar esta venta? Esta acción no se puede deshacer.")) {
-                try {
-                    await deleteDoc(doc(db, "ventas", id));
-                } catch (error) {
-                    console.error("Error al eliminar:", error);
-                }
+            if(confirm("¿Seguro que deseas borrar este registro?")) {
+                await deleteDoc(doc(db, "ventas", id));
             }
         };
 
-        // Monitoreo VIP
+        // Global Balances and Monitors
+        let totalRevenueVentas = 0;
+        let totalRevenueVIP = 0;
+
+        function updateGlobalRecaudado() {
+            const total = totalRevenueVentas + totalRevenueVIP;
+            document.getElementById('totalRevenueDisplay').innerText = `$${total.toLocaleString()}`;
+        }
+
+        // VIP Monitor
         onSnapshot(collection(db, "artistasVIP"), (snapshot) => {
             const grid = document.getElementById('monitorGrid');
             grid.innerHTML = '';
             let totalDeuda = 0;
+            let currentVIPRevenue = 0;
 
             snapshot.forEach((doc) => {
                 const data = doc.data();
                 const abono = parseFloat(data.abono || 0);
                 const total = parseFloat(data.totalProyecto || 0);
                 const deuda = total - abono;
+                
                 totalDeuda += deuda;
+                currentVIPRevenue += abono; // Solo sumamos el abono al recaudado
 
                 const card = document.createElement('div');
                 card.className = 'glass-panel p-5 border-l-4 ' + (deuda > 0 ? 'border-red-500' : 'border-emerald-500');
@@ -196,35 +405,40 @@
                     <div class="flex justify-between items-start mb-3">
                         <div>
                             <h4 class="font-bold text-sm uppercase italic">${data.artistName}</h4>
-                            <p class="text-[9px] text-neutral-500 uppercase font-bold">${data.projectName || 'Sin nombre'}</p>
+                            <p class="text-[9px] text-neutral-500 uppercase font-bold">${data.projectName} ${data.isCredit ? '• <span class="text-orange-500">CRÉDITO</span>' : ''}</p>
+                            ${data.songName ? `<p class="text-[8px] text-orange-500 font-bold mt-1 uppercase italic">${data.songName}</p>` : ''}
                         </div>
                         <span class="status-badge ${deuda > 0 ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}">
-                            ${deuda > 0 ? 'Deuda: $' + deuda : 'Pagado'}
+                            $${deuda > 0 ? deuda : 'LISTO'}
                         </span>
                     </div>
-                    <div class="flex justify-between items-end">
-                        <p class="text-[10px] font-black text-neutral-400">$${abono} / $${total}</p>
-                        <div class="w-24 h-1.5 bg-white/5 rounded-full overflow-hidden">
-                            <div class="h-full bg-orange-500" style="width: ${(abono/total)*100}%"></div>
-                        </div>
+                    ${data.dueDate ? `<p class="text-[8px] text-neutral-600 mb-2 font-bold uppercase tracking-widest">Pagar antes de: ${data.dueDate}</p>` : ''}
+                    <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
+                        <div class="h-full bg-orange-500 transition-all duration-500" style="width: ${(abono/total)*100}%"></div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
+            totalRevenueVIP = currentVIPRevenue;
             document.getElementById('totalDebtDisplay').innerText = `$${totalDeuda.toLocaleString()}`;
+            updateGlobalRecaudado();
         });
 
-        // Ventas de Beats con opción de eliminar
+        // Sales Monitor
         const qVentas = query(collection(db, "ventas"), orderBy("createdAt", "desc"));
         onSnapshot(qVentas, (snapshot) => {
             const log = document.getElementById('activityLog');
             log.innerHTML = '';
-            let totalVentas = 0;
+            let currentVentasRevenue = 0;
 
             snapshot.forEach((documento) => {
                 const data = documento.data();
-                const id = documento.id;
-                totalVentas += parseFloat(data.amount || 0);
+                
+                // Lógica de cálculo solicitada:
+                // Si es crédito: sumamos amountPaid (lo abonado)
+                // Si NO es crédito: sumamos amount (el total al contado)
+                const realCashIn = data.isCredit ? (parseFloat(data.amountPaid) || 0) : (parseFloat(data.amount) || 0);
+                currentVentasRevenue += realCashIn;
 
                 const item = document.createElement('div');
                 item.className = 'sale-item p-4 flex justify-between items-center hover:bg-white/[0.02] transition-colors group';
@@ -235,25 +449,32 @@
                         </div>
                         <div>
                             <p class="text-[11px] font-bold uppercase italic">${data.beatName}</p>
-                            <p class="text-[9px] text-neutral-500 uppercase">${data.customerName || 'Cliente'}</p>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <p class="text-[9px] text-neutral-500 uppercase">${data.customerName}</p>
+                                ${data.hasRecording ? '<span class="text-[8px] bg-orange-500/20 text-orange-500 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter italic">+ Grabación</span>' : ''}
+                                ${data.isCredit ? '<span class="text-[8px] bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter italic">Crédito</span>' : ''}
+                                ${data.songName ? `<span class="text-[8px] text-neutral-600 font-bold italic">Tema: ${data.songName}</span>` : ''}
+                            </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-6">
                         <div class="text-right">
-                            <p class="text-emerald-400 font-black italic">+$${data.amount}</p>
-                            <p class="text-[8px] text-neutral-600 uppercase font-bold">${data.licenseType || 'MP3'}</p>
+                            <p class="text-emerald-400 font-black italic">+$${realCashIn}</p>
+                            <p class="text-[8px] text-neutral-600 uppercase font-bold">${data.licenseType}${data.isCredit ? ' (ABONO)' : ''}</p>
                         </div>
-                        <button onclick="deleteSale('${id}')" class="delete-btn p-2 hover:bg-red-500/20 rounded-lg text-red-500 transition-all">
+                        <button onclick="deleteSale('${documento.id}')" class="delete-btn p-2 hover:bg-red-500/20 rounded-lg text-red-500 transition-all">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
                         </button>
                     </div>
                 `;
                 log.appendChild(item);
             });
-            document.getElementById('totalRevenueDisplay').innerText = `$${totalVentas.toLocaleString()}`;
+            totalRevenueVentas = currentVentasRevenue;
+            updateGlobalRecaudado();
             lucide.createIcons();
         });
 
+        // Catalog Count
         onSnapshot(collection(db, "beats"), (snapshot) => {
             document.getElementById('catalogCount').innerText = `${snapshot.size} Activos`;
         });
