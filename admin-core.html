@@ -53,11 +53,11 @@
             text-transform: uppercase;
         }
 
-        .delete-btn {
+        .delete-btn, .edit-btn {
             opacity: 0;
             transition: opacity 0.2s;
         }
-        .sale-item:hover .delete-btn {
+        .sale-item:hover .delete-btn, .vip-card:hover .delete-btn, .vip-card:hover .edit-btn {
             opacity: 1;
         }
 
@@ -84,6 +84,11 @@
             padding: 32px;
             max-height: 90vh;
             overflow-y: auto;
+        }
+
+        /* Full Screen VIP Modal */
+        .modal-vip-full {
+            max-width: 900px !important;
         }
 
         input, select {
@@ -114,7 +119,6 @@
             cursor: pointer;
         }
 
-        /* Conditional Sections */
         .credit-fields {
             display: none;
             border-top: 1px solid #1a1a1a;
@@ -123,7 +127,24 @@
         }
 
         @media (max-width: 768px) {
-            .delete-btn { opacity: 1; }
+            .delete-btn, .edit-btn { opacity: 1; }
+        }
+
+        .tab-btn {
+            padding: 8px 16px;
+            font-size: 10px;
+            font-weight: 800;
+            text-transform: uppercase;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+        .tab-btn.active {
+            background: var(--orange-primary);
+            color: white;
+        }
+        .tab-btn:not(.active) {
+            background: #1a1a1a;
+            color: #666;
         }
     </style>
 </head>
@@ -193,14 +214,25 @@
 
     <main class="w-full px-6 py-4">
         <div class="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div class="lg:col-span-4 space-y-6">
-                <h3 class="text-[10px] font-black uppercase text-neutral-500 tracking-[0.3em] px-2 flex items-center gap-2">
-                    <i data-lucide="users" class="w-4 h-4"></i> Producción VIP
-                </h3>
-                <div id="monitorGrid" class="space-y-3 max-h-[600px] overflow-y-auto custom-scrollbar pr-2"></div>
+            <!-- Left Sidebar Navigation -->
+            <div class="lg:col-span-3 space-y-4">
+                <h3 class="text-[10px] font-black uppercase text-neutral-500 tracking-[0.3em] px-2">Gestión</h3>
+                <button onclick="openModal('vipListModal')" class="w-full glass-panel p-6 flex items-center justify-between group hover:border-orange-500/50 transition-all cursor-pointer">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all">
+                            <i data-lucide="users" class="w-6 h-6"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-xs font-black uppercase italic">Producciones VIP</p>
+                            <p id="vipCountSidebar" class="text-[9px] text-neutral-500 font-bold uppercase">0 Proyectos</p>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="text-neutral-700 w-5 h-5"></i>
+                </button>
             </div>
 
-            <div class="lg:col-span-8 space-y-6">
+            <!-- Right Activity Log -->
+            <div class="lg:col-span-9 space-y-6">
                 <h3 class="text-[10px] font-black uppercase text-neutral-500 tracking-[0.3em] px-2 flex items-center gap-2">
                     <i data-lucide="history" class="w-4 h-4"></i> Ventas de Beats Recientes
                 </h3>
@@ -210,6 +242,28 @@
             </div>
         </div>
     </main>
+
+    <!-- LISTA COMPLETA VIP MODAL -->
+    <div id="vipListModal" class="modal-overlay">
+        <div class="modal-content modal-vip-full animate-in zoom-in duration-200 custom-scrollbar">
+            <div class="flex justify-between items-start mb-8">
+                <div>
+                    <h2 class="text-2xl font-black uppercase italic tracking-tighter">Panel de <span class="text-orange-500">Producciones VIP</span></h2>
+                    <p class="text-[10px] text-neutral-500 font-bold uppercase tracking-widest mt-1">Gestión centralizada de artistas y proyectos</p>
+                </div>
+                <button onclick="closeModal('vipListModal')" class="bg-white/5 p-2 rounded-xl text-neutral-500 hover:text-white transition-all"><i data-lucide="x"></i></button>
+            </div>
+
+            <div class="flex gap-2 mb-6 p-1 bg-white/5 rounded-2xl w-fit">
+                <button id="tabPendientes" onclick="switchVipTab('pendientes')" class="tab-btn active">Pendientes de Pago</button>
+                <button id="tabPagados" onclick="switchVipTab('pagados')" class="tab-btn">Finalizados / Pagados</button>
+            </div>
+
+            <div id="monitorGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Se llena dinámicamente -->
+            </div>
+        </div>
+    </div>
 
     <!-- SALE MODAL -->
     <div id="saleModal" class="modal-overlay">
@@ -256,7 +310,7 @@
         </div>
     </div>
 
-    <!-- VIP MODAL -->
+    <!-- VIP MODAL (CREAR) -->
     <div id="vipModal" class="modal-overlay">
         <div class="modal-content animate-in zoom-in duration-200 custom-scrollbar">
             <div class="flex justify-between items-center mb-6">
@@ -290,9 +344,72 @@
         </div>
     </div>
 
+    <!-- EDIT VIP MODAL -->
+    <div id="editVipModal" class="modal-overlay">
+        <div class="modal-content animate-in zoom-in duration-200 custom-scrollbar">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-black uppercase italic tracking-tighter">Editar <span class="text-orange-500">Producción</span></h2>
+                <button onclick="closeModal('editVipModal')" class="text-neutral-500 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <form id="editVipForm" class="space-y-4">
+                <input type="hidden" id="editVipRefId">
+                <div class="flex flex-col">
+                    <label class="text-[8px] uppercase font-bold text-neutral-500 mb-1 ml-1">Artista</label>
+                    <input type="text" id="editArtistName" class="w-full" required>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[8px] uppercase font-bold text-neutral-500 mb-1 ml-1">Proyecto / EP</label>
+                    <input type="text" id="editProjectName" class="w-full" required>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="flex flex-col">
+                        <label class="text-[8px] uppercase font-bold text-neutral-500 mb-1 ml-1">Total Proyecto ($)</label>
+                        <input type="number" id="editTotalProject" class="w-full" required>
+                    </div>
+                    <div class="flex flex-col">
+                        <label class="text-[8px] uppercase font-bold text-neutral-500 mb-1 ml-1">Abono Acumulado ($)</label>
+                        <input type="number" id="editAbonoTotal" class="w-full" required>
+                    </div>
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[8px] uppercase font-bold text-neutral-500 mb-1 ml-1">Tema Específico</label>
+                    <input type="text" id="editSongNameVip" class="w-full">
+                </div>
+                <div class="flex flex-col">
+                    <label class="text-[8px] uppercase font-bold text-neutral-500 mb-1 ml-1">Fecha Límite</label>
+                    <input type="date" id="editDueDateVip" class="w-full">
+                </div>
+                <div class="py-2">
+                    <label class="checkbox-container">
+                        <input type="checkbox" id="editIsCreditVip"> Trabajo a Crédito
+                    </label>
+                </div>
+                <button type="submit" class="w-full btn-primary py-3 rounded-xl font-bold uppercase italic text-xs tracking-widest mt-2">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ABONO QUICK MODAL -->
+    <div id="abonoVipModal" class="modal-overlay">
+        <div class="modal-content animate-in zoom-in duration-200">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-black uppercase italic tracking-tighter">Registrar <span class="text-emerald-500">Abono</span></h2>
+                <button onclick="closeModal('abonoVipModal')" class="text-neutral-500 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <form id="abonoForm" class="space-y-4">
+                <input type="hidden" id="quickAbonoVipId">
+                <div>
+                    <p id="quickAbonoArtist" class="text-xs font-bold text-neutral-400 uppercase mb-2"></p>
+                    <input type="number" id="newAbonoAmount" placeholder="Monto del Nuevo Abono ($)" class="w-full" required>
+                </div>
+                <button type="submit" class="w-full btn-primary py-3 rounded-xl font-bold uppercase italic text-xs tracking-widest mt-2">Sumar Abono</button>
+            </form>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, doc, deleteDoc, addDoc, updateDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -307,16 +424,84 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // State
+        let currentVipTab = 'pendientes';
+        let vipData = [];
+
         // UI Functions
-        window.openModal = (id) => document.getElementById(id).style.display = 'flex';
+        window.openModal = (id) => {
+            const modal = document.getElementById(id);
+            if (modal) modal.style.display = 'flex';
+        };
         window.closeModal = (id) => {
-            document.getElementById(id).style.display = 'none';
-            const creditFields = document.querySelectorAll('.credit-fields');
-            creditFields.forEach(f => f.style.display = 'none');
+            const modal = document.getElementById(id);
+            if (modal) modal.style.display = 'none';
         };
 
         window.toggleCreditFields = (containerId, isChecked) => {
             document.getElementById(containerId).style.display = isChecked ? 'block' : 'none';
+        };
+
+        window.switchVipTab = (tab) => {
+            currentVipTab = tab;
+            document.getElementById('tabPendientes').classList.toggle('active', tab === 'pendientes');
+            document.getElementById('tabPagados').classList.toggle('active', tab === 'pagados');
+            renderVipGrid();
+        };
+
+        // Quick Abono Logic
+        window.openAbonoModal = (id, artist) => {
+            document.getElementById('quickAbonoVipId').value = id;
+            document.getElementById('quickAbonoArtist').innerText = `Artista: ${artist}`;
+            openModal('abonoVipModal');
+        };
+
+        document.getElementById('abonoForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('quickAbonoVipId').value;
+            const newAbono = parseFloat(document.getElementById('newAbonoAmount').value);
+            if (isNaN(newAbono) || newAbono <= 0) return;
+            const docRef = doc(db, "artistasVIP", id);
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) {
+                const currentAbono = parseFloat(docSnap.data().abono || 0);
+                await updateDoc(docRef, { abono: currentAbono + newAbono, updatedAt: serverTimestamp() });
+            }
+            e.target.reset();
+            closeModal('abonoVipModal');
+        };
+
+        // Edit VIP Info
+        window.openEditVipModal = async (id) => {
+            const docSnap = await getDoc(doc(db, "artistasVIP", id));
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                document.getElementById('editVipRefId').value = id;
+                document.getElementById('editArtistName').value = data.artistName || "";
+                document.getElementById('editProjectName').value = data.projectName || "";
+                document.getElementById('editTotalProject').value = data.totalProyecto || 0;
+                document.getElementById('editAbonoTotal').value = data.abono || 0;
+                document.getElementById('editSongNameVip').value = data.songName || "";
+                document.getElementById('editDueDateVip').value = data.dueDate || "";
+                document.getElementById('editIsCreditVip').checked = data.isCredit || false;
+                openModal('editVipModal');
+            }
+        };
+
+        document.getElementById('editVipForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editVipRefId').value;
+            await updateDoc(doc(db, "artistasVIP", id), {
+                artistName: document.getElementById('editArtistName').value,
+                projectName: document.getElementById('editProjectName').value,
+                totalProyecto: parseFloat(document.getElementById('editTotalProject').value),
+                abono: parseFloat(document.getElementById('editAbonoTotal').value),
+                songName: document.getElementById('editSongNameVip').value,
+                dueDate: document.getElementById('editDueDateVip').value,
+                isCredit: document.getElementById('editIsCreditVip').checked,
+                updatedAt: serverTimestamp()
+            });
+            closeModal('editVipModal');
         };
 
         // Sale Registration
@@ -332,19 +517,17 @@
                 isCredit: isCredit,
                 createdAt: serverTimestamp()
             };
-
             if (isCredit) {
                 data.songName = document.getElementById('songNameSale').value;
                 data.amountPaid = parseFloat(document.getElementById('amountPaidSale').value || 0);
                 data.dueDate = document.getElementById('dueDateSale').value;
             }
-
             await addDoc(collection(db, "ventas"), data);
             e.target.reset();
             closeModal('saleModal');
         };
 
-        // VIP Registration
+        // VIP Creation
         document.getElementById('vipForm').onsubmit = async (e) => {
             e.preventDefault();
             const isCredit = document.getElementById('isCreditVip').checked;
@@ -356,25 +539,19 @@
                 isCredit: isCredit,
                 updatedAt: serverTimestamp()
             };
-
             if (isCredit) {
                 data.songName = document.getElementById('songNameVip').value;
                 data.dueDate = document.getElementById('dueDateVip').value;
             }
-
             await addDoc(collection(db, "artistasVIP"), data);
             e.target.reset();
             closeModal('vipModal');
         };
 
-        // Delete Sale
-        window.deleteSale = async (id) => {
-            if(confirm("¿Seguro que deseas borrar este registro?")) {
-                await deleteDoc(doc(db, "ventas", id));
-            }
-        };
+        window.deleteSale = async (id) => { if(confirm("¿Seguro que deseas borrar este registro de venta?")) await deleteDoc(doc(db, "ventas", id)); };
+        window.deleteVip = async (id) => { if(confirm("¿Deseas eliminar este proyecto VIP?")) await deleteDoc(doc(db, "artistasVIP", id)); };
 
-        // Global Balances and Monitors
+        // Global Balances
         let totalRevenueVentas = 0;
         let totalRevenueVIP = 0;
 
@@ -383,63 +560,95 @@
             document.getElementById('totalRevenueDisplay').innerText = `$${total.toLocaleString()}`;
         }
 
-        // VIP Monitor
-        onSnapshot(collection(db, "artistasVIP"), (snapshot) => {
+        // Render Functions
+        function renderVipGrid() {
             const grid = document.getElementById('monitorGrid');
             grid.innerHTML = '';
-            let totalDeuda = 0;
-            let currentVIPRevenue = 0;
+            
+            const filtered = vipData.filter(item => {
+                const deuda = item.totalProyecto - item.abono;
+                return currentVipTab === 'pendientes' ? deuda > 0 : deuda <= 0;
+            });
 
-            snapshot.forEach((doc) => {
-                const data = doc.data();
-                const abono = parseFloat(data.abono || 0);
-                const total = parseFloat(data.totalProyecto || 0);
-                const deuda = total - abono;
-                
-                totalDeuda += deuda;
-                currentVIPRevenue += abono; // Solo sumamos el abono al recaudado
+            if(filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-12 text-center text-neutral-600 font-bold uppercase text-xs italic">No hay proyectos en esta categoría</div>`;
+                return;
+            }
 
+            filtered.forEach(item => {
+                const deuda = item.totalProyecto - item.abono;
                 const card = document.createElement('div');
-                card.className = 'glass-panel p-5 border-l-4 ' + (deuda > 0 ? 'border-red-500' : 'border-emerald-500');
+                card.className = 'vip-card glass-panel p-5 border-l-4 group ' + (deuda > 0 ? 'border-red-500' : 'border-emerald-500');
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-3">
-                        <div>
-                            <h4 class="font-bold text-sm uppercase italic">${data.artistName}</h4>
-                            <p class="text-[9px] text-neutral-500 uppercase font-bold">${data.projectName} ${data.isCredit ? '• <span class="text-orange-500">CRÉDITO</span>' : ''}</p>
-                            ${data.songName ? `<p class="text-[8px] text-orange-500 font-bold mt-1 uppercase italic">${data.songName}</p>` : ''}
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h4 class="font-bold text-sm uppercase italic">${item.artistName}</h4>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="openEditVipModal('${item.id}')" class="edit-btn opacity-0 group-hover:opacity-100 text-orange-500 transition-opacity p-1">
+                                        <i data-lucide="edit-3" class="w-3 h-3"></i>
+                                    </button>
+                                    <button onclick="deleteVip('${item.id}')" class="delete-btn opacity-0 group-hover:opacity-100 text-red-500 transition-opacity p-1">
+                                        <i data-lucide="trash-2" class="w-3 h-3"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <p class="text-[9px] text-neutral-500 uppercase font-bold">${item.projectName} ${item.isCredit ? '• <span class="text-orange-500">CRÉDITO</span>' : ''}</p>
+                            ${item.songName ? `<p class="text-[8px] text-orange-500 font-bold mt-1 uppercase italic">${item.songName}</p>` : ''}
                         </div>
-                        <span class="status-badge ${deuda > 0 ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}">
-                            $${deuda > 0 ? deuda : 'LISTO'}
-                        </span>
+                        <div class="flex flex-col items-end gap-2">
+                            <span class="status-badge ${deuda > 0 ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}">
+                                $${deuda > 0 ? deuda : 'PAGADO'}
+                            </span>
+                            ${deuda > 0 ? `
+                                <button onclick="openAbonoModal('${item.id}', '${item.artistName}')" class="w-8 h-8 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center hover:bg-emerald-500/20 transition-all text-emerald-500">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                </button>
+                            ` : ''}
+                        </div>
                     </div>
-                    ${data.dueDate ? `<p class="text-[8px] text-neutral-600 mb-2 font-bold uppercase tracking-widest">Pagar antes de: ${data.dueDate}</p>` : ''}
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="text-[8px] text-neutral-600 font-bold uppercase tracking-widest">${item.dueDate ? 'Cierre: ' + item.dueDate : ''}</p>
+                        <p class="text-[8px] text-neutral-500 font-bold">$${item.abono} / $${item.totalProyecto}</p>
+                    </div>
                     <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
-                        <div class="h-full bg-orange-500 transition-all duration-500" style="width: ${(abono/total)*100}%"></div>
+                        <div class="h-full bg-orange-500 transition-all duration-500" style="width: ${(item.abono/item.totalProyecto)*100}%"></div>
                     </div>
                 `;
                 grid.appendChild(card);
             });
+            lucide.createIcons();
+        }
+
+        // Snapshots
+        onSnapshot(collection(db, "artistasVIP"), (snapshot) => {
+            vipData = [];
+            let totalDeuda = 0;
+            let currentVIPRevenue = 0;
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                const abono = parseFloat(data.abono || 0);
+                const total = parseFloat(data.totalProyecto || 0);
+                const deuda = total - abono;
+                vipData.push({ id: doc.id, ...data, abono, totalProyecto: total });
+                totalDeuda += (deuda > 0 ? deuda : 0);
+                currentVIPRevenue += abono;
+            });
             totalRevenueVIP = currentVIPRevenue;
             document.getElementById('totalDebtDisplay').innerText = `$${totalDeuda.toLocaleString()}`;
+            document.getElementById('vipCountSidebar').innerText = `${vipData.length} Proyectos`;
             updateGlobalRecaudado();
+            renderVipGrid();
         });
 
-        // Sales Monitor
-        const qVentas = query(collection(db, "ventas"), orderBy("createdAt", "desc"));
-        onSnapshot(qVentas, (snapshot) => {
+        onSnapshot(query(collection(db, "ventas"), orderBy("createdAt", "desc")), (snapshot) => {
             const log = document.getElementById('activityLog');
             log.innerHTML = '';
             let currentVentasRevenue = 0;
-
             snapshot.forEach((documento) => {
                 const data = documento.data();
-                
-                // Lógica de cálculo solicitada:
-                // Si es crédito: sumamos amountPaid (lo abonado)
-                // Si NO es crédito: sumamos amount (el total al contado)
                 const realCashIn = data.isCredit ? (parseFloat(data.amountPaid) || 0) : (parseFloat(data.amount) || 0);
                 currentVentasRevenue += realCashIn;
-
                 const item = document.createElement('div');
                 item.className = 'sale-item p-4 flex justify-between items-center hover:bg-white/[0.02] transition-colors group';
                 item.innerHTML = `
@@ -453,14 +662,13 @@
                                 <p class="text-[9px] text-neutral-500 uppercase">${data.customerName}</p>
                                 ${data.hasRecording ? '<span class="text-[8px] bg-orange-500/20 text-orange-500 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter italic">+ Grabación</span>' : ''}
                                 ${data.isCredit ? '<span class="text-[8px] bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded font-black uppercase tracking-tighter italic">Crédito</span>' : ''}
-                                ${data.songName ? `<span class="text-[8px] text-neutral-600 font-bold italic">Tema: ${data.songName}</span>` : ''}
                             </div>
                         </div>
                     </div>
                     <div class="flex items-center gap-6">
                         <div class="text-right">
                             <p class="text-emerald-400 font-black italic">+$${realCashIn}</p>
-                            <p class="text-[8px] text-neutral-600 uppercase font-bold">${data.licenseType}${data.isCredit ? ' (ABONO)' : ''}</p>
+                            <p class="text-[8px] text-neutral-600 uppercase font-bold">${data.licenseType}</p>
                         </div>
                         <button onclick="deleteSale('${documento.id}')" class="delete-btn p-2 hover:bg-red-500/20 rounded-lg text-red-500 transition-all">
                             <i data-lucide="trash-2" class="w-4 h-4"></i>
@@ -474,7 +682,6 @@
             lucide.createIcons();
         });
 
-        // Catalog Count
         onSnapshot(collection(db, "beats"), (snapshot) => {
             document.getElementById('catalogCount').innerText = `${snapshot.size} Activos`;
         });
