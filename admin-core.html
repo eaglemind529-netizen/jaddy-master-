@@ -217,6 +217,8 @@
             <!-- Left Sidebar Navigation -->
             <div class="lg:col-span-3 space-y-4">
                 <h3 class="text-[10px] font-black uppercase text-neutral-500 tracking-[0.3em] px-2">Gestión</h3>
+                
+                <!-- Botón Producción VIP -->
                 <button onclick="openModal('vipListModal')" class="w-full glass-panel p-6 flex items-center justify-between group hover:border-orange-500/50 transition-all cursor-pointer">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center group-hover:bg-orange-500 group-hover:text-white transition-all">
@@ -225,6 +227,20 @@
                         <div class="text-left">
                             <p class="text-xs font-black uppercase italic">Producciones VIP</p>
                             <p id="vipCountSidebar" class="text-[9px] text-neutral-500 font-bold uppercase">0 Proyectos</p>
+                        </div>
+                    </div>
+                    <i data-lucide="chevron-right" class="text-neutral-700 w-5 h-5"></i>
+                </button>
+
+                <!-- NUEVO BOTÓN: Ventas Productos -->
+                <button onclick="console.log('Abrir Ventas Productos')" class="w-full glass-panel p-6 flex items-center justify-between group hover:border-blue-500/50 transition-all cursor-pointer">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-all text-blue-500">
+                            <i data-lucide="package" class="w-6 h-6"></i>
+                        </div>
+                        <div class="text-left">
+                            <p class="text-xs font-black uppercase italic">Ventas Productos</p>
+                            <p class="text-[9px] text-neutral-500 font-bold uppercase">Gestión Inventario</p>
                         </div>
                     </div>
                     <i data-lucide="chevron-right" class="text-neutral-700 w-5 h-5"></i>
@@ -439,7 +455,8 @@
         };
 
         window.toggleCreditFields = (containerId, isChecked) => {
-            document.getElementById(containerId).style.display = isChecked ? 'block' : 'none';
+            const el = document.getElementById(containerId);
+            if(el) el.style.display = isChecked ? 'block' : 'none';
         };
 
         window.switchVipTab = (tab) => {
@@ -563,6 +580,7 @@
         // Render Functions
         function renderVipGrid() {
             const grid = document.getElementById('monitorGrid');
+            if(!grid) return;
             grid.innerHTML = '';
             
             const filtered = vipData.filter(item => {
@@ -643,6 +661,7 @@
 
         onSnapshot(query(collection(db, "ventas"), orderBy("createdAt", "desc")), (snapshot) => {
             const log = document.getElementById('activityLog');
+            if(!log) return;
             log.innerHTML = '';
             let currentVentasRevenue = 0;
             snapshot.forEach((documento) => {
@@ -683,7 +702,8 @@
         });
 
         onSnapshot(collection(db, "beats"), (snapshot) => {
-            document.getElementById('catalogCount').innerText = `${snapshot.size} Activos`;
+            const countEl = document.getElementById('catalogCount');
+            if(countEl) countEl.innerText = `${snapshot.size} Activos`;
         });
 
         window.onload = () => lucide.createIcons();
