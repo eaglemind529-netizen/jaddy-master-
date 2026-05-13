@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jaddy Studio Pro - Master Marketplace</title>
+    <title>Jaddy Studio Pro - Marketplace & Editor Master</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -22,7 +22,7 @@
             0%, 100% { transform: scaleY(0.5); opacity: 0.3; }
             50% { transform: scaleY(1.3); opacity: 1; }
         }
-        input, textarea {
+        input, textarea, select {
             background: rgba(255, 255, 255, 0.03) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 12px !important;
@@ -31,7 +31,7 @@
             color: white;
             width: 100%;
         }
-        input:focus { border-color: #ea580c !important; }
+        input:focus, select:focus { border-color: #ea580c !important; }
         .glass-player {
             background: rgba(10, 10, 10, 0.98);
             backdrop-filter: blur(20px);
@@ -45,83 +45,135 @@
             from { opacity: 0; transform: translateY(-10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .tab-active {
+            background: #ea580c;
+            color: white;
+        }
+        .btn-edit { color: #3b82f6; }
+        .btn-delete { color: #ef4444; }
+        /* Ajuste para evitar desbordamiento en móviles */
+        .beat-card {
+            word-wrap: break-word;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
 
     <div id="app">
-        <nav class="p-5 border-b border-white/5 bg-black/80 backdrop-blur-2xl sticky top-0 z-[60]">
+        <nav class="p-4 border-b border-white/5 bg-black/80 backdrop-blur-2xl sticky top-0 z-[60]">
             <div class="max-w-5xl mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-700 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-600/20">
-                        <i data-lucide="disc" class="text-black animate-spin-slow w-7 h-7"></i>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+                        <i data-lucide="disc" class="text-black animate-spin-slow w-6 h-6"></i>
                     </div>
                     <div>
-                        <h1 class="text-xl font-black italic tracking-tighter leading-none text-white uppercase">Jaddy Studio</h1>
-                        <p class="text-[8px] font-bold text-orange-500 uppercase tracking-[0.2em] mt-1">Marketplace & Studio</p>
+                        <h1 class="text-lg font-black italic tracking-tighter leading-none text-white uppercase text-orange-500">Jaddy Studio</h1>
+                        <p class="text-[7px] font-bold text-white uppercase tracking-[0.2em] mt-1">Admin Panel</p>
                     </div>
                 </div>
-                <button onclick="window.toggleForm()" class="flex items-center gap-2 px-5 py-2.5 bg-orange-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-orange-600/20 transition-all active:scale-95">
-                    <i data-lucide="plus" class="w-4 h-4"></i> AGREGAR BEAT
+                <button id="mainToggleBtn" onclick="window.prepareCreate()" class="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> AGREGAR
                 </button>
             </div>
         </nav>
 
-        <main class="max-w-5xl mx-auto p-6 pt-10 pb-40">
-            <section id="beatForm" class="hidden bg-gradient-to-b from-[#111] to-[#070707] border border-white/5 p-8 rounded-[2.5rem] shadow-2xl mb-12">
-                <h2 class="text-xl font-black uppercase italic tracking-tighter mb-8 flex items-center gap-3 text-white">
-                    <i data-lucide="plus" class="text-orange-500"></i> Configuración de Venta
-                </h2>
-                <form id="uploadForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    <div class="space-y-4">
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase px-1">Información Básica</label>
-                        <input type="text" id="title" placeholder="Nombre del Beat" required>
-                        <input type="text" id="url" placeholder="Link Directo / Dropbox / YouTube" required>
-                        <input type="text" id="producer" placeholder="Productor">
+        <main class="max-w-5xl mx-auto p-4 pt-8 pb-40">
+            <!-- Formulario Adaptado -->
+            <section id="beatForm" class="hidden bg-[#0a0a0a] border border-white/5 p-6 rounded-3xl shadow-2xl mb-8">
+                <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-3">
+                    <h2 id="formTitle" class="text-sm font-black uppercase italic tracking-tighter text-white flex items-center gap-2">
+                        <i data-lucide="settings" class="text-orange-500 w-4 h-4"></i> Configurar
+                    </h2>
+                    <button onclick="window.toggleForm()" class="text-neutral-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                
+                <form id="uploadForm" class="space-y-6">
+                    <input type="hidden" id="editingId">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <div class="space-y-3">
+                            <label class="text-[9px] font-bold text-orange-500 uppercase px-1">Track & Media</label>
+                            <input type="text" id="title" placeholder="Nombre de la Pista" required>
+                            <input type="text" id="url" placeholder="Link Dropbox / YouTube" required>
+                            <input type="text" id="producer" placeholder="Productor">
+                        </div>
+                        <div class="space-y-3">
+                            <label class="text-[9px] font-bold text-orange-500 uppercase px-1">Venta</label>
+                            <select id="saleType" onchange="window.toggleCreditFields()">
+                                <option value="ambos">Contado y Crédito</option>
+                                <option value="contado">Solo Contado</option>
+                                <option value="credito">Solo Crédito</option>
+                            </select>
+                            <input type="number" id="price" step="0.01" placeholder="Precio Total ($)" required>
+                            <input type="text" id="whatsapp" placeholder="WhatsApp (Ej: 1809...)" required>
+                        </div>
+                        <div id="creditConfig" class="space-y-3 bg-white/5 p-4 rounded-2xl border border-white/5">
+                            <label class="text-[9px] font-bold text-yellow-500 uppercase px-1">Crédito</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="downPayment" placeholder="Inicial $">
+                                <input type="number" id="installmentsCount" placeholder="Cuotas">
+                            </div>
+                            <input type="number" id="paymentDays" placeholder="Días entre pagos (Ej: 7)">
+                        </div>
                     </div>
-                    <div class="space-y-4">
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase px-1">Contacto y Pago</label>
-                        <input type="text" id="whatsapp" placeholder="WhatsApp (Ej: +58412...)" required>
-                        <input type="email" id="email" placeholder="Correo (Opcional)">
-                        <input type="text" id="paymentMethod" value="PayPal / Zelle">
-                    </div>
-                    <div class="space-y-4">
-                        <label class="text-[10px] font-bold text-neutral-500 uppercase px-1">Precio y Detalles</label>
-                        <input type="number" id="price" value="29.99">
-                        <textarea id="description" class="h-28" placeholder="Descripción breve del beat..."></textarea>
-                    </div>
-                    <button type="submit" id="submitBtn" class="md:col-span-2 lg:col-span-3 bg-gradient-to-r from-orange-600 to-red-600 py-4 rounded-xl font-black uppercase tracking-widest flex items-center justify-center gap-3 hover:brightness-110 transition-all">
-                        <i data-lucide="zap" class="w-5 h-5"></i> PUBLICAR BEAT
+                    <button type="submit" id="submitBtn" class="w-full bg-orange-600 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-orange-500 transition-all">
+                        <i data-lucide="zap" class="w-4 h-4"></i> <span id="submitBtnText">PUBLICAR</span>
                     </button>
                 </form>
             </section>
 
-            <div class="flex items-center justify-between mb-8">
-                <h2 class="text-2xl font-black italic uppercase tracking-tighter text-white">Catálogo de Beats</h2>
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-black italic uppercase tracking-tighter text-white">Catálogo Jaddy INC</h2>
             </div>
-            <div id="beatsList" class="grid gap-3">
-                <div class="p-10 text-center text-neutral-600 font-bold uppercase tracking-widest">Cargando tracks...</div>
-            </div>
+            
+            <!-- Lista con scroll horizontal prevenido y mejor organización móvil -->
+            <div id="beatsList" class="flex flex-col gap-3"></div>
         </main>
 
-        <div id="masterPlayer" class="hidden fixed bottom-0 left-0 right-0 z-[100] glass-player p-6 shadow-2xl">
+        <!-- Player Responsivo -->
+        <div id="masterPlayer" class="hidden fixed bottom-0 left-0 right-0 z-[100] glass-player p-4 md:p-6 shadow-2xl border-t border-orange-600/20">
             <div class="max-w-4xl mx-auto">
-                <div class="flex justify-between items-center mb-4">
-                    <div class="flex items-center gap-3">
-                        <i data-lucide="activity" class="text-orange-500 animate-pulse w-5 h-5"></i>
-                        <h4 id="playTitle" class="font-black uppercase text-white tracking-widest text-sm"></h4>
+                <div class="flex justify-between items-center mb-3">
+                    <div class="flex items-center gap-2 text-white overflow-hidden">
+                        <i data-lucide="music" class="text-orange-500 w-4 h-4 shrink-0"></i>
+                        <h4 id="playTitle" class="font-black uppercase tracking-widest text-[10px] truncate"></h4>
                     </div>
                     <button onclick="window.closePlayer()" class="text-neutral-500 hover:text-white transition-all">
-                        <i data-lucide="x" class="w-6 h-6"></i>
+                        <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
-                <div class="grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
-                    <div class="md:col-span-8" id="mediaContainer"></div>
-                    <div class="md:col-span-4 bg-white/[0.03] p-6 rounded-3xl border border-white/5 flex flex-col justify-between min-h-[150px]">
-                        <p id="playPrice" class="text-3xl font-black italic text-white mb-4"></p>
-                        <button id="buyBtn" class="w-full bg-orange-600 text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-orange-500 transition-all shadow-lg shadow-orange-600/20">
-                            <i data-lucide="shopping-cart" class="w-4 h-4"></i> COMPRAR AHORA
-                        </button>
+                <div class="flex flex-col md:grid md:grid-cols-12 gap-4 items-center">
+                    <div class="w-full md:col-span-7" id="mediaContainer"></div>
+                    
+                    <div class="w-full md:col-span-5 flex flex-col gap-2">
+                        <div id="pricingTabs" class="flex bg-white/5 p-1 rounded-lg">
+                            <button onclick="window.switchPricing('contado')" id="tabContado" class="flex-1 py-1.5 text-[9px] font-bold uppercase rounded-md transition-all tab-active">Contado</button>
+                            <button onclick="window.switchPricing('credito')" id="tabCredito" class="flex-1 py-1.5 text-[9px] font-bold uppercase rounded-md transition-all">Crédito</button>
+                        </div>
+
+                        <div class="bg-white/[0.03] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
+                            <div id="contadoInfo" class="text-center">
+                                <p id="playPrice" class="text-3xl font-black italic text-white leading-none"></p>
+                                <p class="text-[8px] text-neutral-500 font-bold uppercase tracking-widest mt-1">Pago único</p>
+                            </div>
+                            <div id="creditoInfo" class="hidden">
+                                <div class="grid grid-cols-2 gap-2 mb-2">
+                                    <div class="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
+                                        <p class="text-[7px] text-orange-500 font-bold uppercase">Inicial</p>
+                                        <p id="creditoInicial" class="text-lg font-black text-white"></p>
+                                    </div>
+                                    <div class="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
+                                        <p id="cuotasLabel" class="text-[7px] text-orange-500 font-bold uppercase"></p>
+                                        <p id="creditoCuota" class="text-lg font-black text-white"></p>
+                                    </div>
+                                </div>
+                                <p id="frecuenciaText" class="text-[7px] text-neutral-400 uppercase font-bold text-center"></p>
+                            </div>
+
+                            <button id="buyBtn" class="w-full mt-3 bg-orange-600 text-white py-3 rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-orange-500 transition-all">
+                                <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i> <span id="btnText">ADQUIRIR</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -131,9 +183,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, onSnapshot, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-        // TUS CREDENCIALES INTEGRADAS
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
             authDomain: "jaddy-estudio.firebaseapp.com",
@@ -149,6 +200,8 @@
         const db = getFirestore(app);
 
         let beats = [];
+        let currentBeat = null;
+        let selectedMode = 'contado';
 
         window.toggleForm = () => {
             const form = document.getElementById('beatForm');
@@ -156,31 +209,75 @@
             form.classList.toggle('active');
         };
 
-        window.closePlayer = () => {
-            document.getElementById('masterPlayer').classList.add('hidden');
-            document.getElementById('mediaContainer').innerHTML = '';
+        window.prepareCreate = () => {
+            document.getElementById('uploadForm').reset();
+            document.getElementById('editingId').value = '';
+            document.getElementById('formTitle').innerHTML = '<i data-lucide="plus" class="text-orange-500 w-4 h-4"></i> Nuevo Beat';
+            document.getElementById('submitBtnText').innerText = 'PUBLICAR BEAT';
+            document.getElementById('submitBtn').className = "w-full bg-orange-600 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all";
+            window.toggleForm();
+            lucide.createIcons();
+        };
+
+        window.prepareEdit = (id) => {
+            const beat = beats.find(b => b.id === id);
+            if (!beat) return;
+            document.getElementById('editingId').value = id;
+            document.getElementById('title').value = beat.title;
+            document.getElementById('url').value = beat.originalUrl || beat.url;
+            document.getElementById('producer').value = beat.producer;
+            document.getElementById('saleType').value = beat.saleType;
+            document.getElementById('price').value = beat.price;
+            document.getElementById('whatsapp').value = beat.whatsapp;
+            document.getElementById('downPayment').value = beat.downPayment;
+            document.getElementById('installmentsCount').value = beat.installmentsCount;
+            document.getElementById('paymentDays').value = beat.paymentDays;
+
+            document.getElementById('formTitle').innerHTML = '<i data-lucide="edit" class="text-blue-500 w-4 h-4"></i> Editar';
+            document.getElementById('submitBtnText').innerText = 'ACTUALIZAR';
+            document.getElementById('submitBtn').className = "w-full bg-blue-600 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all";
+            
+            if(!document.getElementById('beatForm').classList.contains('active')) window.toggleForm();
+            window.toggleCreditFields();
+            lucide.createIcons();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        };
+
+        window.toggleCreditFields = () => {
+            const saleType = document.getElementById('saleType').value;
+            const config = document.getElementById('creditConfig');
+            config.style.opacity = (saleType === 'contado') ? '0.3' : '1';
+            config.style.pointerEvents = (saleType === 'contado') ? 'none' : 'auto';
         };
 
         window.renderBeats = () => {
             const list = document.getElementById('beatsList');
             if (beats.length === 0) {
-                list.innerHTML = `<div class="p-10 text-center text-neutral-600 font-bold uppercase text-xs">Aún no hay pistas. ¡Sube la primera!</div>`;
+                list.innerHTML = `<div class="p-10 text-center text-neutral-600 font-bold uppercase text-[9px]">Sin pistas aún.</div>`;
                 return;
             }
             list.innerHTML = beats.map(beat => `
-                <div class="group p-4 rounded-3xl border border-white/5 bg-[#0a0a0a] flex items-center gap-5 hover:border-orange-500/30 transition-all">
-                    <button onclick="window.playBeat('${beat.id}')" class="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-orange-600 hover:text-white transition-all">
-                        <i data-lucide="play" class="w-6 h-6 ml-1"></i>
+                <div class="beat-card p-3 rounded-2xl border border-white/5 bg-[#0a0a0a] flex items-center gap-3 md:gap-5 hover:border-orange-500/30 transition-all">
+                    <button onclick="window.playBeat('${beat.id}')" class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-orange-600 hover:text-white transition-all shrink-0">
+                        <i data-lucide="play" class="w-5 h-5 ml-0.5"></i>
                     </button>
                     <div class="flex-1 min-w-0">
-                        <h3 class="font-black uppercase text-white truncate">${beat.title}</h3>
-                        <p class="text-[9px] text-neutral-500 font-bold uppercase mt-1 tracking-widest">PROD. ${beat.producer || 'JADDY'}</p>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <h3 class="font-black uppercase text-white truncate text-xs">${beat.title}</h3>
+                            ${beat.saleType !== 'contado' ? '<span class="text-[6px] bg-green-500/10 text-green-500 px-1 py-0.5 rounded font-black uppercase">Crédito</span>' : ''}
+                        </div>
+                        <p class="text-[8px] text-neutral-500 font-bold uppercase tracking-tighter mt-0.5 truncate">Prod. ${beat.producer}</p>
                     </div>
-                    <div class="text-right flex items-center gap-4">
-                        <p class="text-xl font-black italic text-white">$${beat.price}</p>
-                        <button onclick="window.deleteBeat('${beat.id}')" class="p-2 text-neutral-800 hover:text-red-500 transition-all">
-                            <i data-lucide="trash-2" class="w-5 h-5"></i>
-                        </button>
+                    <div class="flex flex-col md:flex-row items-end md:items-center gap-2 shrink-0">
+                        <p class="text-sm font-black italic text-white">$${beat.price}</p>
+                        <div class="flex gap-1">
+                            <button onclick="window.prepareEdit('${beat.id}')" class="p-2 btn-edit bg-white/5 hover:bg-blue-500/10 rounded-lg transition-all">
+                                <i data-lucide="edit-3" class="w-4 h-4"></i>
+                            </button>
+                            <button onclick="window.deleteBeat('${beat.id}')" class="p-2 btn-delete bg-white/5 hover:bg-red-500/10 rounded-lg transition-all">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             `).join('');
@@ -190,97 +287,110 @@
         window.playBeat = (id) => {
             const beat = beats.find(b => b.id === id);
             if (!beat) return;
-            const player = document.getElementById('masterPlayer');
-            const media = document.getElementById('mediaContainer');
-            player.classList.remove('hidden');
+            currentBeat = beat;
+            document.getElementById('masterPlayer').classList.remove('hidden');
             document.getElementById('playTitle').innerText = beat.title;
             document.getElementById('playPrice').innerText = `$${beat.price}`;
-            
+
+            const tabs = document.getElementById('pricingTabs');
+            if(beat.saleType === 'contado') { tabs.classList.add('hidden'); window.switchPricing('contado'); }
+            else if(beat.saleType === 'credito') { tabs.classList.add('hidden'); window.switchPricing('credito'); }
+            else { tabs.classList.remove('hidden'); window.switchPricing('contado'); }
+
+            if(beat.saleType !== 'contado') {
+                const count = parseInt(beat.installmentsCount) || 1;
+                const inicial = parseFloat(beat.downPayment) || 0;
+                const cuotaMonto = ((beat.price - inicial) / count).toFixed(2);
+                document.getElementById('creditoInicial').innerText = `$${inicial}`;
+                document.getElementById('cuotasLabel').innerText = `${count} Cuotas`;
+                document.getElementById('creditoCuota').innerText = `$${cuotaMonto}`;
+                document.getElementById('frecuenciaText').innerText = `Cada ${beat.paymentDays} días`;
+            }
+
+            const media = document.getElementById('mediaContainer');
             if(beat.type === 'youtube') {
-                media.innerHTML = `<div class="aspect-video rounded-3xl overflow-hidden border border-white/10"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/${beat.src}?autoplay=1" frameborder="0" allowfullscreen></iframe></div>`;
+                media.innerHTML = `<div class="aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-lg"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/${beat.url}?autoplay=1" frameborder="0" allowfullscreen></iframe></div>`;
             } else {
-                media.innerHTML = `<div class="bg-black/40 p-6 rounded-3xl border border-white/5 shadow-inner">
-                    <div class="flex justify-center items-end gap-1.5 h-14 mb-4">
-                        ${Array(25).fill('<div class="w-1.5 bg-orange-600 rounded-full animate-audio-bar"></div>').join('')}
+                media.innerHTML = `<div class="bg-black/20 p-4 rounded-2xl border border-white/5">
+                    <div class="flex justify-center items-end gap-1 h-8 mb-4">
+                        ${Array(20).fill('<div class="w-1 bg-orange-600 rounded-full animate-audio-bar"></div>').join('')}
                     </div>
-                    <audio src="${beat.url}" controls autoplay class="w-full h-10 invert brightness-125"></audio>
+                    <audio src="${beat.url}" controls autoplay class="w-full h-8 invert brightness-150"></audio>
                 </div>`;
             }
 
             document.getElementById('buyBtn').onclick = () => {
-                const text = `¡Hola! Me interesa comprar el beat "${beat.title}" por $${beat.price}.`;
-                window.open(`https://wa.me/${beat.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
+                let msg = selectedMode === 'contado' 
+                    ? `¡Hola Jaddy! Me interesa "${beat.title}" al contado por $${beat.price}.`
+                    : `¡Hola! Quiero el plan de crédito para "${beat.title}". Pago hoy $${beat.downPayment} de inicial.`;
+                window.open(`https://wa.me/${beat.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
             };
             lucide.createIcons();
         };
 
-        // FUNCIÓN DE ELIMINAR ACTUALIZADA (Sin clave, solo confirmación)
+        window.switchPricing = (mode) => {
+            selectedMode = mode;
+            document.getElementById('tabContado').classList.toggle('tab-active', mode === 'contado');
+            document.getElementById('tabCredito').classList.toggle('tab-active', mode === 'credito');
+            document.getElementById('contadoInfo').classList.toggle('hidden', mode === 'credito');
+            document.getElementById('creditoInfo').classList.toggle('hidden', mode === 'contado');
+            document.getElementById('btnText').innerText = mode === 'contado' ? 'PAGAR AL CONTADO' : 'INICIAR CRÉDITO';
+        };
+
+        window.closePlayer = () => { document.getElementById('masterPlayer').classList.add('hidden'); document.getElementById('mediaContainer').innerHTML = ''; };
+
         window.deleteBeat = async (id) => {
-            if (confirm("¿Estás seguro de que deseas eliminar este beat del catálogo? Esta acción no se puede deshacer.")) {
-                try {
-                    await deleteDoc(doc(db, 'beats', id));
-                } catch(e) {
-                    console.error("Error al borrar:", e);
-                    alert("Error al intentar eliminar el beat.");
-                }
-            }
+            if (confirm("¿Borrar pista definitivamente?")) await deleteDoc(doc(db, 'beats', id));
         };
 
-        const processLink = (url) => {
-            if (!url) return { type: 'direct', src: '' };
-            if (url.includes('dropbox.com')) return { type: 'dropbox', src: url.replace(/dl=0|dl=1/, 'raw=1') };
-            if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                const id = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|&v=))([^#&?]{11})/)?.[1];
-                return { type: 'youtube', src: id };
-            }
-            return { type: 'direct', src: url };
-        };
-
-        signInAnonymously(auth).catch(err => console.error("Error de conexión:", err));
-
+        signInAnonymously(auth);
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                const q = collection(db, 'beats');
-                onSnapshot(q, (snap) => {
+                onSnapshot(collection(db, 'beats'), (snap) => {
                     beats = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                     window.renderBeats();
-                }, (err) => {
-                    console.error("Error de base de datos:", err);
                 });
             }
         });
 
         document.getElementById('uploadForm').onsubmit = async (e) => {
             e.preventDefault();
+            const editingId = document.getElementById('editingId').value;
             const btn = document.getElementById('submitBtn');
             btn.disabled = true;
-            btn.innerHTML = '<span>PUBLICANDO...</span>';
-            
-            const media = processLink(document.getElementById('url').value);
-            
+            btn.innerText = 'PROCESANDO...';
+
+            const rawUrl = document.getElementById('url').value;
+            let type = 'direct';
+            let src = rawUrl;
+            if (src.includes('dropbox.com')) src = src.replace(/dl=0|dl=1/, 'raw=1');
+            if (src.includes('youtube.com') || src.includes('youtu.be')) {
+                type = 'youtube';
+                src = src.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|&v=))([^#&?]{11})/)?.[1];
+            }
+
+            const data = {
+                title: document.getElementById('title').value,
+                url: src,
+                originalUrl: rawUrl,
+                type: type,
+                price: parseFloat(document.getElementById('price').value),
+                saleType: document.getElementById('saleType').value,
+                downPayment: document.getElementById('downPayment').value || 0,
+                installmentsCount: document.getElementById('installmentsCount').value || 0,
+                paymentDays: document.getElementById('paymentDays').value || 0,
+                whatsapp: document.getElementById('whatsapp').value,
+                producer: document.getElementById('producer').value || 'Jaddy INC',
+                updatedAt: serverTimestamp()
+            };
+
             try {
-                await addDoc(collection(db, 'beats'), {
-                    title: document.getElementById('title').value,
-                    url: media.src,
-                    type: media.type,
-                    price: document.getElementById('price').value,
-                    whatsapp: document.getElementById('whatsapp').value,
-                    producer: document.getElementById('producer').value || 'Jaddy Studio',
-                    email: document.getElementById('email').value || '',
-                    paymentMethod: document.getElementById('paymentMethod').value || 'Varios',
-                    description: document.getElementById('description').value || '',
-                    createdAt: serverTimestamp()
-                });
+                if (editingId) { await updateDoc(doc(db, 'beats', editingId), data); } 
+                else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'beats'), data); }
                 e.target.reset();
                 window.toggleForm();
-            } catch (err) {
-                console.error("Error al guardar:", err);
-                alert("Error: " + err.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = '<i data-lucide="zap" class="w-5 h-5"></i> PUBLICAR BEAT';
-                lucide.createIcons();
-            }
+            } catch (err) { alert(err.message); } 
+            finally { btn.disabled = false; lucide.createIcons(); }
         };
 
         lucide.createIcons();
