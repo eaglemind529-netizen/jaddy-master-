@@ -17,11 +17,7 @@
         }
         .animate-spin-slow { animation: spin 10s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        .animate-audio-bar { animation: audio-bar 1s ease-in-out infinite; }
-        @keyframes audio-bar {
-            0%, 100% { transform: scaleY(0.5); opacity: 0.3; }
-            50% { transform: scaleY(1.3); opacity: 1; }
-        }
+        
         input, textarea, select {
             background: rgba(255, 255, 255, 0.03) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
@@ -32,30 +28,33 @@
             width: 100%;
         }
         input:focus, select:focus { border-color: #ea580c !important; }
-        .glass-player {
-            background: rgba(10, 10, 10, 0.98);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
         }
-        #beatForm.active {
-            display: block !important;
-            animation: fadeIn 0.3s ease-out;
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 20px;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
         }
-        .tab-active {
-            background: #ea580c;
-            color: white;
-        }
-        .btn-edit { color: #3b82f6; }
-        .btn-delete { color: #ef4444; }
-        /* Ajuste para evitar desbordamiento en móviles */
-        .beat-card {
-            word-wrap: break-word;
-            overflow: hidden;
-        }
+        input:checked + .slider { background-color: #ea580c; }
+        input:checked + .slider:before { transform: translateX(20px); }
     </style>
 </head>
 <body>
@@ -72,117 +71,88 @@
                         <p class="text-[7px] font-bold text-white uppercase tracking-[0.2em] mt-1">Admin Panel</p>
                     </div>
                 </div>
-                <button id="mainToggleBtn" onclick="window.prepareCreate()" class="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
-                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> AGREGAR
+                <button onclick="window.prepareCreate()" class="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> AGREGAR BEAT
                 </button>
             </div>
         </nav>
 
         <main class="max-w-5xl mx-auto p-4 pt-8 pb-40">
-            <!-- Formulario Adaptado -->
             <section id="beatForm" class="hidden bg-[#0a0a0a] border border-white/5 p-6 rounded-3xl shadow-2xl mb-8">
                 <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-3">
                     <h2 id="formTitle" class="text-sm font-black uppercase italic tracking-tighter text-white flex items-center gap-2">
-                        <i data-lucide="settings" class="text-orange-500 w-4 h-4"></i> Configurar
+                        <i data-lucide="settings" class="text-orange-500 w-4 h-4"></i> Configurar Pista
                     </h2>
                     <button onclick="window.toggleForm()" class="text-neutral-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
                 </div>
                 
                 <form id="uploadForm" class="space-y-6">
                     <input type="hidden" id="editingId">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <div class="space-y-3">
-                            <label class="text-[9px] font-bold text-orange-500 uppercase px-1">Track & Media</label>
-                            <input type="text" id="title" placeholder="Nombre de la Pista" required>
-                            <input type="text" id="url" placeholder="Link Dropbox / YouTube" required>
-                            <input type="text" id="producer" placeholder="Productor">
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="space-y-4">
+                            <label class="text-[9px] font-bold text-orange-500 uppercase px-1">Información Básica</label>
+                            <input type="text" id="title" placeholder="Título del Beat" required>
+                            <input type="text" id="producer" placeholder="Productor (Jaddy Studio)">
+                            <select id="category">
+                                <option value="licencia">Venta por Licencia</option>
+                                <option value="exclusiva">Venta Exclusiva</option>
+                            </select>
+                            <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
+                                <span class="text-[10px] font-bold uppercase text-neutral-400">Pista Visible en Web</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="isVisible" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
                         </div>
-                        <div class="space-y-3">
-                            <label class="text-[9px] font-bold text-orange-500 uppercase px-1">Venta</label>
+
+                        <div class="space-y-4">
+                            <label class="text-[9px] font-bold text-orange-500 uppercase px-1">Media & Enlaces</label>
+                            <input type="text" id="url" placeholder="Link Dropbox / YouTube" required>
+                            <input type="text" id="genre" placeholder="Género (Trap, Reggaeton...)">
+                            <input type="text" id="whatsapp" placeholder="WhatsApp (Ej: 1829...)" required>
+                            <textarea id="description" placeholder="Descripción de la pista (detalles, términos, etc.)" rows="2" class="text-sm"></textarea>
+                        </div>
+
+                        <div class="space-y-4">
+                            <label class="text-[9px] font-bold text-orange-500 uppercase px-1">Precios y Crédito</label>
                             <select id="saleType" onchange="window.toggleCreditFields()">
-                                <option value="ambos">Contado y Crédito</option>
                                 <option value="contado">Solo Contado</option>
                                 <option value="credito">Solo Crédito</option>
+                                <option value="ambos">Ambos (Contado y Crédito)</option>
                             </select>
                             <input type="number" id="price" step="0.01" placeholder="Precio Total ($)" required>
-                            <input type="text" id="whatsapp" placeholder="WhatsApp (Ej: 1809...)" required>
-                        </div>
-                        <div id="creditConfig" class="space-y-3 bg-white/5 p-4 rounded-2xl border border-white/5">
-                            <label class="text-[9px] font-bold text-yellow-500 uppercase px-1">Crédito</label>
-                            <div class="grid grid-cols-2 gap-2">
-                                <input type="number" id="downPayment" placeholder="Inicial $">
-                                <input type="number" id="installmentsCount" placeholder="Cuotas">
+                            
+                            <div id="creditConfig" class="space-y-3 bg-orange-600/5 p-4 rounded-2xl border border-orange-500/10">
+                                <label class="text-[9px] font-bold text-orange-500 uppercase">Ajustes de Crédito</label>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <input type="number" id="downPayment" placeholder="Inicial $">
+                                    <input type="number" id="installmentsCount" placeholder="N° Cuotas">
+                                </div>
+                                <input type="number" id="paymentDays" placeholder="Frecuencia (Ej: 7 días)">
                             </div>
-                            <input type="number" id="paymentDays" placeholder="Días entre pagos (Ej: 7)">
                         </div>
                     </div>
-                    <button type="submit" id="submitBtn" class="w-full bg-orange-600 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-orange-500 transition-all">
-                        <i data-lucide="zap" class="w-4 h-4"></i> <span id="submitBtnText">PUBLICAR</span>
+
+                    <button type="submit" id="submitBtn" class="w-full bg-orange-600 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-orange-500 transition-all shadow-lg shadow-orange-900/20">
+                        <i data-lucide="zap" class="w-4 h-4"></i> <span id="submitBtnText">GUARDAR CAMBIOS</span>
                     </button>
                 </form>
             </section>
 
-            <div class="flex items-center justify-between mb-6">
-                <h2 class="text-xl font-black italic uppercase tracking-tighter text-white">Catálogo Jaddy INC</h2>
+            <div class="flex items-center justify-between mb-8">
+                <h2 class="text-xl font-black italic uppercase tracking-tighter text-white">Gestión de Catálogo</h2>
+                <span id="counter" class="text-[10px] font-bold bg-white/5 px-3 py-1 rounded-full text-neutral-400">--- PISTAS</span>
             </div>
             
-            <!-- Lista con scroll horizontal prevenido y mejor organización móvil -->
             <div id="beatsList" class="flex flex-col gap-3"></div>
         </main>
-
-        <!-- Player Responsivo -->
-        <div id="masterPlayer" class="hidden fixed bottom-0 left-0 right-0 z-[100] glass-player p-4 md:p-6 shadow-2xl border-t border-orange-600/20">
-            <div class="max-w-4xl mx-auto">
-                <div class="flex justify-between items-center mb-3">
-                    <div class="flex items-center gap-2 text-white overflow-hidden">
-                        <i data-lucide="music" class="text-orange-500 w-4 h-4 shrink-0"></i>
-                        <h4 id="playTitle" class="font-black uppercase tracking-widest text-[10px] truncate"></h4>
-                    </div>
-                    <button onclick="window.closePlayer()" class="text-neutral-500 hover:text-white transition-all">
-                        <i data-lucide="x" class="w-5 h-5"></i>
-                    </button>
-                </div>
-                <div class="flex flex-col md:grid md:grid-cols-12 gap-4 items-center">
-                    <div class="w-full md:col-span-7" id="mediaContainer"></div>
-                    
-                    <div class="w-full md:col-span-5 flex flex-col gap-2">
-                        <div id="pricingTabs" class="flex bg-white/5 p-1 rounded-lg">
-                            <button onclick="window.switchPricing('contado')" id="tabContado" class="flex-1 py-1.5 text-[9px] font-bold uppercase rounded-md transition-all tab-active">Contado</button>
-                            <button onclick="window.switchPricing('credito')" id="tabCredito" class="flex-1 py-1.5 text-[9px] font-bold uppercase rounded-md transition-all">Crédito</button>
-                        </div>
-
-                        <div class="bg-white/[0.03] p-4 rounded-2xl border border-white/5 flex flex-col justify-center">
-                            <div id="contadoInfo" class="text-center">
-                                <p id="playPrice" class="text-3xl font-black italic text-white leading-none"></p>
-                                <p class="text-[8px] text-neutral-500 font-bold uppercase tracking-widest mt-1">Pago único</p>
-                            </div>
-                            <div id="creditoInfo" class="hidden">
-                                <div class="grid grid-cols-2 gap-2 mb-2">
-                                    <div class="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
-                                        <p class="text-[7px] text-orange-500 font-bold uppercase">Inicial</p>
-                                        <p id="creditoInicial" class="text-lg font-black text-white"></p>
-                                    </div>
-                                    <div class="bg-black/40 p-2 rounded-lg border border-white/5 text-center">
-                                        <p id="cuotasLabel" class="text-[7px] text-orange-500 font-bold uppercase"></p>
-                                        <p id="creditoCuota" class="text-lg font-black text-white"></p>
-                                    </div>
-                                </div>
-                                <p id="frecuenciaText" class="text-[7px] text-neutral-400 uppercase font-bold text-center"></p>
-                            </div>
-
-                            <button id="buyBtn" class="w-full mt-3 bg-orange-600 text-white py-3 rounded-lg font-black uppercase text-[10px] tracking-widest flex items-center justify-center gap-2 hover:bg-orange-500 transition-all">
-                                <i data-lucide="shopping-cart" class="w-3.5 h-3.5"></i> <span id="btnText">ADQUIRIR</span>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
         import { getFirestore, collection, addDoc, updateDoc, onSnapshot, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -198,10 +168,14 @@
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-
         let beats = [];
-        let currentBeat = null;
-        let selectedMode = 'contado';
+
+        signInAnonymously(auth).then(() => {
+            onSnapshot(collection(db, 'beats'), (snap) => {
+                beats = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                render();
+            });
+        });
 
         window.toggleForm = () => {
             const form = document.getElementById('beatForm');
@@ -214,186 +188,126 @@
             document.getElementById('editingId').value = '';
             document.getElementById('formTitle').innerHTML = '<i data-lucide="plus" class="text-orange-500 w-4 h-4"></i> Nuevo Beat';
             document.getElementById('submitBtnText').innerText = 'PUBLICAR BEAT';
-            document.getElementById('submitBtn').className = "w-full bg-orange-600 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all";
             window.toggleForm();
-            lucide.createIcons();
-        };
-
-        window.prepareEdit = (id) => {
-            const beat = beats.find(b => b.id === id);
-            if (!beat) return;
-            document.getElementById('editingId').value = id;
-            document.getElementById('title').value = beat.title;
-            document.getElementById('url').value = beat.originalUrl || beat.url;
-            document.getElementById('producer').value = beat.producer;
-            document.getElementById('saleType').value = beat.saleType;
-            document.getElementById('price').value = beat.price;
-            document.getElementById('whatsapp').value = beat.whatsapp;
-            document.getElementById('downPayment').value = beat.downPayment;
-            document.getElementById('installmentsCount').value = beat.installmentsCount;
-            document.getElementById('paymentDays').value = beat.paymentDays;
-
-            document.getElementById('formTitle').innerHTML = '<i data-lucide="edit" class="text-blue-500 w-4 h-4"></i> Editar';
-            document.getElementById('submitBtnText').innerText = 'ACTUALIZAR';
-            document.getElementById('submitBtn').className = "w-full bg-blue-600 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-all";
-            
-            if(!document.getElementById('beatForm').classList.contains('active')) window.toggleForm();
             window.toggleCreditFields();
             lucide.createIcons();
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
         window.toggleCreditFields = () => {
             const saleType = document.getElementById('saleType').value;
             const config = document.getElementById('creditConfig');
-            config.style.opacity = (saleType === 'contado') ? '0.3' : '1';
-            config.style.pointerEvents = (saleType === 'contado') ? 'none' : 'auto';
+            if(saleType === 'contado') {
+                config.style.opacity = '0.3';
+                config.style.pointerEvents = 'none';
+            } else {
+                config.style.opacity = '1';
+                config.style.pointerEvents = 'auto';
+            }
         };
 
-        window.renderBeats = () => {
+        function render() {
+            document.getElementById('counter').innerText = `${beats.length} PISTAS TOTALES`;
             const list = document.getElementById('beatsList');
             if (beats.length === 0) {
-                list.innerHTML = `<div class="p-10 text-center text-neutral-600 font-bold uppercase text-[9px]">Sin pistas aún.</div>`;
+                list.innerHTML = `<div class="p-20 text-center text-neutral-700 font-bold uppercase text-[10px]">No hay beats en la base de datos</div>`;
                 return;
             }
-            list.innerHTML = beats.map(beat => `
-                <div class="beat-card p-3 rounded-2xl border border-white/5 bg-[#0a0a0a] flex items-center gap-3 md:gap-5 hover:border-orange-500/30 transition-all">
-                    <button onclick="window.playBeat('${beat.id}')" class="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-neutral-400 hover:bg-orange-600 hover:text-white transition-all shrink-0">
-                        <i data-lucide="play" class="w-5 h-5 ml-0.5"></i>
-                    </button>
-                    <div class="flex-1 min-w-0">
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <h3 class="font-black uppercase text-white truncate text-xs">${beat.title}</h3>
-                            ${beat.saleType !== 'contado' ? '<span class="text-[6px] bg-green-500/10 text-green-500 px-1 py-0.5 rounded font-black uppercase">Crédito</span>' : ''}
-                        </div>
-                        <p class="text-[8px] text-neutral-500 font-bold uppercase tracking-tighter mt-0.5 truncate">Prod. ${beat.producer}</p>
+
+            list.innerHTML = beats.map(b => `
+                <div class="bg-[#0a0a0a] border border-white/5 p-4 rounded-2xl flex items-center gap-4 hover:border-orange-500/20 transition-all ${!b.visible ? 'opacity-40' : ''}">
+                    <div class="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-orange-500">
+                        <i data-lucide="music" class="w-5 h-5"></i>
                     </div>
-                    <div class="flex flex-col md:flex-row items-end md:items-center gap-2 shrink-0">
-                        <p class="text-sm font-black italic text-white">$${beat.price}</p>
-                        <div class="flex gap-1">
-                            <button onclick="window.prepareEdit('${beat.id}')" class="p-2 btn-edit bg-white/5 hover:bg-blue-500/10 rounded-lg transition-all">
-                                <i data-lucide="edit-3" class="w-4 h-4"></i>
-                            </button>
-                            <button onclick="window.deleteBeat('${beat.id}')" class="p-2 btn-delete bg-white/5 hover:bg-red-500/10 rounded-lg transition-all">
-                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                            </button>
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                            <h3 class="text-xs font-black uppercase text-white truncate">${b.title}</h3>
+                            <span class="text-[7px] px-1.5 py-0.5 rounded border ${b.category === 'exclusiva' ? 'border-orange-500 text-orange-500' : 'border-blue-500 text-blue-500'} font-bold uppercase">
+                                ${b.category || 'Licencia'}
+                            </span>
+                            ${!b.visible ? '<span class="text-[7px] bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded font-bold uppercase">Oculto</span>' : ''}
                         </div>
+                        <p class="text-[8px] text-neutral-600 font-bold uppercase mt-0.5">Prod. ${b.producer || 'Jaddy Studio'} | $${b.price}</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="window.prepareEdit('${b.id}')" class="p-2 bg-white/5 hover:bg-orange-500/10 text-neutral-400 hover:text-orange-500 rounded-lg transition-all">
+                            <i data-lucide="edit-3" class="w-4 h-4"></i>
+                        </button>
+                        <button onclick="window.deleteBeat('${b.id}')" class="p-2 bg-white/5 hover:bg-red-500/10 text-neutral-400 hover:text-red-500 rounded-lg transition-all">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
                     </div>
                 </div>
             `).join('');
             lucide.createIcons();
-        };
+        }
 
-        window.playBeat = (id) => {
-            const beat = beats.find(b => b.id === id);
-            if (!beat) return;
-            currentBeat = beat;
-            document.getElementById('masterPlayer').classList.remove('hidden');
-            document.getElementById('playTitle').innerText = beat.title;
-            document.getElementById('playPrice').innerText = `$${beat.price}`;
+        window.prepareEdit = (id) => {
+            const b = beats.find(x => x.id === id);
+            if(!b) return;
+            document.getElementById('editingId').value = b.id;
+            document.getElementById('title').value = b.title;
+            document.getElementById('producer').value = b.producer || '';
+            document.getElementById('category').value = b.category || 'licencia';
+            document.getElementById('isVisible').checked = b.visible !== false;
+            document.getElementById('url').value = b.url;
+            document.getElementById('genre').value = b.genre || '';
+            document.getElementById('whatsapp').value = b.whatsapp;
+            document.getElementById('description').value = b.description || '';
+            document.getElementById('saleType').value = b.saleType || 'contado';
+            document.getElementById('price').value = b.price;
+            document.getElementById('downPayment').value = b.downPayment || '';
+            document.getElementById('installmentsCount').value = b.installmentsCount || '';
+            document.getElementById('paymentDays').value = b.paymentDays || '';
 
-            const tabs = document.getElementById('pricingTabs');
-            if(beat.saleType === 'contado') { tabs.classList.add('hidden'); window.switchPricing('contado'); }
-            else if(beat.saleType === 'credito') { tabs.classList.add('hidden'); window.switchPricing('credito'); }
-            else { tabs.classList.remove('hidden'); window.switchPricing('contado'); }
-
-            if(beat.saleType !== 'contado') {
-                const count = parseInt(beat.installmentsCount) || 1;
-                const inicial = parseFloat(beat.downPayment) || 0;
-                const cuotaMonto = ((beat.price - inicial) / count).toFixed(2);
-                document.getElementById('creditoInicial').innerText = `$${inicial}`;
-                document.getElementById('cuotasLabel').innerText = `${count} Cuotas`;
-                document.getElementById('creditoCuota').innerText = `$${cuotaMonto}`;
-                document.getElementById('frecuenciaText').innerText = `Cada ${beat.paymentDays} días`;
-            }
-
-            const media = document.getElementById('mediaContainer');
-            if(beat.type === 'youtube') {
-                media.innerHTML = `<div class="aspect-video rounded-2xl overflow-hidden border border-white/10 shadow-lg"><iframe width="100%" height="100%" src="https://www.youtube.com/embed/${beat.url}?autoplay=1" frameborder="0" allowfullscreen></iframe></div>`;
-            } else {
-                media.innerHTML = `<div class="bg-black/20 p-4 rounded-2xl border border-white/5">
-                    <div class="flex justify-center items-end gap-1 h-8 mb-4">
-                        ${Array(20).fill('<div class="w-1 bg-orange-600 rounded-full animate-audio-bar"></div>').join('')}
-                    </div>
-                    <audio src="${beat.url}" controls autoplay class="w-full h-8 invert brightness-150"></audio>
-                </div>`;
-            }
-
-            document.getElementById('buyBtn').onclick = () => {
-                let msg = selectedMode === 'contado' 
-                    ? `¡Hola Jaddy! Me interesa "${beat.title}" al contado por $${beat.price}.`
-                    : `¡Hola! Quiero el plan de crédito para "${beat.title}". Pago hoy $${beat.downPayment} de inicial.`;
-                window.open(`https://wa.me/${beat.whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(msg)}`, '_blank');
-            };
+            document.getElementById('formTitle').innerHTML = `<i data-lucide="edit" class="text-orange-500 w-4 h-4"></i> Editando: ${b.title}`;
+            document.getElementById('submitBtnText').innerText = 'ACTUALIZAR DATOS';
+            if(!document.getElementById('beatForm').classList.contains('active')) window.toggleForm();
+            window.toggleCreditFields();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
             lucide.createIcons();
         };
 
-        window.switchPricing = (mode) => {
-            selectedMode = mode;
-            document.getElementById('tabContado').classList.toggle('tab-active', mode === 'contado');
-            document.getElementById('tabCredito').classList.toggle('tab-active', mode === 'credito');
-            document.getElementById('contadoInfo').classList.toggle('hidden', mode === 'credito');
-            document.getElementById('creditoInfo').classList.toggle('hidden', mode === 'contado');
-            document.getElementById('btnText').innerText = mode === 'contado' ? 'PAGAR AL CONTADO' : 'INICIAR CRÉDITO';
-        };
-
-        window.closePlayer = () => { document.getElementById('masterPlayer').classList.add('hidden'); document.getElementById('mediaContainer').innerHTML = ''; };
-
-        window.deleteBeat = async (id) => {
-            if (confirm("¿Borrar pista definitivamente?")) await deleteDoc(doc(db, 'beats', id));
-        };
-
-        signInAnonymously(auth);
-        onAuthStateChanged(auth, (user) => {
-            if (user) {
-                onSnapshot(collection(db, 'beats'), (snap) => {
-                    beats = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                    window.renderBeats();
-                });
-            }
-        });
-
         document.getElementById('uploadForm').onsubmit = async (e) => {
             e.preventDefault();
-            const editingId = document.getElementById('editingId').value;
-            const btn = document.getElementById('submitBtn');
-            btn.disabled = true;
-            btn.innerText = 'PROCESANDO...';
-
-            const rawUrl = document.getElementById('url').value;
-            let type = 'direct';
-            let src = rawUrl;
-            if (src.includes('dropbox.com')) src = src.replace(/dl=0|dl=1/, 'raw=1');
-            if (src.includes('youtube.com') || src.includes('youtu.be')) {
-                type = 'youtube';
-                src = src.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|&v=))([^#&?]{11})/)?.[1];
-            }
+            const id = document.getElementById('editingId').value;
+            
+            let cleanUrl = document.getElementById('url').value;
+            if(cleanUrl.includes('youtube.com/watch?v=')) cleanUrl = cleanUrl.split('v=')[1].split('&')[0];
+            else if(cleanUrl.includes('youtu.be/')) cleanUrl = cleanUrl.split('youtu.be/')[1].split('?')[0];
 
             const data = {
                 title: document.getElementById('title').value,
-                url: src,
-                originalUrl: rawUrl,
-                type: type,
-                price: parseFloat(document.getElementById('price').value),
-                saleType: document.getElementById('saleType').value,
-                downPayment: document.getElementById('downPayment').value || 0,
-                installmentsCount: document.getElementById('installmentsCount').value || 0,
-                paymentDays: document.getElementById('paymentDays').value || 0,
+                producer: document.getElementById('producer').value || 'Jaddy Studio',
+                category: document.getElementById('category').value,
+                visible: document.getElementById('isVisible').checked,
+                url: cleanUrl,
+                type: cleanUrl.length < 20 ? 'youtube' : 'audio',
+                genre: document.getElementById('genre').value,
                 whatsapp: document.getElementById('whatsapp').value,
-                producer: document.getElementById('producer').value || 'Jaddy INC',
+                description: document.getElementById('description').value,
+                saleType: document.getElementById('saleType').value,
+                price: parseFloat(document.getElementById('price').value),
+                downPayment: document.getElementById('downPayment').value,
+                installmentsCount: document.getElementById('installmentsCount').value,
+                paymentDays: document.getElementById('paymentDays').value,
                 updatedAt: serverTimestamp()
             };
 
             try {
-                if (editingId) { await updateDoc(doc(db, 'beats', editingId), data); } 
-                else { data.createdAt = serverTimestamp(); await addDoc(collection(db, 'beats'), data); }
-                e.target.reset();
+                if(id) await updateDoc(doc(db, 'beats', id), data);
+                else await addDoc(collection(db, 'beats'), { ...data, createdAt: serverTimestamp() });
+                
                 window.toggleForm();
-            } catch (err) { alert(err.message); } 
-            finally { btn.disabled = false; lucide.createIcons(); }
+                document.getElementById('uploadForm').reset();
+            } catch (err) { alert("Error al guardar: " + err.message); }
         };
 
-        lucide.createIcons();
+        window.deleteBeat = async (id) => {
+            if(confirm("¿Seguro que quieres eliminar esta pista del sistema?")) {
+                await deleteDoc(doc(db, 'beats', id));
+            }
+        };
+
     </script>
 </body>
 </html>
