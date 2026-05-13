@@ -24,7 +24,6 @@
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        /* Estilos de Formulario Modernos */
         input, select, textarea {
             background: rgba(255, 255, 255, 0.02) !important;
             border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -32,16 +31,8 @@
             padding: 12px 16px !important;
             color: white !important;
             width: 100%;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        input:focus, select:focus, textarea:focus {
-            border-color: #f59e0b !important;
-            background: rgba(245, 158, 11, 0.05) !important;
-            box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.1) !important;
-        }
-
-        /* CONTENEDOR DE VISTA PREVIA - IMAGEN COMPLETA */
         .full-preview-container {
             width: 100%;
             aspect-ratio: 1 / 1;
@@ -52,46 +43,27 @@
             justify-content: center;
             overflow: hidden;
             border: 1px solid rgba(245, 158, 11, 0.2);
-            position: relative;
         }
 
         #mainPreviewImg {
             max-width: 100%;
             max-height: 100%;
-            object-fit: contain; /* Esto asegura que la imagen NO se corte */
-            display: block;
+            object-fit: contain;
         }
 
         .btn-primary {
             background: linear-gradient(to right, #f59e0b, #d97706);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 10px 20px -5px rgba(245, 158, 11, 0.4);
-        }
-
-        .inventory-card {
-            transition: all 0.3s ease;
-            border: 1px solid transparent;
         }
 
         .inventory-card:hover {
             border-color: rgba(245, 158, 11, 0.5);
             background: rgba(245, 158, 11, 0.03);
         }
-
-        .active-edit {
-            border-color: #f59e0b !important;
-            background: rgba(245, 158, 11, 0.08) !important;
-        }
     </style>
 </head>
 <body class="min-h-screen pb-20">
 
     <div class="max-w-7xl mx-auto px-4 pt-8">
-        <!-- Header -->
         <header class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
             <div class="flex items-center gap-4">
                 <div class="w-14 h-14 bg-amber-500 rounded-2xl flex items-center justify-center shadow-lg shadow-amber-500/20">
@@ -111,30 +83,23 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            
-            <!-- FORMULARIO DE EDICIÓN / REGISTRO -->
-            <div class="lg:col-span-7 glass-panel rounded-[2.5rem] p-8 order-2 lg:order-1">
-                <h2 class="text-xs font-black uppercase text-amber-500 tracking-widest mb-8 italic flex items-center gap-2">
-                    <i data-lucide="plus-circle" class="w-4 h-4"></i> Detalles del Producto
-                </h2>
-                
+            <!-- FORMULARIO -->
+            <div class="lg:col-span-7 glass-panel rounded-[2.5rem] p-8">
                 <form id="productForm" class="space-y-6">
                     <input type="hidden" id="productId">
-                    
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
-                            <label class="text-[10px] font-bold uppercase text-neutral-500 ml-2 tracking-widest">Nombre Comercial</label>
-                            <input type="text" id="name" placeholder="Ej: Bad Boy Cobalt" required>
+                            <label class="text-[10px] font-bold uppercase text-neutral-500 ml-2">Nombre Comercial</label>
+                            <input type="text" id="name" required>
                         </div>
                         <div class="space-y-2">
-                            <label class="text-[10px] font-bold uppercase text-neutral-500 ml-2 tracking-widest">Precio Sugerido ($)</label>
-                            <input type="number" id="price" value="10.00" step="0.01" required>
+                            <label class="text-[10px] font-bold uppercase text-neutral-500 ml-2">Precio Sugerido ($)</label>
+                            <input type="number" id="price" step="0.01" required>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
-                            <label class="text-[10px] font-bold uppercase text-neutral-500 ml-2 tracking-widest">Categoría / Género</label>
+                            <label class="text-[10px] font-bold uppercase text-neutral-500 ml-2">Categoría</label>
                             <select id="category">
                                 <option value="Caballero">Caballero</option>
                                 <option value="Dama">Dama</option>
@@ -142,71 +107,47 @@
                             </select>
                         </div>
                         <div class="space-y-2">
-                            <label class="text-[10px] font-bold uppercase text-neutral-500 ml-2 tracking-widest">Enlace de Dropbox</label>
-                            <input type="text" id="imgUrl" placeholder="https://www.dropbox.com/..." required>
+                            <label class="text-[10px] font-bold uppercase text-neutral-500 ml-2">Enlace de Dropbox</label>
+                            <input type="text" id="imgUrl" placeholder="Pegue el link aquí..." required>
                         </div>
                     </div>
-
                     <div class="space-y-2">
-                        <label class="text-[10px] font-bold uppercase text-neutral-500 ml-2 tracking-widest">Descripción Olfativa</label>
-                        <textarea id="description" rows="3" placeholder="Notas de salida, corazón y fondo..."></textarea>
+                        <label class="text-[10px] font-bold uppercase text-neutral-500 ml-2">Descripción</label>
+                        <textarea id="description" rows="3"></textarea>
                     </div>
-
                     <div class="flex gap-4 pt-4">
-                        <button type="submit" id="saveBtn" class="flex-grow btn-primary py-4 rounded-2xl font-black text-xs uppercase tracking-[0.2em] text-black">
-                            Guardar en Catálogo
+                        <button type="submit" id="saveBtn" class="flex-grow btn-primary py-4 rounded-2xl font-black text-xs uppercase text-black">
+                            Guardar Producto
                         </button>
-                        <button type="button" id="resetBtn" class="hidden bg-white/10 hover:bg-white/20 px-6 rounded-2xl transition-all" onclick="clearForm()">
+                        <button type="button" id="resetBtn" class="hidden bg-white/10 px-6 rounded-2xl" onclick="clearForm()">
                             <i data-lucide="x" class="w-5 h-5 text-white"></i>
                         </button>
                     </div>
                 </form>
             </div>
 
-            <!-- VISTA PREVIA CENTRALIZADA -->
-            <div class="lg:col-span-5 order-1 lg:order-2">
+            <!-- VISTA PREVIA -->
+            <div class="lg:col-span-5">
                 <div class="sticky top-8 space-y-4">
-                    <h2 class="text-xs font-black uppercase text-amber-500 tracking-widest ml-4 italic flex items-center gap-2">
-                        <i data-lucide="eye" class="w-4 h-4"></i> Vista Previa de Imagen
-                    </h2>
-                    
                     <div class="glass-panel p-4 rounded-[3rem]">
                         <div class="full-preview-container">
                             <div id="noImage" class="flex flex-col items-center gap-4 opacity-20">
                                 <i data-lucide="image-plus" class="w-16 h-16"></i>
-                                <p class="text-[10px] font-bold uppercase tracking-widest">Sin Imagen Seleccionada</p>
                             </div>
-                            <img id="mainPreviewImg" src="" alt="Vista previa" class="hidden">
+                            <img id="mainPreviewImg" src="" class="hidden">
                         </div>
-                        
                         <div class="mt-6 px-4 pb-4">
-                            <div class="flex justify-between items-end">
-                                <div>
-                                    <span id="viewCat" class="text-[9px] font-black text-amber-500 uppercase tracking-[0.2em] mb-1 block">Categoría</span>
-                                    <h3 id="viewName" class="text-2xl font-black text-white italic uppercase leading-none">Nombre Perfume</h3>
-                                </div>
-                                <div class="text-right">
-                                    <p class="text-[8px] font-bold text-neutral-500 uppercase mb-1">Precio Unitario</p>
-                                    <span id="viewPrice" class="text-3xl font-black text-white italic leading-none">$0.00</span>
-                                </div>
-                            </div>
+                            <h3 id="viewName" class="text-2xl font-black text-white italic uppercase">Nombre Perfume</h3>
+                            <span id="viewPrice" class="text-3xl font-black text-amber-500 italic">$0.00</span>
                         </div>
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <!-- LISTADO DE PRODUCTOS -->
+        <!-- LISTADO -->
         <div class="mt-20">
-            <div class="flex items-center justify-between mb-8 px-4">
-                <h3 class="text-sm font-black uppercase tracking-[0.4em] text-neutral-400 italic">Inventario Actual</h3>
-                <div class="h-[1px] flex-grow mx-8 bg-white/5"></div>
-            </div>
-
-            <div id="inventoryContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                <!-- Tarjetas cargadas dinámicamente -->
-            </div>
+            <div id="inventoryContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6"></div>
         </div>
     </div>
 
@@ -214,160 +155,123 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-        // Configuración
         const firebaseConfig = {
-            apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
-            projectId: "jaddy-estudio",
-            storageBucket: "jaddy-estudio.firebasestorage.app",
+            apiKey: "AIzaSyCrjjeOoXPOtJDXDfrHLOA4Ny0QW2zfVWk",
+            authDomain: "apps-d45d6.firebaseapp.com",
+            projectId: "apps-d45d6",
+            storageBucket: "apps-d45d6.firebasestorage.app",
+            messagingSenderId: "502648373937",
+            appId: "1:502648373937:web:8c3beaa2a6c9289a4d9890"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // Nodos DOM
-        const form = document.getElementById('productForm');
-        const mainImg = document.getElementById('mainPreviewImg');
-        const noImgPlaceholder = document.getElementById('noImage');
-        const saveBtn = document.getElementById('saveBtn');
-        const resetBtn = document.getElementById('resetBtn');
-
-        // Formatear enlace Dropbox
+        // FUNCIÓN CORREGIDA: Mantiene el rlkey y solo cambia dl=0 por raw=1
         const formatDropbox = (url) => {
             if (!url) return "";
-            if (!url.includes('dropbox.com')) return url;
-            return url.split('?')[0].replace('www.dropbox.com', 'dl.dropboxusercontent.com') + "?raw=1";
-        };
-
-        // Sincronizar Vista Previa en tiempo real
-        const syncPreview = () => {
-            const url = formatDropbox(document.getElementById('imgUrl').value);
-            const name = document.getElementById('name').value;
-            const price = document.getElementById('price').value;
-            const cat = document.getElementById('category').value;
-
-            if (url && url.startsWith('http')) {
-                mainImg.src = url;
-                mainImg.classList.remove('hidden');
-                noImgPlaceholder.classList.add('hidden');
-            } else {
-                mainImg.classList.add('hidden');
-                noImgPlaceholder.classList.remove('hidden');
+            let cleanUrl = url.trim();
+            if (cleanUrl.includes('dropbox.com')) {
+                // Cambiamos el parámetro de descarga para que el navegador lo lea como imagen directa
+                // Reemplazamos dl=0 por raw=1 si existe, o lo añadimos
+                if (cleanUrl.includes('dl=0')) {
+                    return cleanUrl.replace('dl=0', 'raw=1');
+                } else if (!cleanUrl.includes('raw=1')) {
+                    return cleanUrl + (cleanUrl.includes('?') ? '&raw=1' : '?raw=1');
+                }
             }
-
-            document.getElementById('viewName').innerText = name || "Nombre Perfume";
-            document.getElementById('viewPrice').innerText = "$" + parseFloat(price || 0).toFixed(2);
-            document.getElementById('viewCat').innerText = cat;
+            return cleanUrl;
         };
 
-        // Listeners
-        ['name', 'price', 'category', 'imgUrl'].forEach(id => {
-            document.getElementById(id).addEventListener('input', syncPreview);
+        const syncPreview = () => {
+            const rawUrl = document.getElementById('imgUrl').value;
+            const url = formatDropbox(rawUrl);
+            const mainImg = document.getElementById('mainPreviewImg');
+            const noImg = document.getElementById('noImage');
+
+            if (url) {
+                mainImg.src = url;
+                mainImg.onload = () => { mainImg.classList.remove('hidden'); noImg.classList.add('hidden'); };
+                mainImg.onerror = () => { mainImg.classList.add('hidden'); noImg.classList.remove('hidden'); };
+            } else {
+                mainImg.classList.add('hidden'); noImg.classList.remove('hidden');
+            }
+            document.getElementById('viewName').innerText = document.getElementById('name').value || "Nombre Perfume";
+            document.getElementById('viewPrice').innerText = "$" + parseFloat(document.getElementById('price').value || 0).toFixed(2);
+        };
+
+        ['name', 'price', 'imgUrl'].forEach(id => document.getElementById(id).addEventListener('input', syncPreview));
+
+        const form = document.getElementById('productForm');
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('productId').value;
+            const payload = {
+                name: document.getElementById('name').value,
+                price: parseFloat(document.getElementById('price').value),
+                category: document.getElementById('category').value,
+                img: document.getElementById('imgUrl').value, // Guardamos el link tal cual
+                description: document.getElementById('description').value,
+                updatedAt: serverTimestamp()
+            };
+
+            if (id) {
+                await updateDoc(doc(db, "perfumes", id), payload);
+            } else {
+                payload.createdAt = serverTimestamp();
+                await addDoc(collection(db, "perfumes"), payload);
+            }
+            clearForm();
         });
 
-        // Seleccionar para Editar
         window.editProduct = (id, dataJson) => {
             const data = JSON.parse(decodeURIComponent(dataJson));
-            
             document.getElementById('productId').value = id;
             document.getElementById('name').value = data.name;
             document.getElementById('price').value = data.price;
             document.getElementById('category').value = data.category;
             document.getElementById('imgUrl').value = data.img;
             document.getElementById('description').value = data.description || "";
-
-            saveBtn.innerText = "ACTUALIZAR CAMBIOS";
-            resetBtn.classList.remove('hidden');
+            document.getElementById('saveBtn').innerText = "ACTUALIZAR";
+            document.getElementById('resetBtn').classList.remove('hidden');
             syncPreview();
-
-            // Resaltar tarjeta seleccionada
-            document.querySelectorAll('.inventory-card').forEach(c => c.classList.remove('active-edit'));
-            document.getElementById(`card-${id}`).classList.add('active-edit');
-            
-            window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        // Limpiar Formulario
         window.clearForm = () => {
             form.reset();
             document.getElementById('productId').value = "";
-            saveBtn.innerText = "GUARDAR EN CATÁLOGO";
-            resetBtn.classList.add('hidden');
-            document.querySelectorAll('.inventory-card').forEach(c => c.classList.remove('active-edit'));
+            document.getElementById('saveBtn').innerText = "GUARDAR PRODUCTO";
+            document.getElementById('resetBtn').classList.add('hidden');
             syncPreview();
         };
 
-        // CRUD: Guardar / Actualizar
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('productId').value;
-            
-            const payload = {
-                name: document.getElementById('name').value,
-                price: parseFloat(document.getElementById('price').value),
-                category: document.getElementById('category').value,
-                img: formatDropbox(document.getElementById('imgUrl').value),
-                description: document.getElementById('description').value,
-                updatedAt: serverTimestamp()
-            };
-
-            try {
-                if (id) {
-                    await updateDoc(doc(db, "perfumes", id), payload);
-                } else {
-                    payload.createdAt = serverTimestamp();
-                    await addDoc(collection(db, "perfumes"), payload);
-                }
-                clearForm();
-            } catch (err) {
-                console.error("Error:", err);
-            }
-        });
-
-        // CRUD: Eliminar
         window.removeProduct = async (id) => {
-            if (confirm("¿Eliminar este producto permanentemente?")) {
-                await deleteDoc(doc(db, "perfumes", id));
-            }
+            if(confirm("¿Eliminar?")) await deleteDoc(doc(db, "perfumes", id));
         };
 
-        // Listener Realtime
         onSnapshot(query(collection(db, "perfumes"), orderBy("name", "asc")), (snap) => {
             const container = document.getElementById('inventoryContainer');
             document.getElementById('statCount').innerText = snap.size;
             container.innerHTML = "";
-
             snap.forEach(docSnap => {
                 const p = docSnap.data();
                 const id = docSnap.id;
-                const dataString = encodeURIComponent(JSON.stringify({...p, updatedAt: null, createdAt: null}));
-
+                const displayImg = formatDropbox(p.img);
+                const dataString = encodeURIComponent(JSON.stringify(p));
                 container.innerHTML += `
-                    <div id="card-${id}" onclick="editProduct('${id}', '${dataString}')" 
-                         class="inventory-card glass-panel p-3 rounded-[2rem] cursor-pointer group relative">
-                        
+                    <div onclick="editProduct('${id}', '${dataString}')" class="inventory-card glass-panel p-3 rounded-[2rem] cursor-pointer group relative border border-transparent">
                         <div class="aspect-square rounded-[1.5rem] bg-black/40 overflow-hidden mb-3">
-                            <img src="${p.img}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700">
+                            <img src="${displayImg}" class="w-full h-full object-cover">
                         </div>
-                        
-                        <div class="px-2">
-                            <h4 class="text-[10px] font-black uppercase text-white italic truncate">${p.name}</h4>
-                            <div class="flex justify-between items-center mt-1">
-                                <span class="text-[10px] font-bold text-amber-500">$${p.price.toFixed(2)}</span>
-                                <span class="text-[8px] text-neutral-500 font-bold uppercase tracking-tighter">${p.category}</span>
-                            </div>
-                        </div>
-
-                        <button onclick="event.stopPropagation(); removeProduct('${id}')" 
-                                class="absolute top-4 right-4 w-8 h-8 bg-black/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all text-neutral-500 hover:text-red-500">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        <h4 class="text-[10px] font-black uppercase text-white truncate">${p.name}</h4>
+                        <button onclick="event.stopPropagation(); removeProduct('${id}')" class="absolute top-4 right-4 w-8 h-8 bg-black/80 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all">
+                            <i data-lucide="trash-2" class="w-4 h-4 text-red-500"></i>
                         </button>
-                    </div>
-                `;
+                    </div>`;
             });
             lucide.createIcons();
         });
 
-        // Inicializar iconos
         lucide.createIcons();
     </script>
 </body>
