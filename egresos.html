@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -20,7 +20,7 @@
             color: white !important;
             outline: none !important;
         }
-        input:focus, select:focus { border-color: #ef4444 !important; }
+        input:focus, select:focus, textarea:focus { border-color: #ef4444 !important; }
         
         .tab-active { border-bottom: 2px solid #ef4444; color: #ef4444; }
         .scrollbar-hide::-webkit-scrollbar { display: none; }
@@ -83,6 +83,7 @@
                             <option value="Estudio">Estudio</option>
                             <option value="Inversión">Inversión</option>
                         </select>
+                        <textarea id="expDesc" placeholder="Descripción (Opcional)" class="w-full p-4 rounded-2xl text-sm min-h-[80px] resize-none"></textarea>
                         <button type="submit" class="w-full bg-red-600 hover:bg-red-700 text-white font-black py-4 rounded-2xl transition-all uppercase italic text-xs tracking-widest">
                             Guardar Egreso
                         </button>
@@ -108,7 +109,10 @@
                         <input type="text" id="debtPerson" placeholder="Nombre del Prestamista" class="w-full p-4 rounded-2xl text-sm" required>
                         <div class="grid grid-cols-2 gap-4">
                             <input type="number" id="debtAmount" step="0.01" placeholder="Capital ($)" class="w-full p-4 rounded-2xl text-sm" required>
-                            <input type="number" id="debtInterest" step="0.01" placeholder="Interés (Opcional)" class="w-full p-4 rounded-2xl text-sm">
+                            <div class="relative">
+                                <input type="number" id="debtInterest" step="0.01" placeholder="Interés" class="w-full p-4 rounded-2xl text-sm pr-10">
+                                <span class="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 font-bold text-xs">%</span>
+                            </div>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
@@ -120,6 +124,15 @@
                                 <input type="date" id="debtDateEnd" class="w-full p-4 rounded-2xl text-[10px]" required>
                             </div>
                         </div>
+                        <!-- Campo de Categoría agregado a Préstamos -->
+                        <select id="debtCat" class="w-full p-4 rounded-2xl text-sm appearance-none">
+                            <option value="Personal">Personal</option>
+                            <option value="Servicios">Servicios</option>
+                            <option value="Alimentación">Alimentación</option>
+                            <option value="Estudio">Estudio</option>
+                            <option value="Inversión">Inversión</option>
+                        </select>
+                        <textarea id="debtDesc" placeholder="Descripción / Detalles del préstamo (Opcional)" class="w-full p-4 rounded-2xl text-sm min-h-[80px] resize-none"></textarea>
                         <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-2xl transition-all uppercase italic text-xs tracking-widest">
                             Crear Deuda
                         </button>
@@ -188,19 +201,26 @@
                 </div>
                 <button onclick="closeDebtModal()" class="text-neutral-500 hover:text-white"><i data-lucide="x" class="w-6 h-6"></i></button>
             </div>
+            
+            <!-- Descripción de la Deuda en Modal -->
+            <div id="modalDebtDesc" class="text-[10px] text-neutral-400 bg-white/5 p-4 rounded-xl mb-6 hidden italic"></div>
 
             <div class="grid grid-cols-3 gap-2 mb-8">
                 <button onclick="showSubAction('capital')" class="bg-white/5 p-3 rounded-xl text-[8px] font-black uppercase hover:bg-emerald-600 transition-all">Abono Capital</button>
                 <button onclick="showSubAction('interes')" class="bg-white/5 p-3 rounded-xl text-[8px] font-black uppercase hover:bg-blue-600 transition-all">Abono Interés</button>
-                <button onclick="showSubAction('prorroga')" class="bg-white/5 p-3 rounded-xl text-[8px] font-black uppercase hover:bg-red-600 transition-all">Prórroga + Int</button>
+                <button onclick="showSubAction('prorroga')" class="bg-white/5 p-3 rounded-xl text-[8px] font-black uppercase hover:bg-red-600 transition-all">Prórroga %</button>
             </div>
 
             <div id="subActionForm" class="hidden space-y-4 bg-white/5 p-6 rounded-2xl mb-6">
                 <h4 id="subActionTitle" class="text-[10px] font-black uppercase italic text-white">Acción</h4>
                 <div class="grid grid-cols-2 gap-4">
-                    <input type="number" id="subActionAmount" placeholder="Monto ($)" class="w-full p-4 rounded-2xl text-sm">
+                    <div class="relative w-full">
+                        <input type="number" id="subActionAmount" placeholder="Monto" class="w-full p-4 rounded-2xl text-sm">
+                        <span id="subActionUnit" class="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-500 font-bold text-xs">$</span>
+                    </div>
                     <input type="date" id="subActionDate" class="w-full p-4 rounded-2xl text-[10px]">
                 </div>
+                <p id="subActionCalcTip" class="text-[8px] text-blue-400 uppercase font-black px-2 hidden"></p>
                 <button onclick="executeDebtAction()" class="w-full bg-white text-black py-4 rounded-xl font-black uppercase italic text-xs tracking-widest">Confirmar Operación</button>
             </div>
 
@@ -288,10 +308,11 @@
             const amount = parseFloat(document.getElementById('expAmount').value);
             const date = document.getElementById('expDate').value;
             const category = document.getElementById('expCat').value;
+            const description = document.getElementById('expDesc').value;
             
             try {
                 await addDoc(collection(db, "gastos"), {
-                    reason, amount, date, category, createdAt: serverTimestamp()
+                    reason, amount, date, category, description, createdAt: serverTimestamp()
                 });
                 e.target.reset();
                 document.getElementById('expDate').value = today;
@@ -307,20 +328,23 @@
                 const data = d.data();
                 total += data.amount;
                 list.innerHTML += `
-                    <div class="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all">
-                        <div class="flex items-center gap-4">
-                            <div class="w-8 h-8 rounded-full ${data.isDebtAction ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'} flex items-center justify-center">
-                                <i data-lucide="${data.isDebtAction ? 'landmark' : 'arrow-down-right'}" class="w-4 h-4"></i>
+                    <div class="flex flex-col p-4 bg-white/5 rounded-2xl border border-white/5 hover:bg-white/10 transition-all gap-2">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center gap-4">
+                                <div class="w-8 h-8 rounded-full ${data.isDebtAction ? 'bg-blue-500/10 text-blue-500' : 'bg-red-500/10 text-red-500'} flex items-center justify-center">
+                                    <i data-lucide="${data.isDebtAction ? 'landmark' : 'arrow-down-right'}" class="w-4 h-4"></i>
+                                </div>
+                                <div>
+                                    <p class="text-xs font-black uppercase italic">${data.reason}</p>
+                                    <p class="text-[8px] text-neutral-500 font-bold uppercase">${data.date} • ${data.category || 'Gasto'}</p>
+                                </div>
                             </div>
-                            <div>
-                                <p class="text-xs font-black uppercase italic">${data.reason}</p>
-                                <p class="text-[8px] text-neutral-500 font-bold uppercase">${data.date} • ${data.category || 'Gasto'}</p>
+                            <div class="flex items-center gap-4">
+                                <p class="font-black text-red-400 text-sm">-$${data.amount.toLocaleString()}</p>
+                                <button onclick="deleteExpense('${d.id}')" class="text-neutral-700 hover:text-red-500 transition-all"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
                             </div>
                         </div>
-                        <div class="flex items-center gap-4">
-                            <p class="font-black text-red-400 text-sm">-$${data.amount.toLocaleString()}</p>
-                            <button onclick="deleteExpense('${d.id}')" class="text-neutral-700 hover:text-red-500 transition-all"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
-                        </div>
+                        ${data.description ? `<p class="text-[9px] text-neutral-400 font-medium pl-12 italic border-l border-white/10 ml-4">${data.description}</p>` : ''}
                     </div>`;
             });
             totalDisplay.innerText = `$${total.toLocaleString()}`;
@@ -334,15 +358,25 @@
             e.preventDefault();
             const person = document.getElementById('debtPerson').value;
             const capital = parseFloat(document.getElementById('debtAmount').value);
-            const interest = parseFloat(document.getElementById('debtInterest').value) || 0;
+            const interestPercent = parseFloat(document.getElementById('debtInterest').value) || 0;
             const dateStart = document.getElementById('debtDateStart').value;
             const dateEnd = document.getElementById('debtDateEnd').value;
+            const category = document.getElementById('debtCat').value; // Nueva categoría capturada
+            const description = document.getElementById('debtDesc').value;
+
+            // Lógica de interés porcentual
+            const interestAmount = (capital * interestPercent) / 100;
 
             try {
                 await addDoc(collection(db, "deudas"), {
-                    person, capital, interest, total: capital + interest,
+                    person, 
+                    capital, 
+                    interest: interestAmount, 
+                    interestRate: interestPercent,
+                    total: capital + interestAmount,
+                    category, // Guardando la categoría
                     paidCapital: 0, paidInterest: 0, dateStart, dateEnd,
-                    history: [], status: 'activa', createdAt: serverTimestamp()
+                    description, history: [], status: 'activa', createdAt: serverTimestamp()
                 });
                 e.target.reset();
                 document.getElementById('debtDateStart').value = today;
@@ -366,7 +400,7 @@
                         <div class="flex justify-between mb-4">
                             <div>
                                 <h4 class="text-xs font-black uppercase tracking-widest">${data.person}</h4>
-                                <p class="text-[8px] text-neutral-500 font-bold uppercase italic">Vence: ${data.dateEnd}</p>
+                                <p class="text-[8px] text-neutral-500 font-bold uppercase italic">Vence: ${data.dateEnd} • ${data.category || 'Deuda'}</p>
                             </div>
                             <button onclick="openDebtModal('${d.id}')" class="bg-white/5 hover:bg-white/10 p-2 rounded-xl transition-all">
                                 <i data-lucide="external-link" class="w-4 h-4 text-blue-500"></i>
@@ -375,13 +409,14 @@
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <p class="text-[8px] text-neutral-500 uppercase font-bold">Cap/Int</p>
-                                <p class="text-[10px] font-black italic">$${data.capital} / $${data.interest}</p>
+                                <p class="text-[10px] font-black italic">$${data.capital} / $${data.interest.toFixed(2)} ${data.interestRate ? '('+data.interestRate+'%)' : ''}</p>
                             </div>
                             <div class="text-right">
                                 <p class="text-[8px] text-neutral-500 uppercase font-bold">Pendiente</p>
                                 <h5 class="text-lg font-black italic ${isPaid ? 'text-emerald-500' : 'text-white'}">$${pending.toLocaleString()}</h5>
                             </div>
                         </div>
+                        ${data.description ? `<p class="mt-4 text-[9px] text-neutral-500 line-clamp-1 italic">${data.description}</p>` : ''}
                         <button onclick="deleteDebt('${d.id}')" class="absolute -top-2 -right-2 bg-red-600 p-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-all">
                             <i data-lucide="trash-2" class="w-3 h-3"></i>
                         </button>
@@ -399,9 +434,18 @@
             const snap = await getDoc(doc(db, "deudas", id));
             const data = snap.data();
             document.getElementById('modalDebtName').innerText = data.person;
-            document.getElementById('modalDebtStatus').innerText = `Cap: $${data.capital} | Int: $${data.interest} | Pagado: $${data.paidCapital + data.paidInterest}`;
+            document.getElementById('modalDebtStatus').innerText = `Cap: $${data.capital} | Int: $${data.interest.toFixed(2)} | Pagado: $${(data.paidCapital + data.paidInterest).toFixed(2)}`;
             document.getElementById('subActionDate').value = today;
             
+            // Descripción en Modal
+            const modalDesc = document.getElementById('modalDebtDesc');
+            if(data.description) {
+                modalDesc.innerText = data.description;
+                modalDesc.classList.remove('hidden');
+            } else {
+                modalDesc.classList.add('hidden');
+            }
+
             const hist = document.getElementById('debtHistoryList');
             hist.innerHTML = data.history && data.history.length ? '' : '<p class="text-[8px] text-center text-neutral-600 font-bold uppercase py-4">Sin movimientos</p>';
             if(data.history) {
@@ -422,38 +466,49 @@
 
         window.showSubAction = (type) => {
             currentSubAction = type;
-            const titles = { capital: 'Abono a Capital', interes: 'Abono a Intereses', prorroga: 'Prórroga con Interés' };
+            const titles = { capital: 'Abono a Capital', interes: 'Abono a Intereses', prorroga: 'Prórroga (% de interés)' };
             document.getElementById('subActionTitle').innerText = titles[type];
+            document.getElementById('subActionUnit').innerText = type === 'prorroga' ? '%' : '$';
+            document.getElementById('subActionCalcTip').classList.toggle('hidden', type !== 'prorroga');
             document.getElementById('subActionForm').classList.remove('hidden');
+            
+            if(type === 'prorroga') {
+                document.getElementById('subActionCalcTip').innerText = "* Se calculará sobre el capital actual.";
+            }
         };
 
         window.executeDebtAction = async () => {
-            const amount = parseFloat(document.getElementById('subActionAmount').value);
+            const inputValue = parseFloat(document.getElementById('subActionAmount').value);
             const date = document.getElementById('subActionDate').value;
-            if(!amount || !activeDebtId) return;
+            if(!inputValue || !activeDebtId) return;
 
             const dRef = doc(db, "deudas", activeDebtId);
             const dSnap = await getDoc(dRef);
             const dData = dSnap.data();
 
             let history = dData.history || [];
-            let updates = { history: [...history, { type: currentSubAction, amount, date }] };
+            let updates = { history: [...history, { type: currentSubAction, amount: inputValue, date }] };
             let expenseReason = "";
+            let amountToSpend = inputValue;
 
             if(currentSubAction === 'capital') {
-                updates.paidCapital = (dData.paidCapital || 0) + amount;
+                updates.paidCapital = (dData.paidCapital || 0) + inputValue;
                 expenseReason = `Abono Cap: ${dData.person}`;
             } else if(currentSubAction === 'interes') {
-                updates.paidInterest = (dData.paidInterest || 0) + amount;
+                updates.paidInterest = (dData.paidInterest || 0) + inputValue;
                 expenseReason = `Abono Int: ${dData.person}`;
             } else if(currentSubAction === 'prorroga') {
-                updates.interest = (dData.interest || 0) + amount;
+                // En prórroga el input es el porcentaje
+                const extraInterest = (dData.capital * inputValue) / 100;
+                updates.interest = (dData.interest || 0) + extraInterest;
                 updates.total = (dData.capital || 0) + updates.interest;
+                // La prórroga no genera un gasto de salida inmediato de dinero, solo aumenta la deuda
+                expenseReason = ""; 
             }
 
             if(expenseReason) {
                 await addDoc(collection(db, "gastos"), {
-                    reason: expenseReason, amount, date, isDebtAction: true, debtId: activeDebtId, createdAt: serverTimestamp()
+                    reason: expenseReason, amount: amountToSpend, date, isDebtAction: true, debtId: activeDebtId, category: dData.category || "Deuda", createdAt: serverTimestamp()
                 });
             }
 
