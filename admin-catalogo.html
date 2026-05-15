@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -63,7 +63,7 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <!-- Formulario Base (Categoría o Producto General) -->
+            <!-- Formulario Base -->
             <div class="lg:col-span-4 space-y-6">
                 <div class="glass-panel p-6 rounded-[2rem]">
                     <h2 class="text-xs font-black uppercase text-amber-500 mb-6 flex items-center gap-2 italic">
@@ -74,8 +74,22 @@
                         <input type="hidden" id="mainId">
                         
                         <div class="space-y-1">
-                            <label class="text-[10px] uppercase font-bold text-neutral-500 ml-1">Nombre General (ej: Perfumes Árabes)</label>
-                            <input type="text" id="mainName" placeholder="Nombre del grupo" required class="w-full">
+                            <label class="text-[10px] uppercase font-bold text-neutral-500 ml-1">Nombre General</label>
+                            <input type="text" id="mainName" placeholder="Ej: Perfumes Árabes" required class="w-full">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[10px] uppercase font-bold text-neutral-500 ml-1">WhatsApp de Pedidos (Sin +)</label>
+                            <input type="text" id="mainWhatsApp" placeholder="Ej: 573001234567" required class="w-full border-green-500/20">
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-[10px] uppercase font-bold text-neutral-500 ml-1">Categoría Principal</label>
+                            <select id="mainCategory" class="w-full" required>
+                                <option value="dama">Dama</option>
+                                <option value="caballero">Caballero</option>
+                                <option value="unisex">Unisex</option>
+                            </select>
                         </div>
 
                         <div class="space-y-1">
@@ -98,7 +112,7 @@
 
             <!-- Inventario y Gestión -->
             <div class="lg:col-span-8 space-y-6">
-                <!-- PANEL DE VARIANTES (Solo se activa al elegir un producto) -->
+                <!-- PANEL DE VARIANTES -->
                 <div id="variantSection" class="hidden glass-panel p-6 rounded-[2rem] border-amber-500/40 bg-amber-500/[0.03]">
                     <div class="flex items-center justify-between mb-6">
                         <div>
@@ -111,16 +125,16 @@
                     <form id="variantForm" class="space-y-4">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div class="space-y-3">
-                                <input type="text" id="varTitle" placeholder="Nombre Variante (ej: Chocolate / Invictus)" required class="w-full border-amber-500/20">
+                                <input type="text" id="varTitle" placeholder="Nombre Variante (ej: Chocolate)" required class="w-full border-amber-500/20">
                                 <select id="varGender" class="w-full" required>
                                     <option value="Dama">Dama</option>
                                     <option value="Caballero">Caballero</option>
                                     <option value="Unisex">Unisex</option>
                                 </select>
-                                <input type="text" id="varSize" placeholder="Presentación (ej: 100ml / 1 Libra)" required class="w-full">
+                                <input type="text" id="varSize" placeholder="Presentación (ej: 100ml)" required class="w-full">
                             </div>
                             <div class="space-y-3">
-                                <input type="text" id="varImg" placeholder="Link de Imagen (específica de variante)" class="w-full">
+                                <input type="text" id="varImg" placeholder="Link de Imagen específica" class="w-full">
                                 <div class="grid grid-cols-2 gap-2">
                                     <input type="number" id="varPriceOld" step="0.01" placeholder="Antes $" class="w-full border-red-500/20 text-red-400">
                                     <input type="number" id="varPriceNew" step="0.01" placeholder="Hoy $" required class="w-full border-green-500/20 text-green-400">
@@ -132,9 +146,7 @@
                         </div>
                     </form>
 
-                    <div id="variantList" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 border-t border-white/5 pt-6">
-                        <!-- Variantes renderizadas aquí -->
-                    </div>
+                    <div id="variantList" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8 border-t border-white/5 pt-6"></div>
                 </div>
 
                 <!-- Lista de Productos Existentes -->
@@ -164,14 +176,15 @@
             return url.trim().replace('dl=0', 'raw=1').replace('www.dropbox.com', 'dl.dropboxusercontent.com');
         };
 
-        // --- MANEJO DEL PRODUCTO PRINCIPAL ---
         const mainForm = document.getElementById('mainForm');
         mainForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const id = document.getElementById('mainId').value;
             const data = {
                 name: document.getElementById('mainName').value,
+                whatsapp: document.getElementById('mainWhatsApp').value.replace(/\D/g,''),
                 img: document.getElementById('mainImg').value,
+                category: document.getElementById('mainCategory').value,
                 description: document.getElementById('mainDesc').value,
                 updatedAt: serverTimestamp()
             };
@@ -186,7 +199,6 @@
             resetAll();
         });
 
-        // --- MANEJO DE VARIANTES ---
         const variantForm = document.getElementById('variantForm');
         variantForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -195,7 +207,7 @@
 
             const newVariant = {
                 id: Date.now().toString(),
-                title: document.getElementById('varTitle').value, // Nombre específico (ej: Chocolate)
+                title: document.getElementById('varTitle').value,
                 gender: document.getElementById('varGender').value,
                 size: document.getElementById('varSize').value,
                 priceOld: parseFloat(document.getElementById('varPriceOld').value || 0),
@@ -207,10 +219,8 @@
                 variants: arrayUnion(newVariant)
             });
             variantForm.reset();
-            // Actualizar vista local de variantes
         });
 
-        // --- ESCUCHA DE DATOS ---
         onSnapshot(query(collection(db, "perfumes"), orderBy("name", "asc")), (snap) => {
             const grid = document.getElementById('productsGrid');
             document.getElementById('totalProducts').innerText = snap.size;
@@ -232,9 +242,9 @@
                         </div>
                         <div class="flex-grow min-w-0">
                             <h3 class="text-sm font-black text-white uppercase truncate">${p.name}</h3>
-                            <p class="text-[9px] text-amber-500/60 uppercase font-black italic tracking-widest">${variants.length} VARIANTES ACTIVAS</p>
-                            <div class="flex gap-1 mt-2">
-                                <span class="bg-white/5 px-2 py-1 rounded text-[8px] font-bold text-white/40 uppercase">Toca para gestionar</span>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] text-amber-500/60 uppercase font-black italic tracking-widest">${variants.length} VARIANTES</span>
+                                <span class="text-[9px] text-green-500/60 font-bold">WA: ${p.whatsapp || 'N/A'}</span>
                             </div>
                         </div>
                     </div>
@@ -242,7 +252,6 @@
                 `;
                 grid.appendChild(card);
 
-                // Si este es el producto que estamos editando actualmente, refrescar sus variantes
                 if(document.getElementById('mainId').value === id) {
                     renderVariantsList(id, variants, p.img);
                 }
@@ -253,7 +262,9 @@
         window.selectProduct = (id, data) => {
             document.getElementById('mainId').value = id;
             document.getElementById('mainName').value = data.name;
+            document.getElementById('mainWhatsApp').value = data.whatsapp || "";
             document.getElementById('mainImg').value = data.img;
+            document.getElementById('mainCategory').value = data.category || "dama";
             document.getElementById('mainDesc').value = data.description || "";
             
             document.getElementById('mainSubmit').innerText = "ACTUALIZAR DATOS BASE";
@@ -287,7 +298,6 @@
                             </div>
                             <div class="flex items-center gap-2 mt-1">
                                 <span class="text-[10px] font-black text-green-400">$${v.priceNew}</span>
-                                ${v.priceOld > 0 ? `<span class="text-[8px] text-red-500/40 line-through italic font-bold">$${v.priceOld}</span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -316,7 +326,7 @@
             resetAll();
         };
 
-        const resetAll = () => {
+        window.resetAll = () => {
             mainForm.reset();
             document.getElementById('mainId').value = "";
             document.getElementById('mainSubmit').innerText = "REGISTRAR PRODUCTO BASE";
