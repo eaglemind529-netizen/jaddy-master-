@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jaddy Studio - Balance Global</title>
+    <title>Jaddy Studio - Sistema Integral</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -17,119 +17,134 @@
         }
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: var(--bg-dark); color: #ffffff; }
         .glass-panel { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 24px; }
-        .progress-bar-container { background: rgba(255,255,255,0.05); border-radius: 100px; height: 12px; overflow: hidden; }
-        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #ff5e00, #ff9e00); transition: width 0.5s ease; }
-        input[type="date"] { background: #000; border: 1px solid #222; color: white; padding: 8px; border-radius: 10px; font-size: 12px; }
+        .progress-bar-container { background: rgba(255,255,255,0.05); border-radius: 100px; height: 14px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: linear-gradient(90deg, #ff5e00, #ff9e00); transition: width 0.8s ease; }
+        
+        input[type="date"] { background: #000; border: 1px solid #222; color: white; padding: 8px; border-radius: 10px; font-size: 11px; }
         
         .card-stat {
-            padding: 24px;
+            padding: 20px;
             border-radius: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
             border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .success-glow { animation: success-pulse 2s infinite; }
+        @keyframes success-pulse {
+            0% { box-shadow: 0 0 0px rgba(16, 185, 129, 0); }
+            50% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); border-color: #10b981; }
+            100% { box-shadow: 0 0 0px rgba(16, 185, 129, 0); }
         }
     </style>
 </head>
 <body class="p-6">
 
     <div class="max-w-5xl mx-auto space-y-6">
-        <!-- HEADER Y FILTROS -->
-        <div class="flex flex-wrap justify-between items-end gap-4 glass-panel p-6">
+        <!-- HEADER CON BOTÓN DE EGRESOS -->
+        <header class="flex justify-between items-center glass-panel p-6">
             <div>
-                <h1 class="text-2xl font-black italic uppercase tracking-tighter">Balance <span class="text-orange-500">Global</span></h1>
-                <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Contabilidad Unificada Jaddy Studio</p>
+                <h1 class="text-2xl font-black italic uppercase tracking-tighter leading-none">Jaddy <span class="text-orange-500">Studio</span></h1>
+                <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mt-1">Control de Finanzas Global</p>
             </div>
-            <div class="flex gap-2">
-                <input type="date" id="filterStart">
-                <input type="date" id="filterEnd">
-                <button onclick="applyFilters()" class="bg-white/5 border border-white/10 text-white font-bold px-4 py-2 rounded-xl text-[10px] uppercase hover:bg-white/10">Filtrar</button>
+            <div class="flex gap-3">
+                <!-- Botón de Egresos restaurado -->
+                <button onclick="window.location.href='egresos.html'" class="bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-xl border border-red-500/20 transition-all flex items-center gap-2 font-black text-[10px] uppercase tracking-widest">
+                    <i data-lucide="minus-circle" class="w-4 h-4"></i>
+                    Egresos
+                </button>
+                <div class="bg-white/5 border border-white/10 p-2 rounded-xl flex items-center gap-2">
+                    <i data-lucide="calendar" class="w-4 h-4 text-neutral-500"></i>
+                    <input type="date" id="filterStart" class="bg-transparent border-none p-0 outline-none">
+                    <span class="text-neutral-600 text-xs">-</span>
+                    <input type="date" id="filterEnd" class="bg-transparent border-none p-0 outline-none">
+                    <button onclick="applyFilters()" class="bg-orange-500 text-black font-black px-3 py-1 rounded-lg text-[9px] uppercase">Filtrar</button>
+                </div>
             </div>
-        </div>
+        </header>
 
-        <!-- INDICADORES PRINCIPALES (INGRESOS, EGRESOS, CAJA REAL) -->
+        <!-- INDICADORES CLAVE: INGRESOS, EGRESOS, CAJA REAL -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="card-stat bg-emerald-500/5 border-emerald-500/20">
                 <div class="flex items-center gap-2 mb-2">
-                    <div class="w-8 h-8 bg-emerald-500/10 rounded-lg flex items-center justify-center text-emerald-500">
-                        <i data-lucide="trending-up" class="w-4 h-4"></i>
-                    </div>
-                    <p class="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Total Ingresos</p>
+                    <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i>
+                    <p class="text-[9px] font-black text-neutral-500 uppercase tracking-widest">Total Recibido (Ingresos)</p>
                 </div>
-                <h2 id="totalGrossIncomes" class="text-3xl font-black italic text-emerald-400 leading-none">$0.00</h2>
+                <h2 id="totalGrossIncomes" class="text-3xl font-black italic text-emerald-400">$0.00</h2>
             </div>
 
             <div class="card-stat bg-red-500/5 border-red-500/20">
                 <div class="flex items-center gap-2 mb-2">
-                    <div class="w-8 h-8 bg-red-500/10 rounded-lg flex items-center justify-center text-red-500">
-                        <i data-lucide="trending-down" class="w-4 h-4"></i>
-                    </div>
-                    <p class="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Total Egresos</p>
+                    <i data-lucide="trending-down" class="w-4 h-4 text-red-500"></i>
+                    <p class="text-[9px] font-black text-neutral-500 uppercase tracking-widest">Total Pagado (Egresos)</p>
                 </div>
-                <h2 id="totalExpenses" class="text-3xl font-black italic text-red-400 leading-none">$0.00</h2>
+                <h2 id="totalExpenses" class="text-3xl font-black italic text-red-400">$0.00</h2>
             </div>
 
-            <div class="card-stat bg-orange-500/5 border-orange-500/20">
+            <div id="balanceCard" class="card-stat bg-white/5 border-white/10">
                 <div class="flex items-center gap-2 mb-2">
-                    <div class="w-8 h-8 bg-orange-500/10 rounded-lg flex items-center justify-center text-orange-500">
-                        <i data-lucide="wallet" class="w-4 h-4"></i>
-                    </div>
-                    <p class="text-[10px] font-black text-neutral-400 uppercase tracking-widest">Caja Real (Neto)</p>
+                    <i data-lucide="wallet" class="w-4 h-4 text-orange-500"></i>
+                    <p class="text-[9px] font-black text-neutral-300 uppercase tracking-widest">Caja Real (Balance Neto)</p>
                 </div>
-                <h2 id="netBalance" class="text-3xl font-black italic text-white leading-none">$0.00</h2>
+                <h2 id="netBalance" class="text-3xl font-black italic text-white">$0.00</h2>
             </div>
         </div>
 
         <!-- META MENSUAL -->
-        <div class="glass-panel p-8">
-            <div class="flex justify-between items-center mb-4">
-                <p class="text-[11px] font-black text-neutral-500 uppercase italic tracking-[0.2em]">Progreso de Meta Mensual</p>
-                <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-bold text-neutral-600">META:</span>
-                    <input type="number" id="monthlyGoal" value="1000" onchange="updateGoal(this.value)" class="bg-white/5 border border-white/10 px-3 py-1 rounded-lg text-sm font-black text-white w-24 text-center">
+        <div id="metaPanel" class="glass-panel p-8">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <p class="text-[11px] font-black text-neutral-400 uppercase italic tracking-widest">Progreso de Meta Mensual</p>
+                    <p id="goalStatus" class="text-[9px] font-bold text-neutral-600 uppercase mt-1">Calculando progreso...</p>
+                </div>
+                <div class="bg-black/40 p-4 rounded-2xl border border-white/5">
+                    <p class="text-[9px] font-black text-orange-500 uppercase tracking-widest mb-1">Ajustar Meta</p>
+                    <div class="flex items-center gap-2">
+                        <span class="text-lg font-bold text-neutral-500">$</span>
+                        <input type="number" id="monthlyGoal" value="1000" onchange="updateGoal(this.value)" class="bg-transparent text-xl font-black text-white w-24 outline-none">
+                    </div>
                 </div>
             </div>
-            <div class="space-y-3">
+            <div class="space-y-4">
                 <div class="progress-bar-container">
                     <div id="goalBar" class="progress-bar-fill" style="width: 0%"></div>
                 </div>
-                <div class="flex justify-between text-[10px] font-black uppercase tracking-wider">
+                <div class="flex justify-between text-[10px] font-black uppercase italic">
                     <span id="goalPercent" class="text-orange-500">0% COMPLETADO</span>
                     <span id="goalRemaining" class="text-neutral-500">FALTAN $0.00</span>
                 </div>
             </div>
         </div>
 
-        <!-- DESGLOSE DETALLADO POR CATEGORÍA -->
+        <!-- DESGLOSE POR CATEGORÍA -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="glass-panel p-5">
-                <p class="text-[9px] font-black text-neutral-500 uppercase tracking-tighter mb-1">Ventas Beats</p>
-                <h4 id="totalBeats" class="text-xl font-black italic text-blue-400">$0</h4>
+            <div class="glass-panel p-6 flex flex-col gap-1 border-b-2 border-blue-500">
+                <p class="text-[10px] font-black text-neutral-500 uppercase italic">Ventas de Beats</p>
+                <h4 id="totalBeats" class="text-2xl font-black text-blue-400">$0</h4>
             </div>
-            <div class="glass-panel p-5">
-                <p class="text-[9px] font-black text-neutral-500 uppercase tracking-tighter mb-1">Abonos VIP</p>
-                <h4 id="totalVip" class="text-xl font-black italic text-orange-400">$0</h4>
+            <div class="glass-panel p-6 flex flex-col gap-1 border-b-2 border-purple-500">
+                <p class="text-[10px] font-black text-neutral-500 uppercase italic">Servicios VIP / Otros</p>
+                <h4 id="totalVip" class="text-2xl font-black text-purple-400">$0</h4>
             </div>
-            <div class="glass-panel p-5">
-                <p class="text-[9px] font-black text-neutral-500 uppercase tracking-tighter mb-1">Otros Ingresos</p>
-                <h4 id="totalOthers" class="text-xl font-black italic text-purple-400">$0</h4>
+            <div class="glass-panel p-6 flex flex-col gap-1 border-b-2 border-red-500">
+                <p class="text-[10px] font-black text-neutral-500 uppercase italic">Gastos Registrados</p>
+                <h4 id="totalExpSmall" class="text-2xl font-black text-red-400">$0</h4>
             </div>
         </div>
 
-        <!-- MOVIMIENTOS RECIENTES -->
+        <!-- HISTORIAL -->
         <div class="glass-panel p-6">
-            <h3 class="text-xs font-black uppercase italic mb-6 flex items-center gap-2 text-neutral-400">
-                <i data-lucide="list" class="w-4 h-4"></i> Transacciones Sincronizadas
+            <h3 class="text-xs font-black uppercase italic mb-6 flex items-center gap-2 text-neutral-400 tracking-widest">
+                <i data-lucide="list" class="w-4 h-4 text-orange-500"></i> Movimientos Recientes
             </h3>
             <div id="globalHistory" class="space-y-2">
-                <!-- Se llena con JS -->
+                <!-- Se llena dinámicamente -->
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -143,74 +158,90 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        let dataStore = { ventas: [], vip: [], otros: [], gastos: [], meta: 1000 };
+        let store = { ventas: [], vip: [], otros: [], gastos: [], meta: 1000 };
         let filters = { start: null, end: null };
 
-        async function loadSettings() {
+        async function init() {
             const snap = await getDoc(doc(db, "configuracion", "meta_mensual"));
             if (snap.exists()) {
-                dataStore.meta = snap.data().valor;
-                document.getElementById('monthlyGoal').value = dataStore.meta;
+                store.meta = snap.data().valor;
+                document.getElementById('monthlyGoal').value = store.meta;
             }
+            lucide.createIcons();
         }
 
         window.updateGoal = async (val) => {
-            dataStore.meta = parseFloat(val) || 0;
-            await setDoc(doc(db, "configuracion", "meta_mensual"), { valor: dataStore.meta });
+            store.meta = parseFloat(val) || 0;
+            await setDoc(doc(db, "configuracion", "meta_mensual"), { valor: store.meta });
             updateUI();
         };
 
         window.applyFilters = () => {
-            filters.start = document.getElementById('filterStart').value ? new Date(document.getElementById('filterStart').value + 'T00:00:00') : null;
-            filters.end = document.getElementById('filterEnd').value ? new Date(document.getElementById('filterEnd').value + 'T23:59:59') : null;
+            const s = document.getElementById('filterStart').value;
+            const e = document.getElementById('filterEnd').value;
+            filters.start = s ? new Date(s + 'T00:00:00') : null;
+            filters.end = e ? new Date(e + 'T23:59:59') : null;
             updateUI();
         };
 
         function updateUI() {
-            const filterFn = (item) => {
+            const checkFilter = (item) => {
                 const date = item.createdAt?.toDate() || (item.date ? new Date(item.date + 'T12:00:00') : new Date());
                 if (filters.start && date < filters.start) return false;
                 if (filters.end && date > filters.end) return false;
                 return true;
             };
 
-            // Cálculos Reales
-            const sumBeats = dataStore.ventas.filter(filterFn).reduce((s, i) => s + (i.isCredit ? (i.amountPaid || 0) : (i.amount || 0)), 0);
-            const sumVip = dataStore.vip.filter(filterFn).reduce((s, i) => s + (i.abono || 0), 0);
-            const sumOthers = dataStore.otros.filter(filterFn).reduce((s, i) => s + (i.amount || 0), 0);
-            const sumGastos = dataStore.gastos.filter(filterFn).reduce((s, i) => s + (i.amount || 0), 0);
+            const valBeats = store.ventas.filter(checkFilter).reduce((s, i) => s + (i.isCredit ? (i.amountPaid || 0) : (i.amount || 0)), 0);
+            const valVip = store.vip.filter(checkFilter).reduce((s, i) => s + (i.abono || 0), 0);
+            const valOthers = store.otros.filter(checkFilter).reduce((s, i) => s + (i.amount || 0), 0);
+            const valGastos = store.gastos.filter(checkFilter).reduce((s, i) => s + (i.amount || 0), 0);
 
-            const totalGross = sumBeats + sumVip + sumOthers;
-            const netAmount = totalGross - sumGastos;
+            const totalIn = valBeats + valVip + valOthers;
+            const net = totalIn - valGastos;
 
-            // Actualizar Pantalla Principal
-            document.getElementById('totalGrossIncomes').innerText = `$${totalGross.toLocaleString()}`;
-            document.getElementById('totalExpenses').innerText = `$${sumGastos.toLocaleString()}`;
-            document.getElementById('netBalance').innerText = `$${netAmount.toLocaleString()}`;
+            // Actualizar UI Principal
+            document.getElementById('totalGrossIncomes').innerText = `$${totalIn.toLocaleString()}`;
+            document.getElementById('totalExpenses').innerText = `$${valGastos.toLocaleString()}`;
+            document.getElementById('netBalance').innerText = `$${net.toLocaleString()}`;
 
             // Actualizar Desglose
-            document.getElementById('totalBeats').innerText = `$${sumBeats.toLocaleString()}`;
-            document.getElementById('totalVip').innerText = `$${sumVip.toLocaleString()}`;
-            document.getElementById('totalOthers').innerText = `$${sumOthers.toLocaleString()}`;
+            document.getElementById('totalBeats').innerText = `$${valBeats.toLocaleString()}`;
+            document.getElementById('totalVip').innerText = `$${(valVip + valOthers).toLocaleString()}`;
+            document.getElementById('totalExpSmall').innerText = `$${valGastos.toLocaleString()}`;
 
-            // Meta Mensual
-            const percent = dataStore.meta > 0 ? Math.min((totalGross / dataStore.meta) * 100, 100) : 0;
-            document.getElementById('goalBar').style.width = `${percent}%`;
+            // Meta
+            const percent = store.meta > 0 ? Math.min((totalIn / store.meta) * 100, 100) : 0;
+            const bar = document.getElementById('goalBar');
+            const panel = document.getElementById('metaPanel');
+            const balanceCard = document.getElementById('balanceCard');
+
+            bar.style.width = `${percent}%`;
             document.getElementById('goalPercent').innerText = `${percent.toFixed(1)}% COMPLETADO`;
-            document.getElementById('goalRemaining').innerText = totalGross >= dataStore.meta ? "META CUMPLIDA" : `FALTAN $${(dataStore.meta - totalGross).toLocaleString()}`;
+            
+            if(totalIn >= store.meta && store.meta > 0) {
+                document.getElementById('goalStatus').innerText = "¡META MENSUAL ALCANZADA!";
+                document.getElementById('goalRemaining').innerText = "EXCEDENTE POSITIVO";
+                balanceCard.classList.add('success-glow');
+                bar.style.background = "linear-gradient(90deg, #10b981, #34d399)";
+            } else {
+                document.getElementById('goalStatus').innerText = "TRABAJANDO POR LA META...";
+                document.getElementById('goalRemaining').innerText = `FALTAN $${(store.meta - totalIn).toLocaleString()}`;
+                balanceCard.classList.remove('success-glow');
+                bar.style.background = "linear-gradient(90deg, #ff5e00, #ff9e00)";
+            }
 
-            // Historial Combinado
-            const history = [
-                ...dataStore.ventas.map(v => ({ label: v.beatName, amount: (v.isCredit ? v.amountPaid : v.amount), type: 'in', cat: 'BEAT', date: v.createdAt?.toDate() })),
-                ...dataStore.otros.map(o => ({ label: o.description, amount: o.amount, type: 'in', cat: 'OTROS', date: o.createdAt?.toDate() || (o.date ? new Date(o.date + 'T12:00:00') : null) })),
-                ...dataStore.gastos.map(g => ({ label: g.reason, amount: g.amount, type: 'out', cat: 'GASTO', date: g.createdAt?.toDate() }))
-            ].filter(h => h.date).sort((a,b) => b.date - a.date).slice(0, 12);
+            // Historial
+            const combined = [
+                ...store.ventas.map(v => ({ label: v.beatName, amount: (v.isCredit ? v.amountPaid : v.amount), type: 'in', cat: 'BEAT', date: v.createdAt?.toDate() })),
+                ...store.otros.map(o => ({ label: o.description || 'Otro Ingreso', amount: o.amount, type: 'in', cat: 'OTROS', date: o.createdAt?.toDate() || (o.date ? new Date(o.date + 'T12:00:00') : null) })),
+                ...store.gastos.map(g => ({ label: g.reason, amount: g.amount, type: 'out', cat: 'GASTO', date: g.createdAt?.toDate() }))
+            ].filter(x => x.date && checkFilter(x)).sort((a,b) => b.date - a.date).slice(0, 15);
 
-            const log = document.getElementById('globalHistory');
-            log.innerHTML = history.map(h => `
-                <div class="flex justify-between items-center p-4 bg-white/[0.03] rounded-2xl border border-white/[0.05] hover:bg-white/[0.05] transition-all">
+            document.getElementById('globalHistory').innerHTML = combined.map(h => `
+                <div class="flex justify-between items-center p-4 bg-white/[0.02] rounded-2xl border border-white/[0.05] hover:bg-white/[0.04] transition-all">
                     <div class="flex items-center gap-4">
-                        <div class="w-2 h-2 rounded-full ${h.type === 'in' ? 'bg-emerald-500' : 'bg-red-500'}"></div>
+                        <div class="w-1.5 h-6 rounded-full ${h.type === 'in' ? 'bg-emerald-500' : 'bg-red-500'}"></div>
                         <div>
                             <p class="text-[11px] font-black uppercase italic leading-none">${h.label}</p>
                             <p class="text-[8px] text-neutral-500 uppercase mt-1 font-bold">${h.cat} • ${h.date.toLocaleDateString()}</p>
@@ -221,30 +252,29 @@
                     </p>
                 </div>
             `).join('');
-            
+
             lucide.createIcons();
         }
 
-        // Listeners en tiempo real para todas las colecciones
+        // Suscripciones a Firebase
         onSnapshot(collection(db, "ventas"), s => {
-            dataStore.ventas = s.docs.map(d => ({ id: d.id, ...d.data() }));
+            store.ventas = s.docs.map(d => ({ id: d.id, ...d.data() }));
             updateUI();
         });
         onSnapshot(collection(db, "artistasVIP"), s => {
-            dataStore.vip = s.docs.map(d => ({ id: d.id, ...d.data() }));
+            store.vip = s.docs.map(d => ({ id: d.id, ...d.data() }));
             updateUI();
         });
-        onSnapshot(collection(db, "otrosIngresos"), s => {
-            dataStore.otros = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        onSnapshot(collection(db, "otros_ingresos"), s => {
+            store.otros = s.docs.map(d => ({ id: d.id, ...d.data() }));
             updateUI();
         });
         onSnapshot(collection(db, "gastos"), s => {
-            dataStore.gastos = s.docs.map(d => ({ id: d.id, ...d.data() }));
+            store.gastos = s.docs.map(d => ({ id: d.id, ...d.data() }));
             updateUI();
         });
 
-        loadSettings();
-        window.onload = () => lucide.createIcons();
+        init();
     </script>
 </body>
 </html>
