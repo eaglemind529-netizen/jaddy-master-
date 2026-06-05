@@ -252,7 +252,7 @@
                     <i data-lucide="chevron-right" class="text-neutral-700 w-5 h-5"></i>
                 </button>
 
-                <button class="w-full glass-panel p-6 flex items-center justify-between group hover:border-blue-500/50 transition-all cursor-pointer">
+                <button onclick="alert('Módulo de Ventas de Productos en desarrollo')" class="w-full glass-panel p-6 flex items-center justify-between group hover:border-blue-500/50 transition-all cursor-pointer">
                     <div class="flex items-center gap-4">
                         <div class="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center group-hover:bg-blue-500 group-hover:text-white transition-all text-blue-500">
                             <i data-lucide="package" class="w-6 h-6"></i>
@@ -431,7 +431,7 @@
         </div>
     </div>
 
-    <!-- MODAL PARA ABONOS (AGREGADO PARA COMPLETAR FUNCIONALIDAD) -->
+    <!-- MODAL PARA ABONOS -->
     <div id="abonoVipModal" class="modal-overlay">
         <div class="modal-content animate-in zoom-in duration-200">
             <div class="flex justify-between items-center mb-6">
@@ -467,7 +467,7 @@
         let currentVipMode = 'vip'; 
         let vipData = [];
         let ventasData = [];
-        let otherIncomeData = []; // ALMACENAR OTROS INGRESOS
+        let otherIncomeData = []; 
         let currentTimeFrame = 'day';
 
         window.openModal = (id) => { document.getElementById(id).style.display = 'flex'; };
@@ -512,6 +512,23 @@
 
         window.openCloseCashModal = () => { updateBreakdownUI(); openModal('closeCashModal'); };
 
+        // Helper para convertir fechas y timestamps de Firestore de forma ultra segura contra desajustes de 1980
+        function safeGetDate(item) {
+            if (item.date) {
+                // Formato local YYYY-MM-DD mapeado correctamente sin desfase de zona horaria
+                const parsed = new Date(item.date + 'T12:00:00');
+                if (!isNaN(parsed.getTime())) return parsed;
+            }
+            if (item.createdAt && typeof item.createdAt.toDate === 'function') {
+                return item.createdAt.toDate();
+            }
+            if (item.updatedAt && typeof item.updatedAt.toDate === 'function') {
+                return item.updatedAt.toDate();
+            }
+            // Si todo falla (ej. latencia de guardado del serverTimestamp en Firestore), retorna hoy
+            return new Date();
+        }
+
         function updateBreakdownUI() {
             const now = new Date();
             let limitDate = new Date();
@@ -520,7 +537,7 @@
             else if (currentTimeFrame === 'month') limitDate.setDate(now.getDate() - 30);
 
             const filterFn = (item) => {
-                const date = item.date ? new Date(item.date + 'T12:00:00') : (item.updatedAt?.toDate() || item.createdAt?.toDate() || new Date());
+                const date = safeGetDate(item);
                 return date >= limitDate;
             };
 
@@ -577,6 +594,7 @@
                     projectName: `Venta: ${saleData.beatName}`,
                     totalProyecto: saleData.amount,
                     abono: saleData.amountPaid,
+                    abonoInicial: saleData.amountPaid, // Se guarda el inicial de forma interna para la reversión inteligente
                     isCredit: true,
                     dueDate: document.getElementById('dueDateSale').value,
                     updatedAt: serverTimestamp()
@@ -588,11 +606,13 @@
 
         document.getElementById('vipForm').onsubmit = async (e) => {
             e.preventDefault();
+            const abonoInitVal = parseFloat(document.getElementById('abonoInitial').value);
             await addDoc(collection(db, "artistasVIP"), {
                 artistName: document.getElementById('artistName').value,
                 projectName: document.getElementById('projectName').value,
                 totalProyecto: parseFloat(document.getElementById('totalProject').value),
-                abono: parseFloat(document.getElementById('abonoInitial').value),
+                abono: abonoInitVal,
+                abonoInicial: abonoInitVal, // Se guarda el inicial de forma interna para la reversión inteligente
                 isCredit: document.getElementById('isCreditVip').checked,
                 instrumentalName: document.getElementById('hasBeat').checked ? document.getElementById('instrumentalName').value : "",
                 dueDate: document.getElementById('dueDateVip').value,
@@ -606,6 +626,40 @@
         window.deleteVip = async (id) => { if(confirm("¿Eliminar registro?")) await deleteDoc(doc(db, "artistasVIP", id)); };
         window.deleteOther = async (id) => { if(confirm("¿Eliminar ingreso?")) await deleteDoc(doc(db, "otrosIngresos", id)); };
 
+        // NUEVA FUNCIÓN PARA REVERTIR / DEVOLVER LOS ABONOS AL ESTADO INICIAL
+        window.revertirAbonos = async (id) => {
+            const docRef = doc(db, "artistasVIP", id);
+            const snap = await getDoc(docRef);
+            if (snap.exists()) {
+                const data = snap.data();
+                // Si el registro ya posee el campo 'abonoInicial', lo usamos. De lo contrario, usamos el abono actual como sugerencia
+                const inicialSugerido = data.abonoInicial !== undefined ? data.abonoInicial : (data.abono || 0);
+                
+                const promptVal = prompt(
+                    `¿Deseas revertir los abonos de "${data.artistName}"?\n\nConfirma o ingresa el monto total de abonos que deseas restablecer (por defecto $${inicialSugerido}):`, 
+                    inicialSugerido
+                );
+                
+                if (promptVal !== null) {
+                    const val = parseFloat(promptVal);
+                    if (!isNaN(val) && val >= 0 && val <= data.totalProyecto) {
+                        await updateDoc(docRef, { 
+                            abono: val, 
+                            updatedAt: serverTimestamp() 
+                        });
+                        addActivity(`Pago Revertido`, `Se devolvió abono de ${data.artistName} a $${val}`, 'rotate-ccw');
+                    } else {
+                        alert("Monto inválido. Debe ser un número entre 0 y el total del proyecto ($" + data.totalProyecto + ").");
+                    }
+                }
+            }
+        };
+
+        function addActivity(title, desc, iconName) {
+            // Función auxiliar local para registrar actividad visual tras una reversión manual
+            console.log("Actividad agregada localmente:", title, desc);
+        }
+
         function renderVipGrid() {
             const grid = document.getElementById('monitorGrid');
             if(!grid) return;
@@ -617,7 +671,7 @@
             filtered.forEach(item => {
                 const deuda = item.totalProyecto - item.abono;
                 const card = document.createElement('div');
-                card.className = `vip-card glass-panel p-5 border-l-4 group ${deuda > 0 ? 'border-red-500' : 'border-emerald-500'}`;
+                card.className = `vip-card glass-panel p-5 border-l-4 group ${deuda > 0 ? 'border-red-500' : 'border-emerald-500'} relative`;
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex-1">
@@ -625,8 +679,12 @@
                             <p class="text-[9px] text-neutral-500 uppercase font-bold">${item.projectName}</p>
                         </div>
                         <div class="flex flex-col items-end gap-2">
-                            <span class="status-badge ${deuda > 0 ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}">${deuda > 0 ? '$'+deuda : 'PAGADO'}</span>
-                            ${deuda > 0 ? `<button onclick="openAbonoModal('${item.id}', '${item.artistName}')" class="w-8 h-8 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-500"><i data-lucide="plus" class="w-4 h-4"></i></button>` : ''}
+                            <span class="status-badge ${deuda > 0 ? 'bg-red-500/10 text-red-500' : 'bg-emerald-500/10 text-emerald-500'}">${deuda > 0 ? '$'+deuda.toLocaleString() : 'PAGADO'}</span>
+                            <div class="flex gap-1.5 mt-1">
+                                ${deuda > 0 ? `<button onclick="openAbonoModal('${item.id}', '${item.artistName}')" class="w-8 h-8 bg-emerald-500/10 border border-emerald-500/20 rounded-lg flex items-center justify-center text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all" title="Abonar Pago"><i data-lucide="plus" class="w-4 h-4"></i></button>` : ''}
+                                <button onclick="revertirAbonos('${item.id}')" class="w-8 h-8 bg-purple-500/10 border border-purple-500/20 rounded-lg flex items-center justify-center text-purple-400 hover:bg-purple-500 hover:text-white transition-all" title="Devolver / Revertir Abonos"><i data-lucide="undo-2" class="w-4 h-4"></i></button>
+                                <button onclick="deleteVip('${item.id}')" class="w-8 h-8 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-all" title="Eliminar Registro"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            </div>
                         </div>
                     </div>
                     <div class="w-full h-1.5 bg-white/5 rounded-full overflow-hidden">
@@ -663,7 +721,7 @@
             window.tRevV = tRevV; updateGlobalRecaudado(); renderActivityLog();
         });
 
-        // NUEVO LISTENER OTROS INGRESOS
+        // LISTENER OTROS INGRESOS
         onSnapshot(query(collection(db, "otrosIngresos"), orderBy("createdAt", "desc")), (snap) => {
             otherIncomeData = []; let tRevO = 0;
             snap.forEach(d => {
@@ -681,7 +739,11 @@
             const combined = [
                 ...ventasData.map(v => ({ ...v, logType: 'venta' })),
                 ...otherIncomeData.map(o => ({ ...o, logType: 'otro' }))
-            ].sort((a, b) => (b.createdAt?.toDate() || 0) - (a.createdAt?.toDate() || 0)).slice(0, 10);
+            ].sort((a, b) => {
+                const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date();
+                const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date();
+                return dateB - dateA;
+            }).slice(0, 10);
 
             combined.forEach(item => {
                 const isOtro = item.logType === 'otro';
@@ -717,7 +779,16 @@
 
         onSnapshot(collection(db, "beats"), (snap) => { document.getElementById('catalogCount').innerText = `${snap.size} Activos`; });
 
-        window.onload = () => lucide.createIcons();
+        window.onload = () => {
+            lucide.createIcons();
+            // Pre-configurar fechas de hoy en todos los selectores de fecha locales de forma segura
+            const todayStr = new Date().toISOString().split('T')[0];
+            const dateInputs = ['otherDate', 'dueDateSale', 'dueDateVip'];
+            dateInputs.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = todayStr;
+            });
+        };
     </script>
 </body>
 </html>
