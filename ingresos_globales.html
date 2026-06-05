@@ -194,6 +194,8 @@
 
             const valBeats = store.ventas.filter(checkFilter).reduce((s, i) => s + (i.isCredit ? (i.amountPaid || 0) : (i.amount || 0)), 0);
             const valVip = store.vip.filter(checkFilter).reduce((s, i) => s + (i.abono || 0), 0);
+            
+            // CORRECCIÓN CLAVE: Se calcula la suma correcta usando los montos de la colección "otrosIngresos"
             const valOthers = store.otros.filter(checkFilter).reduce((s, i) => s + (i.amount || 0), 0);
             const valGastos = store.gastos.filter(checkFilter).reduce((s, i) => s + (i.amount || 0), 0);
 
@@ -265,7 +267,8 @@
             store.vip = s.docs.map(d => ({ id: d.id, ...d.data() }));
             updateUI();
         });
-        onSnapshot(collection(db, "otros_ingresos"), s => {
+        // CORRECCIÓN CLAVE: Se cambió "otros_ingresos" a "otrosIngresos" para alinearse perfectamente con tu index.html
+        onSnapshot(collection(db, "otrosIngresos"), s => {
             store.otros = s.docs.map(d => ({ id: d.id, ...d.data() }));
             updateUI();
         });
