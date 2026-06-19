@@ -21,26 +21,22 @@
         }
         input:focus, select:focus, textarea:focus { border-color: #f97316 !important; }
         .glass-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .progress-bar-bg { background: rgba(255, 255, 255, 0.05); height: 6px; border-radius: 10px; overflow: hidden; }
-        .progress-bar-fill { background: linear-gradient(90deg, #f97316, #fb923c); height: 100%; transition: width 0.5s ease; }
         .modal-overlay { background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); }
     </style>
 </head>
 <body>
 
     <div id="app">
-        <!-- Modal de Pago de Membresía -->
+        <!-- Modal -->
         <div id="quickAbonoModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 modal-overlay">
             <div class="glass-card p-8 rounded-[2.5rem] border-orange-500/30 border w-full max-w-sm">
-                <h2 class="text-xl font-black uppercase italic tracking-tighter text-orange-500 mb-2">Registrar Pago Mensual</h2>
+                <h2 class="text-xl font-black uppercase italic tracking-tighter text-orange-500 mb-2">Registrar Pago</h2>
                 <p id="abonoTargetName" class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-6"></p>
                 <input type="hidden" id="quickAbonoId">
-                <div class="space-y-4">
-                    <input type="number" id="quickAbonoAmount" placeholder="Monto abonado a membresía $" autofocus>
-                    <div class="flex gap-3">
-                        <button onclick="closeQuickAbono()" class="flex-1 py-3 bg-white/5 text-white rounded-xl font-black text-[10px] uppercase tracking-widest border border-white/5">CANCELAR</button>
-                        <button onclick="saveQuickAbono()" class="flex-1 py-3 bg-orange-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest">PROCESAR PAGO</button>
-                    </div>
+                <input type="number" id="quickAbonoAmount" placeholder="Monto $" class="mb-4">
+                <div class="flex gap-3">
+                    <button onclick="closeQuickAbono()" class="flex-1 py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest">CANCELAR</button>
+                    <button onclick="saveQuickAbono()" class="flex-1 py-3 bg-orange-600 rounded-xl text-[10px] font-black uppercase tracking-widest">PROCESAR</button>
                 </div>
             </div>
         </div>
@@ -70,33 +66,26 @@
                 </div>
                 <form id="saveArtistForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <input type="hidden" id="editId">
-                    <div class="space-y-4">
-                        <input type="text" id="artistName" placeholder="Nombre del Artista" required>
-                        <input type="text" id="plan" placeholder="Nombre del Plan (Ej: Membresía Gold)" required>
-                        <div class="grid grid-cols-2 gap-4">
-                            <input type="number" id="limit" placeholder="Límite Servicios/Mes" required>
-                            <input type="number" id="totalCost" placeholder="Mensualidad $" required>
-                        </div>
-                    </div>
-                    <div class="space-y-4">
-                        <input type="text" id="pdfLink" placeholder="Enlace a Contrato">
-                        <input type="number" id="initialDeposit" placeholder="Abono Inicial al plan $">
-                    </div>
-                    <button type="submit" class="md:col-span-2 bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest hover:bg-orange-500 hover:text-white transition-all">
-                        ACTIVAR MEMBRESÍA
-                    </button>
+                    <input type="text" id="artistName" placeholder="Nombre del Artista" required>
+                    <input type="text" id="plan" placeholder="Nombre del Plan" required>
+                    <input type="number" id="limit" placeholder="Límite Servicios/Mes" required>
+                    <input type="number" id="totalCost" placeholder="Mensualidad $" required>
+                    <input type="number" id="initialDeposit" placeholder="Abono Inicial $" class="md:col-span-2">
+                    <button type="submit" class="md:col-span-2 bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest hover:bg-orange-500 transition-all">ACTIVAR MEMBRESÍA</button>
                 </form>
             </section>
 
-            <div id="artistsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Los artistas VIP se renderizan aquí -->
-            </div>
+            <h2 class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-6">Artistas VIP Activos</h2>
+            <div id="artistsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20"></div>
+
+            <h2 class="text-[10px] font-black text-neutral-600 uppercase tracking-widest mb-6 border-t border-white/5 pt-10">Historial de Eliminados (Recuperar)</h2>
+            <div id="archivedList" class="grid grid-cols-1 md:grid-cols-3 gap-4"></div>
         </main>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, doc, setDoc, updateDoc, deleteDoc, serverTimestamp, addDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, doc, setDoc, updateDoc, serverTimestamp, addDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -112,129 +101,72 @@
         const artistasRef = collection(db, 'artistasVIP');
 
         const syncToMonitor = async (id, name, abono) => {
-            try {
-                const monitorRef = doc(db, 'artifacts', 'jaddy-master-v3', 'public', 'data', 'vip_report', id);
-                await setDoc(monitorRef, { 
-                    name, 
-                    ingresoVIP: parseFloat(abono) || 0, 
-                    fechaRegistro: serverTimestamp() 
-                }, { merge: true });
-            } catch (e) { console.error("Error sincronizando:", e); }
+            const monitorRef = doc(db, 'artifacts', 'jaddy-master-v3', 'public', 'data', 'vip_report', id);
+            await setDoc(monitorRef, { name, ingresoVIP: parseFloat(abono) || 0, fechaRegistro: serverTimestamp(), active: true }, { merge: true });
         };
 
         onSnapshot(query(artistasRef, orderBy('updatedAt', 'desc')), (snap) => {
             const list = document.getElementById('artistsList');
-            list.innerHTML = '';
-            if (snap.empty) {
-                list.innerHTML = '<p class="col-span-full text-center py-20 opacity-50 uppercase font-black tracking-widest text-xs">No hay artistas con membresía activa</p>';
-            }
+            const arc = document.getElementById('archivedList');
+            list.innerHTML = ''; arc.innerHTML = '';
+            
             snap.forEach(docSnap => {
                 const a = docSnap.data();
                 const id = docSnap.id;
-                const deuda = (a.costo || 0) - (a.abono || 0);
-                const card = document.createElement('div');
-                card.className = "glass-card p-6 rounded-[2rem] border border-white/5";
-                card.innerHTML = `
-                    <div class="flex justify-between mb-4">
-                        <div class="w-10 h-10 bg-orange-600/20 rounded-xl flex items-center justify-center border border-orange-500/20">
-                            <i data-lucide="crown" class="text-orange-500 w-5 h-5"></i>
-                        </div>
-                        <div class="flex gap-2">
-                             <button onclick="window.openQuickAbono('${id}', '${a.artistName}')" class="w-8 h-8 flex items-center justify-center bg-emerald-600/20 text-emerald-500 rounded-lg hover:bg-emerald-600 hover:text-white transition-all">
-                                <i data-lucide="dollar-sign" class="w-4 h-4"></i>
-                             </button>
-                             <button onclick="window.editarArtista('${id}')" class="text-neutral-500 hover:text-blue-500 p-2"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
-                             <button onclick="window.eliminarArtista('${id}')" class="text-neutral-500 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
-                        </div>
-                    </div>
-                    <h3 class="font-black uppercase italic text-lg text-white tracking-tighter">${a.artistName}</h3>
-                    <p class="text-[9px] text-orange-500 font-bold uppercase mb-6 tracking-widest">${a.plan}</p>
-                    <div class="grid grid-cols-2 gap-3 mb-6">
-                        <div class="bg-black/40 p-3 rounded-2xl border border-white/5 text-center">
-                            <p class="text-[8px] font-bold text-neutral-500 uppercase">Abonado</p>
-                            <p class="text-sm font-black text-emerald-500">$${a.abono}</p>
-                        </div>
-                        <div class="bg-black/40 p-3 rounded-2xl border border-white/5 text-center">
-                            <p class="text-[8px] font-bold text-neutral-500 uppercase">Saldo Pendiente</p>
-                            <p class="text-sm font-black text-orange-500">$${deuda > 0 ? deuda : 0}</p>
-                        </div>
-                    </div>
-                `;
-                list.appendChild(card);
+                
+                if (a.status === 'archived') {
+                    arc.innerHTML += `
+                        <div class="glass-card p-4 rounded-xl flex justify-between items-center text-[10px]">
+                            <span class="font-bold text-neutral-400">${a.artistName}</span>
+                            <button onclick="window.recuperarArtista('${id}')" class="text-emerald-500 font-black uppercase underline">Recuperar</button>
+                        </div>`;
+                } else {
+                    const deuda = (a.costo || 0) - (a.abono || 0);
+                    list.innerHTML += `
+                        <div class="glass-card p-6 rounded-[2rem] border border-white/5">
+                            <div class="flex justify-between mb-4">
+                                <div class="w-10 h-10 bg-orange-600/20 rounded-xl flex items-center justify-center border border-orange-500/20">
+                                    <i data-lucide="crown" class="text-orange-500 w-5 h-5"></i>
+                                </div>
+                                <div class="flex gap-2">
+                                     <button onclick="window.openQuickAbono('${id}', '${a.artistName}')" class="w-8 h-8 flex items-center justify-center bg-emerald-600/20 text-emerald-500 rounded-lg hover:bg-emerald-600 hover:text-white transition-all"><i data-lucide="dollar-sign" class="w-4 h-4"></i></button>
+                                     <button onclick="window.archivarArtista('${id}')" class="text-neutral-500 hover:text-red-500 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                                </div>
+                            </div>
+                            <h3 class="font-black uppercase italic text-lg text-white">${a.artistName}</h3>
+                            <p class="text-[9px] text-orange-500 font-bold uppercase mb-6">${a.plan}</p>
+                            <div class="grid grid-cols-2 gap-3 text-center">
+                                <div class="bg-black/40 p-3 rounded-2xl"><p class="text-[8px] text-neutral-500">Abonado</p><p class="text-sm font-black text-emerald-500">$${a.abono || 0}</p></div>
+                                <div class="bg-black/40 p-3 rounded-2xl"><p class="text-[8px] text-neutral-500">Saldo</p><p class="text-sm font-black text-orange-500">$${deuda > 0 ? deuda : 0}</p></div>
+                            </div>
+                        </div>`;
+                }
             });
             lucide.createIcons();
         });
 
-        window.openCreateForm = () => {
-            document.getElementById('saveArtistForm').reset();
-            document.getElementById('editId').value = '';
-            document.getElementById('artistForm').classList.remove('hidden');
-        };
-
-        window.closeForm = () => document.getElementById('artistForm').classList.add('hidden');
-
-        window.openQuickAbono = (id, name) => {
-            document.getElementById('quickAbonoId').value = id;
-            document.getElementById('abonoTargetName').innerText = name;
-            document.getElementById('quickAbonoModal').classList.remove('hidden');
-        };
-
-        window.closeQuickAbono = () => document.getElementById('quickAbonoModal').classList.add('hidden');
-
-        window.saveQuickAbono = async () => {
-            const id = document.getElementById('quickAbonoId').value;
-            const amount = parseFloat(document.getElementById('quickAbonoAmount').value) || 0;
-            const docRef = doc(db, 'artistasVIP', id);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) {
-                const newAbono = (docSnap.data().abono || 0) + amount;
-                await updateDoc(docRef, { abono: newAbono, updatedAt: serverTimestamp() });
-                await syncToMonitor(id, docSnap.data().artistName, newAbono);
-            }
-            closeQuickAbono();
-        };
-
-        window.editarArtista = async (id) => {
+        window.recuperarArtista = async (id) => {
             const snap = await getDoc(doc(db, 'artistasVIP', id));
-            if (snap.exists()) {
-                const data = snap.data();
-                document.getElementById('editId').value = id;
-                document.getElementById('artistName').value = data.artistName;
-                document.getElementById('plan').value = data.plan;
-                document.getElementById('limit').value = data.limit;
-                document.getElementById('totalCost').value = data.costo;
-                document.getElementById('artistForm').classList.remove('hidden');
+            await updateDoc(doc(db, 'artistasVIP', id), { status: 'active', updatedAt: serverTimestamp() });
+            await syncToMonitor(id, snap.data().artistName, snap.data().abono);
+        };
+
+        window.archivarArtista = async (id) => {
+            if(confirm("¿Archivar artista?")) {
+                await updateDoc(doc(db, 'artistasVIP', id), { status: 'archived', updatedAt: serverTimestamp() });
+                const monitorRef = doc(db, 'artifacts', 'jaddy-master-v3', 'public', 'data', 'vip_report', id);
+                await updateDoc(monitorRef, { active: false });
             }
         };
 
-        window.eliminarArtista = async (id) => {
-            if(confirm("¿Eliminar membresía?")) {
-                await deleteDoc(doc(db, 'artistasVIP', id));
-                await deleteDoc(doc(db, 'artifacts', 'jaddy-master-v3', 'public', 'data', 'vip_report', id));
-            }
-        };
+        // Funciones auxiliares
+        window.openCreateForm = () => { document.getElementById('saveArtistForm').reset(); document.getElementById('artistForm').classList.toggle('hidden'); };
+        window.closeForm = () => document.getElementById('artistForm').classList.add('hidden');
+        window.openQuickAbono = (id, name) => { document.getElementById('quickAbonoId').value = id; document.getElementById('abonoTargetName').innerText = name; document.getElementById('quickAbonoModal').classList.remove('hidden'); };
+        window.closeQuickAbono = () => document.getElementById('quickAbonoModal').classList.add('hidden');
+        window.saveQuickAbono = async () => { const id = document.getElementById('quickAbonoId').value; const amount = parseFloat(document.getElementById('quickAbonoAmount').value) || 0; const docRef = doc(db, 'artistasVIP', id); const snap = await getDoc(docRef); const newAbono = (snap.data().abono || 0) + amount; await updateDoc(docRef, { abono: newAbono, updatedAt: serverTimestamp() }); await syncToMonitor(id, snap.data().artistName, newAbono); closeQuickAbono(); };
 
-        document.getElementById('saveArtistForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const editId = document.getElementById('editId').value;
-            const data = {
-                artistName: document.getElementById('artistName').value,
-                plan: document.getElementById('plan').value,
-                limit: parseInt(document.getElementById('limit').value),
-                costo: parseFloat(document.getElementById('totalCost').value),
-                updatedAt: serverTimestamp()
-            };
-            if (editId) {
-                await updateDoc(doc(db, 'artistasVIP', editId), data);
-                const snap = await getDoc(doc(db, 'artistasVIP', editId));
-                await syncToMonitor(editId, data.artistName, snap.data().abono);
-            } else {
-                data.abono = parseFloat(document.getElementById('initialDeposit').value) || 0;
-                const newDoc = await addDoc(artistasRef, data);
-                await syncToMonitor(newDoc.id, data.artistName, data.abono);
-            }
-            closeForm();
-        };
+        document.getElementById('saveArtistForm').onsubmit = async (e) => { e.preventDefault(); const data = { artistName: document.getElementById('artistName').value, plan: document.getElementById('plan').value, limit: parseInt(document.getElementById('limit').value), costo: parseFloat(document.getElementById('totalCost').value), abono: parseFloat(document.getElementById('initialDeposit').value) || 0, status: 'active', updatedAt: serverTimestamp() }; const newDoc = await addDoc(artistasRef, data); await syncToMonitor(newDoc.id, data.artistName, data.abono); closeForm(); };
     </script>
 </body>
 </html>
