@@ -1,4 +1,4 @@
-```html
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -62,18 +62,27 @@
     <div id="app">
         <nav class="p-4 border-b border-white/5 bg-black/80 backdrop-blur-2xl sticky top-0 z-[60]">
             <div class="max-w-5xl mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
-                        <i data-lucide="disc" class="text-black animate-spin-slow w-6 h-6"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-lg font-black italic tracking-tighter leading-none text-white uppercase text-orange-500">Jaddy Studio</h1>
-                        <p class="text-[7px] font-bold text-white uppercase tracking-[0.2em] mt-1">Admin Panel</p>
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
+                            <i data-lucide="disc" class="text-black animate-spin-slow w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-lg font-black italic tracking-tighter leading-none text-white uppercase text-orange-500">Jaddy Studio</h1>
+                            <p class="text-[7px] font-bold text-white uppercase tracking-[0.2em] mt-1">Admin Panel</p>
+                        </div>
                     </div>
                 </div>
-                <button onclick="window.prepareCreate()" class="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
-                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> AGREGAR BEAT
-                </button>
+                
+                <div class="flex items-center gap-3">
+                    <a href="artistas.html" class="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg font-black text-[9px] uppercase tracking-widest transition-all">
+                        <i data-lucide="users" class="w-3.5 h-3.5"></i> ARTISTAS
+                    </a>
+                    
+                    <button onclick="window.prepareCreate()" class="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> AGREGAR BEAT
+                    </button>
+                </div>
             </div>
         </nav>
 
@@ -311,5 +320,6 @@
     </script>
 </body>
 </html>
+
 
 ```
