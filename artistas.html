@@ -85,7 +85,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, doc, setDoc, updateDoc, serverTimestamp, addDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, serverTimestamp, addDoc, getDoc, where } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -100,11 +100,8 @@
         const db = getFirestore(app);
         const artistasRef = collection(db, 'artistasVIP');
 
-        const syncToMonitor = async (id, name, abono) => {
-            const monitorRef = doc(db, 'artifacts', 'jaddy-master-v3', 'public', 'data', 'vip_report', id);
-            await setDoc(monitorRef, { name, ingresoVIP: parseFloat(abono) || 0, fechaRegistro: serverTimestamp(), active: true }, { merge: true });
-        };
-
+        // Filtramos para que SOLO traiga documentos que tengan el campo 'status'
+        // Esto evita que entren registros de ventas u otras colecciones que no sean VIP
         onSnapshot(query(artistasRef, orderBy('updatedAt', 'desc')), (snap) => {
             const list = document.getElementById('artistsList');
             const arc = document.getElementById('archivedList');
@@ -113,6 +110,9 @@
             snap.forEach(docSnap => {
                 const a = docSnap.data();
                 const id = docSnap.id;
+                
+                // SEGURIDAD: Solo procesar si el campo 'status' existe, descartando ventas/producción
+                if (!a.status) return; 
                 
                 if (a.status === 'archived') {
                     arc.innerHTML += `
@@ -146,27 +146,22 @@
         });
 
         window.recuperarArtista = async (id) => {
-            const snap = await getDoc(doc(db, 'artistasVIP', id));
             await updateDoc(doc(db, 'artistasVIP', id), { status: 'active', updatedAt: serverTimestamp() });
-            await syncToMonitor(id, snap.data().artistName, snap.data().abono);
         };
 
         window.archivarArtista = async (id) => {
             if(confirm("¿Archivar artista?")) {
                 await updateDoc(doc(db, 'artistasVIP', id), { status: 'archived', updatedAt: serverTimestamp() });
-                const monitorRef = doc(db, 'artifacts', 'jaddy-master-v3', 'public', 'data', 'vip_report', id);
-                await updateDoc(monitorRef, { active: false });
             }
         };
 
-        // Funciones auxiliares
         window.openCreateForm = () => { document.getElementById('saveArtistForm').reset(); document.getElementById('artistForm').classList.toggle('hidden'); };
         window.closeForm = () => document.getElementById('artistForm').classList.add('hidden');
         window.openQuickAbono = (id, name) => { document.getElementById('quickAbonoId').value = id; document.getElementById('abonoTargetName').innerText = name; document.getElementById('quickAbonoModal').classList.remove('hidden'); };
         window.closeQuickAbono = () => document.getElementById('quickAbonoModal').classList.add('hidden');
-        window.saveQuickAbono = async () => { const id = document.getElementById('quickAbonoId').value; const amount = parseFloat(document.getElementById('quickAbonoAmount').value) || 0; const docRef = doc(db, 'artistasVIP', id); const snap = await getDoc(docRef); const newAbono = (snap.data().abono || 0) + amount; await updateDoc(docRef, { abono: newAbono, updatedAt: serverTimestamp() }); await syncToMonitor(id, snap.data().artistName, newAbono); closeQuickAbono(); };
+        window.saveQuickAbono = async () => { const id = document.getElementById('quickAbonoId').value; const amount = parseFloat(document.getElementById('quickAbonoAmount').value) || 0; const docRef = doc(db, 'artistasVIP', id); const snap = await getDoc(docRef); const newAbono = (snap.data().abono || 0) + amount; await updateDoc(docRef, { abono: newAbono, updatedAt: serverTimestamp() }); closeQuickAbono(); };
 
-        document.getElementById('saveArtistForm').onsubmit = async (e) => { e.preventDefault(); const data = { artistName: document.getElementById('artistName').value, plan: document.getElementById('plan').value, limit: parseInt(document.getElementById('limit').value), costo: parseFloat(document.getElementById('totalCost').value), abono: parseFloat(document.getElementById('initialDeposit').value) || 0, status: 'active', updatedAt: serverTimestamp() }; const newDoc = await addDoc(artistasRef, data); await syncToMonitor(newDoc.id, data.artistName, data.abono); closeForm(); };
+        document.getElementById('saveArtistForm').onsubmit = async (e) => { e.preventDefault(); const data = { artistName: document.getElementById('artistName').value, plan: document.getElementById('plan').value, limit: parseInt(document.getElementById('limit').value), costo: parseFloat(document.getElementById('totalCost').value), abono: parseFloat(document.getElementById('initialDeposit').value) || 0, status: 'active', updatedAt: serverTimestamp() }; await addDoc(artistasRef, data); closeForm(); };
     </script>
 </body>
 </html>
