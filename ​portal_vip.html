@@ -4,42 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jaddy Studio - Portal VIP</title>
+    <title>Jaddy Studio | Portal VIP</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #030303;
-            color: #e0e0e0;
-            overflow-x: hidden;
-        }
+        body { background-color: #030303; color: white; font-family: sans-serif; }
     </style>
 </head>
-<body>
+<body class="p-8">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-10 border-b border-white/10 pb-6">
+            <h1 class="text-2xl font-black text-orange-500 uppercase italic tracking-tighter">Portal VIP</h1>
+            <a href="index.html" class="text-xs font-bold text-neutral-400 hover:text-white uppercase">Volver al Inicio</a>
+        </header>
 
-    <nav class="p-4 border-b border-white/5 bg-black/80 backdrop-blur-2xl sticky top-0 z-[60]">
-        <div class="max-w-5xl mx-auto flex justify-between items-center">
-            <a href="index.html" class="flex items-center gap-2 text-white hover:text-orange-500 transition-all">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i>
-                <span class="text-[9px] font-black uppercase tracking-widest">Regresar</span>
-            </a>
-            <h1 class="text-lg font-black italic tracking-tighter text-white uppercase">Portal <span class="text-orange-500">VIP</span></h1>
-            <div class="w-16"></div>
+        <div id="vip-list" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <p class="text-neutral-600 font-bold uppercase text-[10px]">Cargando acceso exclusivo...</p>
         </div>
-    </nav>
-
-    <main class="max-w-5xl mx-auto p-4 pt-8">
-        <div id="vipBeatsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- Aquí se cargarán las pistas con su reproductor -->
-        </div>
-    </main>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -52,59 +38,33 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
         const db = getFirestore(app);
+        const auth = getAuth(app);
 
         signInAnonymously(auth).then(() => {
             onSnapshot(collection(db, 'beats'), (snap) => {
-                const vipBeats = snap.docs
-                    .map(doc => ({ id: doc.id, ...doc.data() }))
-                    .filter(b => b.targetPortal === 'vip' && b.visible !== false);
+                const list = document.getElementById('vip-list');
+                const vips = snap.docs.map(d => ({id: d.id, ...d.data()})).filter(b => b.targetPortal === 'vip' && b.visible);
                 
-                render(vipBeats);
+                if(vips.length === 0) {
+                    list.innerHTML = '<p class="text-neutral-500 uppercase font-bold text-[10px]">No hay beats VIP disponibles en este momento.</p>';
+                    return;
+                }
+
+                list.innerHTML = vips.map(b => `
+                    <div class="bg-white/5 p-5 rounded-2xl border border-white/5 hover:border-orange-500/50 transition-all">
+                        <h3 class="font-black uppercase italic">${b.title}</h3>
+                        <p class="text-orange-500 text-xs mt-1 font-bold">$${b.price}</p>
+                        <a href="https://wa.me/${b.whatsapp}" target="_blank" class="mt-4 block w-full text-center bg-orange-600 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest hover:bg-orange-500">
+                            Adquirir vía WhatsApp
+                        </a>
+                    </div>
+                `).join('');
             });
         });
-
-        function render(beats) {
-            const list = document.getElementById('vipBeatsList');
-            if (beats.length === 0) {
-                list.innerHTML = `<div class="col-span-full p-20 text-center text-neutral-700 font-bold uppercase text-[10px]">No hay contenido VIP disponible.</div>`;
-                return;
-            }
-
-            list.innerHTML = beats.map(b => {
-                // Lógica de detección de tipo basada en la URL almacenada
-                const isYoutube = b.url.length < 20 || b.url.includes('youtube') || b.url.includes('youtu.be');
-                const embedUrl = isYoutube ? (b.url.includes('v=') ? b.url.split('v=')[1].split('&')[0] : b.url) : b.url;
-
-                return `
-                <div class="bg-[#0a0a0a] border border-orange-500/20 p-5 rounded-3xl hover:border-orange-500 transition-all">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 bg-orange-500/10 rounded-full flex items-center justify-center text-orange-500">
-                            <i data-lucide="play" class="w-4 h-4"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-xs font-black uppercase text-white">${b.title}</h3>
-                            <p class="text-[8px] text-neutral-500 font-bold uppercase">Prod. ${b.producer || 'Jaddy Studio'}</p>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-4 rounded-xl overflow-hidden bg-black border border-white/5 aspect-video flex items-center justify-center">
-                        ${isYoutube ? 
-                            `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${embedUrl}" frameborder="0" allowfullscreen></iframe>` : 
-                            `<audio controls class="w-full h-10 px-2"><source src="${embedUrl}" type="audio/mpeg">Tu navegador no soporta el reproductor.</audio>`
-                        }
-                    </div>
-
-                    <a href="https://wa.me/${b.whatsapp.replace(/\D/g, '')}" target="_blank" class="block w-full text-center py-3 bg-white hover:bg-orange-500 text-black rounded-xl font-black text-[10px] uppercase tracking-widest transition-all">
-                        Contactar para compra
-                    </a>
-                </div>`;
-            }).join('');
-            lucide.createIcons();
-        }
     </script>
 </body>
 </html>
 
 ```
+
