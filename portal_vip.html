@@ -1,0 +1,76 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jaddy Studio | Portal VIP</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #030303; color: #e0e0e0; }
+    </style>
+</head>
+<body>
+
+    <nav class="p-4 border-b border-white/5 bg-black/80 backdrop-blur-2xl">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <h1 class="text-orange-500 font-black italic uppercase tracking-tighter">Portal VIP</h1>
+            <a href="index.html" class="text-[9px] font-bold text-neutral-400 hover:text-white uppercase tracking-widest">Volver al Admin</a>
+        </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto p-4 pt-8">
+        <div id="vipList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
+            authDomain: "jaddy-estudio.firebaseapp.com",
+            projectId: "jaddy-estudio",
+            storageBucket: "jaddy-estudio.firebasestorage.app",
+            messagingSenderId: "968903268866",
+            appId: "1:968903268866:web:e2b6895e8acff18178e51b",
+            measurementId: "G-SBBXXDD3TV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        signInAnonymously(auth).then(() => {
+            onSnapshot(collection(db, 'beats'), (snap) => {
+                const list = document.getElementById('vipList');
+                const vips = snap.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(b => b.targetPortal === 'vip');
+
+                if (vips.length === 0) {
+                    list.innerHTML = '<p class="text-neutral-700 font-bold uppercase text-[10px] col-span-full text-center p-20">No hay contenido VIP disponible</p>';
+                    return;
+                }
+
+                list.innerHTML = vips.map(b => `
+                    <div class="bg-[#0a0a0a] border border-orange-500/20 p-5 rounded-2xl">
+                        <h3 class="text-white font-black uppercase text-sm">${b.title}</h3>
+                        <p class="text-[10px] text-neutral-500 font-bold uppercase mt-1">Precio: $${b.price}</p>
+                        <a href="https://wa.me/${b.whatsapp}" target="_blank" class="mt-4 block w-full bg-orange-600 py-2 rounded-lg text-white text-[10px] font-black uppercase tracking-widest text-center hover:bg-orange-500 transition-all">
+                            Contactar VIP
+                        </a>
+                    </div>
+                `).join('');
+            });
+        });
+    </script>
+</body>
+</html>
+
+
+```
+
