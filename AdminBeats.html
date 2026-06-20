@@ -1,4 +1,4 @@
-
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -74,11 +74,13 @@
                     </div>
                 </div>
                 
-                <div class="flex items-center gap-3">
-                    <a href="artistas.html" class="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg font-black text-[9px] uppercase tracking-widest transition-all">
+                <div class="flex items-center gap-2">
+                    <a href="artistas.html" class="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg font-black text-[9px] uppercase tracking-widest transition-all">
                         <i data-lucide="users" class="w-3.5 h-3.5"></i> ARTISTAS
                     </a>
-                    
+                    <a href="portal_vip.html" class="flex items-center gap-2 px-3 py-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all border border-orange-500/10">
+                        <i data-lucide="star" class="w-3.5 h-3.5"></i> PORTAL VIP
+                    </a>
                     <button onclick="window.prepareCreate()" class="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
                         <i data-lucide="plus" class="w-3.5 h-3.5"></i> AGREGAR BEAT
                     </button>
@@ -107,8 +109,13 @@
                                 <option value="licencia">Venta por Licencia</option>
                                 <option value="exclusiva">Venta Exclusiva</option>
                             </select>
+                            <!-- Nuevo selector de destino -->
+                            <select id="targetPortal">
+                                <option value="marketplace">Marketplace Público</option>
+                                <option value="vip">Portal VIP</option>
+                            </select>
                             <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
-                                <span class="text-[10px] font-bold uppercase text-neutral-400">Pista Visible en Web</span>
+                                <span class="text-[10px] font-bold uppercase text-neutral-400">Pista Visible</span>
                                 <label class="switch">
                                     <input type="checkbox" id="isVisible" checked>
                                     <span class="slider"></span>
@@ -225,13 +232,13 @@
             list.innerHTML = beats.map(b => `
                 <div class="bg-[#0a0a0a] border border-white/5 p-4 rounded-2xl flex items-center gap-4 hover:border-orange-500/20 transition-all ${!b.visible ? 'opacity-40' : ''}">
                     <div class="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-orange-500">
-                        <i data-lucide="music" class="w-5 h-5"></i>
+                        <i data-lucide="${b.targetPortal === 'vip' ? 'star' : 'music'}" class="w-5 h-5"></i>
                     </div>
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
                             <h3 class="text-xs font-black uppercase text-white truncate">${b.title}</h3>
-                            <span class="text-[7px] px-1.5 py-0.5 rounded border ${b.category === 'exclusiva' ? 'border-orange-500 text-orange-500' : 'border-blue-500 text-blue-500'} font-bold uppercase">
-                                ${b.category || 'Licencia'}
+                            <span class="text-[7px] px-1.5 py-0.5 rounded border ${b.targetPortal === 'vip' ? 'border-orange-500 text-orange-500' : 'border-blue-500 text-blue-500'} font-bold uppercase">
+                                ${b.targetPortal === 'vip' ? 'VIP' : (b.category || 'Licencia')}
                             </span>
                             ${!b.visible ? '<span class="text-[7px] bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded font-bold uppercase">Oculto</span>' : ''}
                         </div>
@@ -257,6 +264,7 @@
             document.getElementById('title').value = b.title;
             document.getElementById('producer').value = b.producer || '';
             document.getElementById('category').value = b.category || 'licencia';
+            document.getElementById('targetPortal').value = b.targetPortal || 'marketplace';
             document.getElementById('isVisible').checked = b.visible !== false;
             document.getElementById('url').value = b.url;
             document.getElementById('genre').value = b.genre || '';
@@ -288,6 +296,7 @@
                 title: document.getElementById('title').value,
                 producer: document.getElementById('producer').value || 'Jaddy Studio',
                 category: document.getElementById('category').value,
+                targetPortal: document.getElementById('targetPortal').value,
                 visible: document.getElementById('isVisible').checked,
                 url: cleanUrl,
                 type: cleanUrl.length < 20 ? 'youtube' : 'audio',
@@ -320,6 +329,5 @@
     </script>
 </body>
 </html>
-
 
 ```
