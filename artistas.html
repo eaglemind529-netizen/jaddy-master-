@@ -152,6 +152,27 @@
         const db = getFirestore(app);
         const artistasRef = collection(db, 'artistasVIP');
 
+        window.openStats = async () => {
+            const snap = await getDocs(artistasRef);
+            let totalAbonado = 0;
+            let totalEsperado = 0;
+            let count = 0;
+            snap.forEach(docSnap => {
+                const a = docSnap.data();
+                // --- FILTRO DE SEGURIDAD EN ESTADÍSTICAS ---
+                // Solo procesamos si es un artista válido y no está archivado
+                if (a.plan && a.artistName && a.status !== 'archived') { 
+                    totalAbonado += (parseFloat(a.abono) || 0);
+                    totalEsperado += (parseFloat(a.costo) || 0);
+                    count++;
+                }
+            });
+            document.getElementById('statTotalArtistas').innerText = count;
+            document.getElementById('statTotalRecaudado').innerText = '$' + totalAbonado.toLocaleString();
+            document.getElementById('statTotalEsperado').innerText = '$' + totalEsperado.toLocaleString();
+            document.getElementById('statsModal').classList.remove('hidden');
+        };
+
         onSnapshot(query(artistasRef, orderBy('updatedAt', 'desc')), (snap) => {
             const list = document.getElementById('artistsList');
             list.innerHTML = '';
@@ -159,9 +180,6 @@
                 const a = docSnap.data();
                 const id = docSnap.id;
                 
-                // --- FILTRO DE SEGURIDAD ---
-                // Solo renderizamos si detectamos que es un ARTISTA (verificamos campos únicos de artistas)
-                // Si el documento NO tiene 'plan' o 'artistName', se ignora (probablemente sea un beat mal guardado)
                 if (!a.plan || !a.artistName || a.status === 'archived') return;
                 
                 const deuda = (parseFloat(a.costo) || 0) - (parseFloat(a.abono) || 0);
@@ -190,17 +208,15 @@
             lucide.createIcons();
         });
 
-        // Funciones auxiliares intactas
-        window.openStats = async () => { /* ... */ };
-        window.archivarArtista = async (id) => { await updateDoc(doc(db, 'artistasVIP', id), { status: 'archived' }); };
-        window.editArtista = async (id) => { /* ... */ };
-        window.saveEdit = async () => { /* ... */ };
-        window.verHistorial = async (id) => { /* ... */ };
+        window.archivarArtista = async (id) => { if(confirm("¿Archivar este artista?")) { await updateDoc(doc(db, 'artistasVIP', id), { status: 'archived' }); } };
+        window.editArtista = async (id) => { const snap = await getDoc(doc(db, 'artistasVIP', id)); const data = snap.data(); document.getElementById('editId').value = id; document.getElementById('editName').value = data.artistName; document.getElementById('editEmail').value = data.email || ''; document.getElementById('editPhone').value = data.phone || ''; document.getElementById('editPlan').value = data.plan; document.getElementById('editLimit').value = data.limit; document.getElementById('editCosto').value = data.costo; document.getElementById('editArtistModal').classList.remove('hidden'); };
+        window.saveEdit = async () => { const id = document.getElementById('editId').value; await updateDoc(doc(db, 'artistasVIP', id), { artistName: document.getElementById('editName').value, email: document.getElementById('editEmail').value, phone: document.getElementById('editPhone').value, plan: document.getElementById('editPlan').value, limit: parseInt(document.getElementById('editLimit').value), costo: parseFloat(document.getElementById('editCosto').value), updatedAt: serverTimestamp() }); document.getElementById('editArtistModal').classList.add('hidden'); };
+        window.verHistorial = async (id) => { const snap = await getDoc(doc(db, 'artistasVIP', id)); const data = snap.data(); const list = document.getElementById('historialList'); let historial = data.historialPagos || []; if (historial.length === 0 && (data.abono > 0)) { historial = [{ monto: data.abono, fecha: 'Abono Inicial' }]; } list.innerHTML = historial.map(p => `<div class="flex justify-between py-2 border-b border-white/5"><span class="text-neutral-400">${p.fecha}</span><span class="font-black text-emerald-500">$${p.monto}</span></div>`).join('') || '<p class="text-neutral-500">No hay pagos registrados</p>'; document.getElementById('historialModal').classList.remove('hidden'); };
         window.openCreateForm = () => { document.getElementById('saveArtistForm').reset(); document.getElementById('artistForm').classList.toggle('hidden'); };
         window.closeForm = () => document.getElementById('artistForm').classList.add('hidden');
-        window.openQuickAbono = (id, name) => { /* ... */ };
+        window.openQuickAbono = (id, name) => { document.getElementById('quickAbonoId').value = id; document.getElementById('abonoTargetName').innerText = name; document.getElementById('quickAbonoDate').valueAsDate = new Date(); document.getElementById('quickAbonoModal').classList.remove('hidden'); };
         window.closeQuickAbono = () => document.getElementById('quickAbonoModal').classList.add('hidden');
-        window.saveQuickAbono = async () => { /* ... */ };
+        window.saveQuickAbono = async () => { const id = document.getElementById('quickAbonoId').value; const amount = parseFloat(document.getElementById('quickAbonoAmount').value) || 0; const rawDate = document.getElementById('quickAbonoDate').value; const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('es-ES') : new Date().toLocaleDateString('es-ES'); const docRef = doc(db, 'artistasVIP', id); const snap = await getDoc(docRef); const newAbono = (parseFloat(snap.data().abono) || 0) + amount; await updateDoc(docRef, { abono: newAbono, historialPagos: arrayUnion({ monto: amount, fecha: formattedDate }), updatedAt: serverTimestamp() }); closeQuickAbono(); };
         document.getElementById('saveArtistForm').onsubmit = async (e) => { e.preventDefault(); const fechaActual = new Date().toLocaleDateString('es-ES'); const data = { artistName: document.getElementById('artistName').value, email: document.getElementById('artistEmail').value, phone: document.getElementById('artistPhone').value, plan: document.getElementById('plan').value, limit: parseInt(document.getElementById('limit').value), costo: parseFloat(document.getElementById('totalCost').value), abono: parseFloat(document.getElementById('initialDeposit').value) || 0, historialPagos: [{monto: parseFloat(document.getElementById('initialDeposit').value) || 0, fecha: fechaActual}], status: 'active', updatedAt: serverTimestamp() }; await addDoc(artistasRef, data); closeForm(); location.reload(); };
     </script>
 </body>
