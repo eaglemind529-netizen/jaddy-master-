@@ -4,42 +4,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jaddy Studio | Portal VIP</title>
+    <title>Jaddy Studio - Portal VIP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #030303; color: #e0e0e0; }
-        .glass-card { background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.05); }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #030303;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
     </style>
 </head>
 <body>
 
-    <nav class="p-6 border-b border-white/5 bg-black/80 sticky top-0 z-50">
-        <div class="max-w-4xl mx-auto flex justify-between items-center">
-            <h1 class="text-white font-black italic uppercase tracking-tighter">Jaddy Studio <span class="text-orange-500">VIP</span></h1>
-            <div class="flex gap-4 items-center">
-                <button onclick="window.toggleView('all')" id="btn-all" class="text-[9px] font-black uppercase text-orange-500">Catálogo</button>
-                <button onclick="window.toggleView('favs')" id="btn-favs" class="text-[9px] font-black uppercase text-neutral-500">Favoritos</button>
-            </div>
+    <nav class="p-4 border-b border-white/5 bg-black/80 backdrop-blur-2xl sticky top-0 z-[60]">
+        <div class="max-w-5xl mx-auto flex justify-between items-center">
+            <a href="index.html" class="flex items-center gap-2 text-white hover:text-orange-500 transition-all">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                <span class="text-[9px] font-black uppercase tracking-widest">Regresar</span>
+            </a>
+            <h1 class="text-lg font-black italic tracking-tighter text-white uppercase">Portal <span class="text-orange-500">VIP</span></h1>
+            <div class="w-16"></div>
         </div>
     </nav>
 
-    <main class="max-w-4xl mx-auto p-6 pb-32">
-        <h2 id="sectionTitle" class="text-[10px] font-black text-neutral-500 uppercase tracking-widest mb-6">Pistas exclusivas para Artistas VIP</h2>
-        <div id="beatsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-    </main>
-
-    <div id="playerContainer" class="fixed bottom-0 w-full bg-black border-t border-orange-500/20 p-4 flex items-center justify-center gap-4 z-[100]">
-        <div class="flex flex-col w-1/3">
-            <span id="nowPlaying" class="text-[9px] font-black text-white uppercase italic truncate">Selecciona una pista</span>
+    <main class="max-w-5xl mx-auto p-4 pt-8">
+        <div id="vipBeatsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Aquí se cargarán las pistas con su reproductor -->
         </div>
-        <audio id="audioPlayer" controls class="h-8 w-1/2"></audio>
-        <button onclick="document.getElementById('playerContainer').classList.add('hidden')" class="text-neutral-500 hover:text-white"><i data-lucide="x" class="w-4 h-4"></i></button>
-    </div>
+    </main>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
         import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -47,69 +46,65 @@
             authDomain: "jaddy-estudio.firebaseapp.com",
             projectId: "jaddy-estudio",
             storageBucket: "jaddy-estudio.firebasestorage.app",
-            appId: "1:968903268866:web:e2b6895e8acff18178e51b"
+            messagingSenderId: "968903268866",
+            appId: "1:968903268866:web:e2b6895e8acff18178e51b",
+            measurementId: "G-SBBXXDD3TV"
         };
 
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        let currentView = 'all';
-        let allBeats = [];
-        let favorites = JSON.parse(localStorage.getItem('favs') || '[]');
+        signInAnonymously(auth).then(() => {
+            onSnapshot(collection(db, 'beats'), (snap) => {
+                const vipBeats = snap.docs
+                    .map(doc => ({ id: doc.id, ...doc.data() }))
+                    .filter(b => b.targetPortal === 'vip' && b.visible !== false);
+                
+                render(vipBeats);
+            });
+        });
 
-        window.toggleView = (view) => { 
-            currentView = view; 
-            document.getElementById('btn-all').className = view === 'all' ? 'text-[9px] font-black uppercase text-orange-500' : 'text-[9px] font-black uppercase text-neutral-500';
-            document.getElementById('btn-favs').className = view === 'favs' ? 'text-[9px] font-black uppercase text-orange-500' : 'text-[9px] font-black uppercase text-neutral-500';
-            render(); 
-        };
+        function render(beats) {
+            const list = document.getElementById('vipBeatsList');
+            if (beats.length === 0) {
+                list.innerHTML = `<div class="col-span-full p-20 text-center text-neutral-700 font-bold uppercase text-[10px]">No hay contenido VIP disponible.</div>`;
+                return;
+            }
 
-        window.toggleFav = (id) => {
-            if(favorites.includes(id)) favorites = favorites.filter(f => f !== id);
-            else favorites.push(id);
-            localStorage.setItem('favs', JSON.stringify(favorites));
-            render();
-        };
+            list.innerHTML = beats.map(b => {
+                // Lógica de detección de tipo basada en la URL almacenada
+                const isYoutube = b.url.length < 20 || b.url.includes('youtube') || b.url.includes('youtu.be');
+                const embedUrl = isYoutube ? (b.url.includes('v=') ? b.url.split('v=')[1].split('&')[0] : b.url) : b.url;
 
-        window.playTrack = (title, url) => {
-            const player = document.getElementById('audioPlayer');
-            document.getElementById('nowPlaying').innerText = title;
-            player.src = url; 
-            document.getElementById('playerContainer').classList.remove('hidden');
-            player.play();
-        };
-
-        function render() {
-            const grid = document.getElementById('beatsGrid');
-            grid.innerHTML = allBeats
-                .filter(b => b.visible !== false && b.category === 'artistaVIP')
-                .filter(b => currentView === 'all' || favorites.includes(b.id))
-                .map(b => `
-                    <div class="glass-card p-5 rounded-2xl border ${favorites.includes(b.id) ? 'border-orange-500/30' : 'border-white/5'}">
-                        <div class="flex justify-between items-start mb-4">
-                            <div>
-                                <h3 class="text-white font-bold text-sm">${b.title}</h3>
-                                <p class="text-[9px] text-neutral-500 uppercase">${b.producer}</p>
-                            </div>
-                            <button onclick="window.toggleFav('${b.id}')" class="${favorites.includes(b.id) ? 'text-orange-500' : 'text-neutral-600'} transition-all">
-                                <i data-lucide="heart" class="w-5 h-5 ${favorites.includes(b.id) ? 'fill-current' : ''}"></i>
-                            </button>
+                return `
+                <div class="bg-[#0a0a0a] border border-orange-500/20 p-5 rounded-3xl hover:border-orange-500 transition-all">
+                    <div class="flex items-center gap-3 mb-4">
+                        <div class="w-10 h-10 bg-orange-500/10 rounded-full flex items-center justify-center text-orange-500">
+                            <i data-lucide="play" class="w-4 h-4"></i>
                         </div>
-                        <button onclick="window.playTrack('${b.title}', '${b.url}')" class="w-full py-2 bg-white/5 hover:bg-orange-600 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all">
-                            Reproducir
-                        </button>
+                        <div>
+                            <h3 class="text-xs font-black uppercase text-white">${b.title}</h3>
+                            <p class="text-[8px] text-neutral-500 font-bold uppercase">Prod. ${b.producer || 'Jaddy Studio'}</p>
+                        </div>
                     </div>
-                `).join('');
+                    
+                    <div class="mb-4 rounded-xl overflow-hidden bg-black border border-white/5 aspect-video flex items-center justify-center">
+                        ${isYoutube ? 
+                            `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${embedUrl}" frameborder="0" allowfullscreen></iframe>` : 
+                            `<audio controls class="w-full h-10 px-2"><source src="${embedUrl}" type="audio/mpeg">Tu navegador no soporta el reproductor.</audio>`
+                        }
+                    </div>
+
+                    <a href="https://wa.me/${b.whatsapp.replace(/\D/g, '')}" target="_blank" class="block w-full text-center py-3 bg-white hover:bg-orange-500 text-black rounded-xl font-black text-[10px] uppercase tracking-widest transition-all">
+                        Contactar para compra
+                    </a>
+                </div>`;
+            }).join('');
             lucide.createIcons();
         }
-
-        onSnapshot(collection(db, 'beats'), (snap) => {
-            allBeats = snap.docs.map(d => ({id: d.id, ...d.data()}));
-            render();
-        });
     </script>
 </body>
 </html>
 
 ```
-
