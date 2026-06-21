@@ -4,220 +4,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jaddy Studio - Control VIP & Membresías</title>
+    <title>Jaddy Studio | Portal VIP</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
-    <style>
-        body { font-family: 'Inter', sans-serif; background-color: #030303; color: #e0e0e0; }
-        input, select, textarea {
-            background: rgba(255, 255, 255, 0.03) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            border-radius: 12px !important;
-            padding: 12px !important;
-            outline: none !important;
-            color: white;
-            width: 100%;
-        }
-        input:focus, select:focus, textarea:focus { border-color: #f97316 !important; }
-        .glass-card { background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05); }
-        .modal-overlay { background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); }
-    </style>
+    <style>body { font-family: 'Inter', sans-serif; background-color: #030303; color: #e0e0e0; }</style>
 </head>
-<body>
+<body class="pb-24">
 
-    <div id="app">
-        <!-- Modales -->
-        <div id="statsModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 modal-overlay">
-            <div class="glass-card p-8 rounded-[2.5rem] border-orange-500/30 border w-full max-w-sm">
-                <h2 class="text-xl font-black uppercase italic tracking-tighter text-orange-500 mb-6">Estadísticas Negocio</h2>
-                <div class="space-y-6">
-                    <div>
-                        <p class="text-[10px] text-neutral-500 font-bold uppercase">Ingreso Mensual Esperado</p>
-                        <p id="statTotalEsperado" class="text-3xl font-black text-blue-500">$0</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-white/5 p-4 rounded-2xl text-center">
-                            <p class="text-[8px] text-neutral-500 uppercase">Activos</p>
-                            <p id="statTotalArtistas" class="text-xl font-black text-white">0</p>
-                        </div>
-                        <div class="bg-white/5 p-4 rounded-2xl text-center">
-                            <p class="text-[8px] text-neutral-500 uppercase">Recaudado</p>
-                            <p id="statTotalRecaudado" class="text-xl font-black text-emerald-500">$0</p>
-                        </div>
-                    </div>
-                </div>
-                <button onclick="document.getElementById('statsModal').classList.add('hidden')" class="w-full mt-8 py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest">CERRAR</button>
-            </div>
+    <!-- Pantalla de Login -->
+    <div id="authScreen" class="fixed inset-0 z-50 bg-black flex items-center justify-center p-6">
+        <div class="max-w-sm w-full bg-[#0a0a0a] p-8 border border-white/10 rounded-3xl text-center">
+            <h2 class="text-xl font-black uppercase italic text-orange-500 mb-6">Acceso Artista VIP</h2>
+            <input type="email" id="artistEmail" placeholder="Correo registrado en el sistema" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 mb-4 text-white text-center">
+            <button id="accessBtn" class="w-full bg-orange-600 py-4 rounded-xl font-black uppercase text-white hover:bg-orange-500 transition-all">Ingresar al Portal</button>
+            <p id="errorMsg" class="text-red-500 text-[10px] mt-4 hidden">Correo no encontrado en la base de artistas.</p>
         </div>
+    </div>
 
-        <div id="quickAbonoModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 modal-overlay">
-            <div class="glass-card p-8 rounded-[2.5rem] border-orange-500/30 border w-full max-w-sm">
-                <h2 class="text-xl font-black uppercase italic tracking-tighter text-orange-500 mb-2">Registrar Pago</h2>
-                <p id="abonoTargetName" class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-6"></p>
-                <input type="hidden" id="quickAbonoId">
-                <input type="number" id="quickAbonoAmount" placeholder="Monto $" class="mb-4">
-                <input type="date" id="quickAbonoDate" class="mb-4 text-white">
-                <div class="flex gap-3">
-                    <button onclick="closeQuickAbono()" class="flex-1 py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest">CANCELAR</button>
-                    <button onclick="saveQuickAbono()" class="flex-1 py-3 bg-orange-600 rounded-xl text-[10px] font-black uppercase tracking-widest">PROCESAR</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="editArtistModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 modal-overlay">
-            <div class="glass-card p-8 rounded-[2.5rem] border-orange-500/30 border w-full max-w-sm">
-                <h2 class="text-xl font-black uppercase italic tracking-tighter text-orange-500 mb-6">Editar Artista</h2>
-                <input type="hidden" id="editId">
-                <input type="text" id="editName" placeholder="Nombre" class="mb-3">
-                <input type="email" id="editEmail" placeholder="Correo" class="mb-3">
-                <input type="tel" id="editPhone" placeholder="Teléfono" class="mb-3">
-                <input type="text" id="editPlan" placeholder="Plan" class="mb-3">
-                <input type="number" id="editLimit" placeholder="Límite" class="mb-3">
-                <input type="number" id="editCosto" placeholder="Mensualidad $" class="mb-6">
-                <div class="flex gap-3">
-                    <button onclick="document.getElementById('editArtistModal').classList.add('hidden')" class="flex-1 py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest">CANCELAR</button>
-                    <button onclick="saveEdit()" class="flex-1 py-3 bg-orange-600 rounded-xl text-[10px] font-black uppercase tracking-widest">GUARDAR</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="historialModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 modal-overlay">
-            <div class="glass-card p-8 rounded-[2.5rem] border-blue-500/30 border w-full max-w-sm">
-                <h2 class="text-xl font-black uppercase italic tracking-tighter text-blue-500 mb-2">Historial de Pagos</h2>
-                <div id="historialList" class="max-h-64 overflow-y-auto mb-6 text-[11px]"></div>
-                <button onclick="document.getElementById('historialModal').classList.add('hidden')" class="w-full py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest">CERRAR</button>
-            </div>
-        </div>
-
-        <nav class="p-5 border-b border-white/5 bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
-            <div class="max-w-7xl mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-4">
-                    <div class="w-10 h-10 bg-orange-600/20 rounded-xl flex items-center justify-center border border-orange-500/20">
-                        <i data-lucide="crown" class="text-orange-500 w-5 h-5"></i>
-                    </div>
-                    <div>
-                        <h1 class="text-lg font-black uppercase italic tracking-tighter text-white leading-none">Jaddy Studio</h1>
-                        <p class="text-[8px] font-bold text-orange-500 uppercase tracking-widest mt-1">GESTIÓN DE MEMBRESÍAS VIP</p>
-                    </div>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="window.openStats()" class="px-5 py-2.5 bg-white/5 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-white/10 transition-all">
-                        <i data-lucide="trending-up" class="w-4 h-4"></i> ESTADÍSTICA
-                    </button>
-                    <button onclick="openCreateForm()" class="px-5 py-2.5 bg-orange-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
-                        <i data-lucide="user-plus" class="w-4 h-4"></i> NUEVO ARTISTA VIP
-                    </button>
-                </div>
+    <!-- Contenido VIP -->
+    <div id="vipContent" class="hidden">
+        <nav class="p-4 border-b border-white/5 bg-black/80 backdrop-blur-2xl">
+            <div class="max-w-5xl mx-auto flex justify-between items-center">
+                <h1 class="text-orange-500 font-black italic uppercase tracking-tighter" id="welcomeMsg">Mis Pistas</h1>
+                <button onclick="location.reload()" class="text-[9px] font-bold text-neutral-400 uppercase">Salir</button>
             </div>
         </nav>
-
-        <main class="max-w-7xl mx-auto p-6 pt-10">
-            <section id="artistForm" class="hidden mb-12 glass-card p-8 rounded-[2.5rem] border-orange-500/20 border">
-                <div class="flex justify-between items-center mb-8">
-                    <h2 class="text-xl font-black uppercase italic tracking-tighter text-orange-500">Alta de Membresía</h2>
-                    <button onclick="closeForm()" class="text-neutral-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-                </div>
-                <form id="saveArtistForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <input type="text" id="artistName" placeholder="Nombre del Artista" required>
-                    <input type="email" id="artistEmail" placeholder="Correo Electrónico" required>
-                    <input type="tel" id="artistPhone" placeholder="Número de Teléfono" required>
-                    <input type="text" id="plan" placeholder="Nombre del Plan" required>
-                    <input type="number" id="limit" placeholder="Límite Servicios/Mes" required>
-                    <input type="number" id="totalCost" placeholder="Mensualidad $" required>
-                    <input type="number" id="initialDeposit" placeholder="Abono Inicial $" class="md:col-span-2">
-                    <button type="submit" class="md:col-span-2 bg-white text-black py-4 rounded-xl font-black uppercase tracking-widest hover:bg-orange-500 transition-all">ACTIVAR MEMBRESÍA</button>
-                </form>
-            </section>
-
-            <h2 class="text-[10px] font-black text-orange-500 uppercase tracking-widest mb-6">Artistas VIP Activos</h2>
-            <div id="artistsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20"></div>
+        <main class="max-w-5xl mx-auto p-4 pt-8">
+            <div id="vipList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
         </main>
+    </div>
+
+    <div id="playerContainer" class="fixed bottom-0 left-0 right-0 bg-neutral-900 border-t border-white/10 p-4 flex flex-col items-center gap-2 hidden z-50">
+        <div class="flex items-center justify-between w-full max-w-lg">
+            <span id="nowPlaying" class="text-[10px] font-bold text-white uppercase truncate w-1/2">...</span>
+            <button onclick="document.getElementById('playerContainer').classList.add('hidden')" class="text-neutral-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
+        <audio id="audioPlayer" controls class="w-full max-w-lg h-10"></audio>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc, serverTimestamp, addDoc, getDoc, arrayUnion, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
-            authDomain: "jaddy-estudio.firebaseapp.com",
-            projectId: "jaddy-estudio",
-            storageBucket: "jaddy-estudio.firebasestorage.app",
-            messagingSenderId: "968903268866",
-            appId: "1:968903268866:web:e2b6895e8acff18178e51b"
+        const firebaseConfig = { 
+            apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8", 
+            projectId: "jaddy-estudio" 
+        };
+        const db = getFirestore(initializeApp(firebaseConfig));
+
+        window.playTrack = (title, url) => {
+            const player = document.getElementById('audioPlayer');
+            document.getElementById('nowPlaying').innerText = title;
+            player.src = url;
+            document.getElementById('playerContainer').classList.remove('hidden');
+            player.play();
         };
 
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-        const artistasRef = collection(db, 'artistasVIP');
+        document.getElementById('accessBtn').onclick = async () => {
+            const email = document.getElementById('artistEmail').value.trim().toLowerCase();
+            if (!email) return;
 
-        window.openStats = async () => {
-            const snap = await getDocs(artistasRef);
-            let totalAbonado = 0;
-            let totalEsperado = 0;
-            let count = 0;
-            snap.forEach(docSnap => {
-                const a = docSnap.data();
-                // --- FILTRO DE SEGURIDAD EN ESTADÍSTICAS ---
-                // Solo procesamos si es un artista válido y no está archivado
-                if (a.plan && a.artistName && a.status !== 'archived') { 
-                    totalAbonado += (parseFloat(a.abono) || 0);
-                    totalEsperado += (parseFloat(a.costo) || 0);
-                    count++;
-                }
-            });
-            document.getElementById('statTotalArtistas').innerText = count;
-            document.getElementById('statTotalRecaudado').innerText = '$' + totalAbonado.toLocaleString();
-            document.getElementById('statTotalEsperado').innerText = '$' + totalEsperado.toLocaleString();
-            document.getElementById('statsModal').classList.remove('hidden');
+            // 1. Verificamos que el correo exista en artistasVIP
+            const q = query(collection(db, 'artistasVIP'), where("email", "==", email));
+            const snap = await getDocs(q);
+
+            if (!snap.empty) {
+                const artistData = snap.docs[0].data();
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('vipContent').classList.remove('hidden');
+                document.getElementById('welcomeMsg').innerText = `Hola, ${artistData.artistName}`;
+                
+                // 2. Cargamos solo los beats asignados a este artista
+                loadPersonalBeats(artistData.artistName);
+            } else {
+                document.getElementById('errorMsg').classList.remove('hidden');
+            }
         };
 
-        onSnapshot(query(artistasRef, orderBy('updatedAt', 'desc')), (snap) => {
-            const list = document.getElementById('artistsList');
-            list.innerHTML = '';
-            snap.forEach(docSnap => {
-                const a = docSnap.data();
-                const id = docSnap.id;
-                
-                if (!a.plan || !a.artistName || a.status === 'archived') return;
-                
-                const deuda = (parseFloat(a.costo) || 0) - (parseFloat(a.abono) || 0);
-                list.innerHTML += `
-                    <div class="glass-card p-6 rounded-[2rem] border border-white/5">
-                        <div class="flex justify-between mb-4">
-                            <div class="w-10 h-10 bg-orange-600/20 rounded-xl flex items-center justify-center border border-orange-500/20">
-                                <i data-lucide="crown" class="text-orange-500 w-5 h-5"></i>
-                            </div>
-                            <div class="flex gap-2">
-                                 <button onclick="window.archivarArtista('${id}')" class="w-8 h-8 flex items-center justify-center bg-neutral-800/50 text-neutral-400 rounded-lg hover:bg-neutral-700 hover:text-white transition-all"><i data-lucide="folder-archive" class="w-4 h-4"></i></button>
-                                 <button onclick="window.editArtista('${id}')" class="w-8 h-8 flex items-center justify-center bg-white/5 text-neutral-400 rounded-lg hover:bg-orange-600 hover:text-white transition-all"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                                 <button onclick="window.verHistorial('${id}')" class="w-8 h-8 flex items-center justify-center bg-blue-600/20 text-blue-500 rounded-lg hover:bg-blue-600 hover:text-white transition-all"><i data-lucide="list" class="w-4 h-4"></i></button>
-                                 <button onclick="window.openQuickAbono('${id}', '${a.artistName}')" class="w-8 h-8 flex items-center justify-center bg-emerald-600/20 text-emerald-500 rounded-lg hover:bg-emerald-600 hover:text-white transition-all"><i data-lucide="dollar-sign" class="w-4 h-4"></i></button>
-                            </div>
+        async function loadPersonalBeats(artistName) {
+            // Buscamos beats que tengan el campo 'assignedTo' igual al nombre del artista
+            const q = query(collection(db, 'beats'), where("assignedTo", "==", artistName));
+            const snap = await getDocs(q);
+            const list = document.getElementById('vipList');
+
+            if (snap.empty) {
+                list.innerHTML = '<p class="text-neutral-600 text-center col-span-full">No hay pistas asignadas para ti todavía.</p>';
+                return;
+            }
+
+            list.innerHTML = snap.docs.map(doc => {
+                const b = doc.data();
+                return `
+                    <div class="bg-[#0a0a0a] border border-orange-500/20 p-5 rounded-2xl">
+                        <h3 class="text-white font-black uppercase text-sm">${b.title}</h3>
+                        <div class="flex flex-col gap-2 mt-4">
+                            <button onclick="window.playTrack('${b.title}', '${b.url}')" class="bg-neutral-800 py-2 rounded-lg text-white text-[10px] font-black uppercase hover:bg-neutral-700">Escuchar</button>
+                            <a href="${b.url}" download target="_blank" class="bg-blue-600 py-2 rounded-lg text-white text-[10px] font-black uppercase text-center hover:bg-blue-500">Descargar</a>
                         </div>
-                        <h3 class="font-black uppercase italic text-lg text-white">${a.artistName}</h3>
-                        <p class="text-[9px] text-orange-500 font-bold uppercase mb-1">${a.plan} | $${a.costo || 0}</p>
-                        <p class="text-[8px] text-neutral-500 font-bold uppercase mb-6">${a.email || ''}</p>
-                        <div class="grid grid-cols-2 gap-3 text-center">
-                            <div class="bg-black/40 p-3 rounded-2xl"><p class="text-[8px] text-neutral-500">Abonado</p><p class="text-sm font-black text-emerald-500">$${a.abono || 0}</p></div>
-                            <div class="bg-black/40 p-3 rounded-2xl"><p class="text-[8px] text-neutral-500">Saldo</p><p class="text-sm font-black text-orange-500">$${deuda > 0 ? deuda : 0}</p></div>
-                        </div>
-                    </div>`;
-            });
+                    </div>
+                `;
+            }).join('');
             lucide.createIcons();
-        });
-
-        window.archivarArtista = async (id) => { if(confirm("¿Archivar este artista?")) { await updateDoc(doc(db, 'artistasVIP', id), { status: 'archived' }); } };
-        window.editArtista = async (id) => { const snap = await getDoc(doc(db, 'artistasVIP', id)); const data = snap.data(); document.getElementById('editId').value = id; document.getElementById('editName').value = data.artistName; document.getElementById('editEmail').value = data.email || ''; document.getElementById('editPhone').value = data.phone || ''; document.getElementById('editPlan').value = data.plan; document.getElementById('editLimit').value = data.limit; document.getElementById('editCosto').value = data.costo; document.getElementById('editArtistModal').classList.remove('hidden'); };
-        window.saveEdit = async () => { const id = document.getElementById('editId').value; await updateDoc(doc(db, 'artistasVIP', id), { artistName: document.getElementById('editName').value, email: document.getElementById('editEmail').value, phone: document.getElementById('editPhone').value, plan: document.getElementById('editPlan').value, limit: parseInt(document.getElementById('editLimit').value), costo: parseFloat(document.getElementById('editCosto').value), updatedAt: serverTimestamp() }); document.getElementById('editArtistModal').classList.add('hidden'); };
-        window.verHistorial = async (id) => { const snap = await getDoc(doc(db, 'artistasVIP', id)); const data = snap.data(); const list = document.getElementById('historialList'); let historial = data.historialPagos || []; if (historial.length === 0 && (data.abono > 0)) { historial = [{ monto: data.abono, fecha: 'Abono Inicial' }]; } list.innerHTML = historial.map(p => `<div class="flex justify-between py-2 border-b border-white/5"><span class="text-neutral-400">${p.fecha}</span><span class="font-black text-emerald-500">$${p.monto}</span></div>`).join('') || '<p class="text-neutral-500">No hay pagos registrados</p>'; document.getElementById('historialModal').classList.remove('hidden'); };
-        window.openCreateForm = () => { document.getElementById('saveArtistForm').reset(); document.getElementById('artistForm').classList.toggle('hidden'); };
-        window.closeForm = () => document.getElementById('artistForm').classList.add('hidden');
-        window.openQuickAbono = (id, name) => { document.getElementById('quickAbonoId').value = id; document.getElementById('abonoTargetName').innerText = name; document.getElementById('quickAbonoDate').valueAsDate = new Date(); document.getElementById('quickAbonoModal').classList.remove('hidden'); };
-        window.closeQuickAbono = () => document.getElementById('quickAbonoModal').classList.add('hidden');
-        window.saveQuickAbono = async () => { const id = document.getElementById('quickAbonoId').value; const amount = parseFloat(document.getElementById('quickAbonoAmount').value) || 0; const rawDate = document.getElementById('quickAbonoDate').value; const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('es-ES') : new Date().toLocaleDateString('es-ES'); const docRef = doc(db, 'artistasVIP', id); const snap = await getDoc(docRef); const newAbono = (parseFloat(snap.data().abono) || 0) + amount; await updateDoc(docRef, { abono: newAbono, historialPagos: arrayUnion({ monto: amount, fecha: formattedDate }), updatedAt: serverTimestamp() }); closeQuickAbono(); };
-        document.getElementById('saveArtistForm').onsubmit = async (e) => { e.preventDefault(); const fechaActual = new Date().toLocaleDateString('es-ES'); const data = { artistName: document.getElementById('artistName').value, email: document.getElementById('artistEmail').value, phone: document.getElementById('artistPhone').value, plan: document.getElementById('plan').value, limit: parseInt(document.getElementById('limit').value), costo: parseFloat(document.getElementById('totalCost').value), abono: parseFloat(document.getElementById('initialDeposit').value) || 0, historialPagos: [{monto: parseFloat(document.getElementById('initialDeposit').value) || 0, fecha: fechaActual}], status: 'active', updatedAt: serverTimestamp() }; await addDoc(artistasRef, data); closeForm(); location.reload(); };
+        }
     </script>
 </body>
 </html>
