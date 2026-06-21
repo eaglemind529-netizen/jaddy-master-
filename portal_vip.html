@@ -1,31 +1,32 @@
+
 ```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jaddy Studio | Mi Acceso VIP</title>
+    <title>Jaddy Studio | Portal VIP</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>body { font-family: 'Inter', sans-serif; background-color: #030303; color: #e0e0e0; }</style>
 </head>
 <body class="pb-24">
 
-    <!-- Pantalla de Acceso por Correo -->
+    <!-- Pantalla de Login -->
     <div id="authScreen" class="fixed inset-0 z-50 bg-black flex items-center justify-center p-6">
         <div class="max-w-sm w-full bg-[#0a0a0a] p-8 border border-white/10 rounded-3xl text-center">
-            <h2 class="text-xl font-black uppercase italic text-orange-500 mb-6">Acceso de Artista</h2>
-            <input type="email" id="artistEmail" placeholder="Tu correo registrado" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 mb-4 text-white text-center">
-            <button id="accessBtn" class="w-full bg-orange-600 py-4 rounded-xl font-black uppercase text-white hover:bg-orange-500">Entrar</button>
-            <p id="errorMsg" class="text-red-500 text-[10px] mt-4 hidden">Correo no encontrado o sin acceso.</p>
+            <h2 class="text-xl font-black uppercase italic text-orange-500 mb-6">Acceso Artista VIP</h2>
+            <input type="email" id="artistEmail" placeholder="Correo registrado en el sistema" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 mb-4 text-white text-center">
+            <button id="accessBtn" class="w-full bg-orange-600 py-4 rounded-xl font-black uppercase text-white hover:bg-orange-500 transition-all">Ingresar al Portal</button>
+            <p id="errorMsg" class="text-red-500 text-[10px] mt-4 hidden">Correo no encontrado en la base de artistas.</p>
         </div>
     </div>
 
-    <!-- Contenido VIP Dinámico -->
+    <!-- Contenido VIP -->
     <div id="vipContent" class="hidden">
         <nav class="p-4 border-b border-white/5 bg-black/80 backdrop-blur-2xl">
             <div class="max-w-5xl mx-auto flex justify-between items-center">
-                <h1 class="text-orange-500 font-black italic uppercase tracking-tighter">Mi Contenido</h1>
+                <h1 class="text-orange-500 font-black italic uppercase tracking-tighter" id="welcomeMsg">Mis Pistas</h1>
                 <button onclick="location.reload()" class="text-[9px] font-bold text-neutral-400 uppercase">Salir</button>
             </div>
         </nav>
@@ -34,7 +35,6 @@
         </main>
     </div>
 
-    <!-- Reproductor -->
     <div id="playerContainer" class="fixed bottom-0 left-0 right-0 bg-neutral-900 border-t border-white/10 p-4 flex flex-col items-center gap-2 hidden z-50">
         <div class="flex items-center justify-between w-full max-w-lg">
             <span id="nowPlaying" class="text-[10px] font-bold text-white uppercase truncate w-1/2">...</span>
@@ -47,7 +47,10 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
-        const firebaseConfig = { apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8", projectId: "jaddy-estudio" };
+        const firebaseConfig = { 
+            apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8", 
+            projectId: "jaddy-estudio" 
+        };
         const db = getFirestore(initializeApp(firebaseConfig));
 
         window.playTrack = (title, url) => {
@@ -62,7 +65,7 @@
             const email = document.getElementById('artistEmail').value.trim().toLowerCase();
             if (!email) return;
 
-            // Buscamos al artista en la colección 'artistasVIP'
+            // 1. Verificamos que el correo exista en artistasVIP
             const q = query(collection(db, 'artistasVIP'), where("email", "==", email));
             const snap = await getDocs(q);
 
@@ -70,6 +73,9 @@
                 const artistData = snap.docs[0].data();
                 document.getElementById('authScreen').classList.add('hidden');
                 document.getElementById('vipContent').classList.remove('hidden');
+                document.getElementById('welcomeMsg').innerText = `Hola, ${artistData.artistName}`;
+                
+                // 2. Cargamos solo los beats asignados a este artista
                 loadPersonalBeats(artistData.artistName);
             } else {
                 document.getElementById('errorMsg').classList.remove('hidden');
@@ -77,13 +83,13 @@
         };
 
         async function loadPersonalBeats(artistName) {
-            // Buscamos los beats que tengan el nombre de este artista en el campo 'assignedTo'
+            // Buscamos beats que tengan el campo 'assignedTo' igual al nombre del artista
             const q = query(collection(db, 'beats'), where("assignedTo", "==", artistName));
             const snap = await getDocs(q);
             const list = document.getElementById('vipList');
 
             if (snap.empty) {
-                list.innerHTML = '<p class="text-neutral-600 text-center col-span-full">No tienes pistas asignadas.</p>';
+                list.innerHTML = '<p class="text-neutral-600 text-center col-span-full">No hay pistas asignadas para ti todavía.</p>';
                 return;
             }
 
@@ -93,8 +99,8 @@
                     <div class="bg-[#0a0a0a] border border-orange-500/20 p-5 rounded-2xl">
                         <h3 class="text-white font-black uppercase text-sm">${b.title}</h3>
                         <div class="flex flex-col gap-2 mt-4">
-                            <button onclick="window.playTrack('${b.title}', '${b.url}')" class="bg-neutral-800 py-2 rounded-lg text-white text-[10px] font-black uppercase">Escuchar</button>
-                            <a href="${b.url}" download target="_blank" class="bg-blue-600 py-2 rounded-lg text-white text-[10px] font-black uppercase text-center">Descargar</a>
+                            <button onclick="window.playTrack('${b.title}', '${b.url}')" class="bg-neutral-800 py-2 rounded-lg text-white text-[10px] font-black uppercase hover:bg-neutral-700">Escuchar</button>
+                            <a href="${b.url}" download target="_blank" class="bg-blue-600 py-2 rounded-lg text-white text-[10px] font-black uppercase text-center hover:bg-blue-500">Descargar</a>
                         </div>
                     </div>
                 `;
