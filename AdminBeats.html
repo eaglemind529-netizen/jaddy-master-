@@ -78,7 +78,6 @@
                     <a href="artistas.html" class="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg font-black text-[9px] uppercase tracking-widest transition-all">
                         <i data-lucide="users" class="w-3.5 h-3.5"></i> ARTISTAS
                     </a>
-                    <!-- Enlace actualizado a portal_vip.html -->
                     <a href="portal_vip.html" class="flex items-center gap-2 px-3 py-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all border border-orange-500/10">
                         <i data-lucide="star" class="w-3.5 h-3.5"></i> PORTAL VIP
                     </a>
@@ -110,10 +109,15 @@
                                 <option value="licencia">Venta por Licencia</option>
                                 <option value="exclusiva">Venta Exclusiva</option>
                             </select>
-                            <select id="targetPortal">
+                            <select id="targetPortal" onchange="window.togglePortalFields()">
                                 <option value="marketplace">Marketplace Público</option>
                                 <option value="vip">Portal VIP</option>
                             </select>
+                            <div id="artistContainer" class="hidden">
+                                <select id="assignedTo">
+                                    <option value="">Cargando artistas...</option>
+                                </select>
+                            </div>
                             <div class="flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/5">
                                 <span class="text-[10px] font-bold uppercase text-neutral-400">Pista Visible</span>
                                 <label class="switch">
@@ -128,7 +132,7 @@
                             <input type="text" id="url" placeholder="Link Dropbox / YouTube" required>
                             <input type="text" id="genre" placeholder="Género (Trap, Reggaeton...)">
                             <input type="text" id="whatsapp" placeholder="WhatsApp (Ej: 1829...)" required>
-                            <textarea id="description" placeholder="Descripción de la pista (detalles, términos, etc.)" rows="2" class="text-sm"></textarea>
+                            <textarea id="description" placeholder="Descripción de la pista" rows="2" class="text-sm"></textarea>
                         </div>
 
                         <div class="space-y-4">
@@ -169,7 +173,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, updateDoc, onSnapshot, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, updateDoc, onSnapshot, doc, deleteDoc, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -186,17 +190,34 @@
         const db = getFirestore(app);
         let beats = [];
 
-        signInAnonymously(auth).then(() => {
+        signInAnonymously(auth).then(async () => {
             onSnapshot(collection(db, 'beats'), (snap) => {
                 beats = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 render();
             });
+            await loadArtists();
         });
 
+        async function loadArtists() {
+            const snap = await getDocs(collection(db, 'artistasVIP'));
+            const select = document.getElementById('assignedTo');
+            select.innerHTML = '<option value="">Seleccionar Artista</option>';
+            snap.forEach(d => {
+                const a = d.data();
+                if(a.status !== 'archived') {
+                    select.innerHTML += `<option value="${a.artistName}">${a.artistName}</option>`;
+                }
+            });
+        }
+
         window.toggleForm = () => {
-            const form = document.getElementById('beatForm');
-            form.classList.toggle('hidden');
-            form.classList.toggle('active');
+            document.getElementById('beatForm').classList.toggle('hidden');
+            document.getElementById('beatForm').classList.toggle('active');
+        };
+
+        window.togglePortalFields = () => {
+            const portal = document.getElementById('targetPortal').value;
+            document.getElementById('artistContainer').classList.toggle('hidden', portal !== 'vip');
         };
 
         window.prepareCreate = () => {
@@ -206,29 +227,20 @@
             document.getElementById('submitBtnText').innerText = 'PUBLICAR BEAT';
             window.toggleForm();
             window.toggleCreditFields();
+            window.togglePortalFields();
             lucide.createIcons();
         };
 
         window.toggleCreditFields = () => {
             const saleType = document.getElementById('saleType').value;
             const config = document.getElementById('creditConfig');
-            if(saleType === 'contado') {
-                config.style.opacity = '0.3';
-                config.style.pointerEvents = 'none';
-            } else {
-                config.style.opacity = '1';
-                config.style.pointerEvents = 'auto';
-            }
+            config.style.opacity = (saleType === 'contado') ? '0.3' : '1';
+            config.style.pointerEvents = (saleType === 'contado') ? 'none' : 'auto';
         };
 
         function render() {
             document.getElementById('counter').innerText = `${beats.length} PISTAS TOTALES`;
             const list = document.getElementById('beatsList');
-            if (beats.length === 0) {
-                list.innerHTML = `<div class="p-20 text-center text-neutral-700 font-bold uppercase text-[10px]">No hay beats en la base de datos</div>`;
-                return;
-            }
-
             list.innerHTML = beats.map(b => `
                 <div class="bg-[#0a0a0a] border border-white/5 p-4 rounded-2xl flex items-center gap-4 hover:border-orange-500/20 transition-all ${!b.visible ? 'opacity-40' : ''}">
                     <div class="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-orange-500">
@@ -237,20 +249,11 @@
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2">
                             <h3 class="text-xs font-black uppercase text-white truncate">${b.title}</h3>
-                            <span class="text-[7px] px-1.5 py-0.5 rounded border ${b.targetPortal === 'vip' ? 'border-orange-500 text-orange-500' : 'border-blue-500 text-blue-500'} font-bold uppercase">
-                                ${b.targetPortal === 'vip' ? 'VIP' : (b.category || 'Licencia')}
-                            </span>
-                            ${!b.visible ? '<span class="text-[7px] bg-red-500/20 text-red-500 px-1.5 py-0.5 rounded font-bold uppercase">Oculto</span>' : ''}
+                            ${b.assignedTo ? `<span class="text-[7px] bg-purple-500/20 text-purple-400 px-1.5 py-0.5 rounded font-bold uppercase">A: ${b.assignedTo}</span>` : ''}
                         </div>
-                        <p class="text-[8px] text-neutral-600 font-bold uppercase mt-0.5">Prod. ${b.producer || 'Jaddy Studio'} | $${b.price}</p>
                     </div>
                     <div class="flex gap-2">
-                        <button onclick="window.prepareEdit('${b.id}')" class="p-2 bg-white/5 hover:bg-orange-500/10 text-neutral-400 hover:text-orange-500 rounded-lg transition-all">
-                            <i data-lucide="edit-3" class="w-4 h-4"></i>
-                        </button>
-                        <button onclick="window.deleteBeat('${b.id}')" class="p-2 bg-white/5 hover:bg-red-500/10 text-neutral-400 hover:text-red-500 rounded-lg transition-all">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                        </button>
+                        <button onclick="window.prepareEdit('${b.id}')" class="p-2 bg-white/5 text-neutral-400 rounded-lg"><i data-lucide="edit-3" class="w-4 h-4"></i></button>
                     </div>
                 </div>
             `).join('');
@@ -262,72 +265,31 @@
             if(!b) return;
             document.getElementById('editingId').value = b.id;
             document.getElementById('title').value = b.title;
-            document.getElementById('producer').value = b.producer || '';
-            document.getElementById('category').value = b.category || 'licencia';
             document.getElementById('targetPortal').value = b.targetPortal || 'marketplace';
-            document.getElementById('isVisible').checked = b.visible !== false;
-            document.getElementById('url').value = b.url;
-            document.getElementById('genre').value = b.genre || '';
-            document.getElementById('whatsapp').value = b.whatsapp;
-            document.getElementById('description').value = b.description || '';
-            document.getElementById('saleType').value = b.saleType || 'contado';
-            document.getElementById('price').value = b.price;
-            document.getElementById('downPayment').value = b.downPayment || '';
-            document.getElementById('installmentsCount').value = b.installmentsCount || '';
-            document.getElementById('paymentDays').value = b.paymentDays || '';
-
-            document.getElementById('formTitle').innerHTML = `<i data-lucide="edit" class="text-orange-500 w-4 h-4"></i> Editando: ${b.title}`;
-            document.getElementById('submitBtnText').innerText = 'ACTUALIZAR DATOS';
+            document.getElementById('assignedTo').value = b.assignedTo || '';
+            document.getElementById('formTitle').innerHTML = `Editando: ${b.title}`;
             if(!document.getElementById('beatForm').classList.contains('active')) window.toggleForm();
-            window.toggleCreditFields();
+            window.togglePortalFields();
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            lucide.createIcons();
         };
 
         document.getElementById('uploadForm').onsubmit = async (e) => {
             e.preventDefault();
             const id = document.getElementById('editingId').value;
-            
-            let cleanUrl = document.getElementById('url').value;
-            if(cleanUrl.includes('youtube.com/watch?v=')) cleanUrl = cleanUrl.split('v=')[1].split('&')[0];
-            else if(cleanUrl.includes('youtu.be/')) cleanUrl = cleanUrl.split('youtu.be/')[1].split('?')[0];
-
             const data = {
                 title: document.getElementById('title').value,
-                producer: document.getElementById('producer').value || 'Jaddy Studio',
-                category: document.getElementById('category').value,
                 targetPortal: document.getElementById('targetPortal').value,
+                assignedTo: document.getElementById('targetPortal').value === 'vip' ? document.getElementById('assignedTo').value : '',
                 visible: document.getElementById('isVisible').checked,
-                url: cleanUrl,
-                type: cleanUrl.length < 20 ? 'youtube' : 'audio',
-                genre: document.getElementById('genre').value,
-                whatsapp: document.getElementById('whatsapp').value,
-                description: document.getElementById('description').value,
-                saleType: document.getElementById('saleType').value,
-                price: parseFloat(document.getElementById('price').value),
-                downPayment: document.getElementById('downPayment').value,
-                installmentsCount: document.getElementById('installmentsCount').value,
-                paymentDays: document.getElementById('paymentDays').value,
                 updatedAt: serverTimestamp()
             };
-
-            try {
-                if(id) await updateDoc(doc(db, 'beats', id), data);
-                else await addDoc(collection(db, 'beats'), { ...data, createdAt: serverTimestamp() });
-                
-                window.toggleForm();
-                document.getElementById('uploadForm').reset();
-            } catch (err) { alert("Error al guardar: " + err.message); }
+            if(id) await updateDoc(doc(db, 'beats', id), data);
+            else await addDoc(collection(db, 'beats'), { ...data, createdAt: serverTimestamp() });
+            window.toggleForm();
         };
-
-        window.deleteBeat = async (id) => {
-            if(confirm("¿Seguro que quieres eliminar esta pista del sistema?")) {
-                await deleteDoc(doc(db, 'beats', id));
-            }
-        };
-
     </script>
 </body>
 </html>
 
 ```
+    
