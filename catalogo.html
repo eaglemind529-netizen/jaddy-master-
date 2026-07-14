@@ -1,25 +1,183 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PRODUCTOS LS | Catálogo</title>
+    <title>PRODUCTOS LS | Catálogo Multiproducto</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;600;800&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #ffffff; color: #000; overflow-x: hidden; }
-        .product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background-color: #f3f4f6; }
-        .product-card { background: white; padding: 15px; text-align: center; position: relative; }
-        .product-card img { width: 100%; aspect-ratio: 1/1; object-fit: contain; margin-bottom: 8px; }
-        #productModal { position: fixed; inset: 0; background: white; z-index: 1000; display: none; flex-direction: column; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
-        #productModal.active { display: flex; transform: translateY(0); }
-        .modal-scroll { flex: 1; overflow-y: auto; padding: 15px; }
-        .variant-card { display: flex; align-items: center; gap: 12px; padding: 12px; background: #fff; border-radius: 18px; border: 2px solid #f0f0f0; margin-bottom: 10px; cursor: pointer; }
-        .variant-card.selected { border-color: #000; }
-        #cartBar { position: fixed; bottom: 20px; left: 20px; right: 20px; background: #000; color: white; padding: 16px 22px; border-radius: 20px; display: none; justify-content: space-between; align-items: center; z-index: 1100; }
-        .close-btn { position: absolute; top: 15px; right: 15px; z-index: 1010; background: #f0f0f0; border-radius: 50%; padding: 8px; }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #ffffff;
+            color: #000;
+            overflow-x: hidden;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1px;
+            background-color: #f3f4f6;
+        }
+
+        .product-card {
+            background: white;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+        }
+
+        .badge-count {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #000;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 800;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+        }
+
+        .product-card img {
+            width: 100%;
+            aspect-ratio: 1/1;
+            object-fit: contain;
+            margin-bottom: 8px;
+        }
+
+        #productModal {
+            position: fixed;
+            inset: 0;
+            background: white;
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        #productModal.active {
+            display: flex;
+            transform: translateY(0);
+        }
+
+        .modal-filter-bar {
+            display: flex;
+            padding: 10px;
+            gap: 6px;
+            border-bottom: 1px solid #f0f0f0;
+            background: #fff;
+            overflow-x: auto;
+            scrollbar-width: none;
+        }
+        
+        .modal-filter-bar::-webkit-scrollbar { display: none; }
+
+        .filter-btn {
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 9px;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: #999;
+            background: #f9f9f9;
+            white-space: nowrap;
+            border: 1px solid transparent;
+        }
+
+        .filter-btn.active {
+            background: #000;
+            color: #fff;
+            border-color: #000;
+        }
+
+        .modal-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+        }
+
+        .variant-card {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: #fff;
+            border-radius: 18px;
+            border: 2px solid #f0f0f0;
+            margin-bottom: 10px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .variant-card.selected {
+            border-color: #000;
+            background: #fafafa;
+        }
+
+        .selector-dot {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .variant-card.selected .selector-dot {
+            border-color: #000;
+            background: #000;
+        }
+
+        .variant-card.selected .selector-dot::after {
+            content: '';
+            width: 7px;
+            height: 7px;
+            background: white;
+            border-radius: 50%;
+        }
+
+        #cartBar {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            background: #000;
+            color: white;
+            padding: 16px 22px;
+            border-radius: 20px;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1100;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            z-index: 1010;
+            background: #f0f0f0;
+            border-radius: 50%;
+            padding: 8px;
+        }
     </style>
 </head>
 <body class="pb-32">
@@ -29,28 +187,56 @@
             <div class="w-8 h-8 bg-black rounded-lg flex items-center justify-center text-white font-bold text-xs italic">LS</div>
             <h1 class="font-black text-[13px] uppercase tracking-tighter italic">PRODUCTOS LS</h1>
         </div>
-        <button id="authBtn" class="bg-black text-white px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest">
-            Acceder
-        </button>
+        <div class="relative">
+            <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+            <div id="cartCountBadge" class="hidden absolute -top-2 -right-2 bg-red-500 text-white text-[8px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</div>
+        </div>
     </header>
 
     <div id="catalogGrid" class="product-grid"></div>
 
-    <!-- Modal que ya existía -->
     <div id="productModal">
-        <button onclick="closeModal()" class="close-btn"><i data-lucide="x" class="w-5 h-5"></i></button>
+        <button onclick="closeModal()" class="close-btn">
+            <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+
         <div class="pt-14 px-6 pb-4">
             <h2 id="modalTitle" class="text-2xl font-black italic uppercase leading-none mb-1">---</h2>
+            <p class="text-[9px] font-bold text-gray-400 uppercase tracking-[0.2em]">Elige tus favoritos</p>
         </div>
-        <div class="modal-scroll"><div id="variantsContainer"></div></div>
+
+        <div class="modal-filter-bar">
+            <button onclick="filterModalVariants('todos')" id="m-btn-todos" class="filter-btn active">Todos</button>
+            <button onclick="filterModalVariants('dama')" id="m-btn-dama" class="filter-btn">Dama</button>
+            <button onclick="filterModalVariants('caballero')" id="m-btn-caballero" class="filter-btn">Caballero</button>
+            <button onclick="filterModalVariants('unisex')" id="m-btn-unisex" class="filter-btn">Unisex</button>
+        </div>
+
+        <div class="modal-scroll">
+            <div id="variantsContainer"></div>
+        </div>
+
+        <div class="p-6 border-t border-gray-100 bg-white">
+            <button onclick="closeModal()" class="w-full bg-black text-white py-4 rounded-xl font-black uppercase text-[11px] tracking-widest">
+                Confirmar Selección
+            </button>
+        </div>
     </div>
 
-    <div id="cartBar"></div>
+    <div id="cartBar" onclick="sendOrder()">
+        <div class="flex flex-col">
+            <span id="cartBarCount" class="text-[9px] font-bold uppercase tracking-widest opacity-70">0 productos</span>
+            <span id="cartBarTotal" class="text-base font-black italic">$0</span>
+        </div>
+        <div class="flex items-center gap-3">
+            <span class="text-[10px] font-black uppercase italic tracking-wider">Hacer pedido</span>
+            <i data-lucide="send" class="w-4 h-4"></i>
+        </div>
+    </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyCrjjeOoXPOtJDXDfrHLOA4Ny0QW2zfVWk",
@@ -63,17 +249,16 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const auth = getAuth(app);
-        const provider = new GoogleAuthProvider();
 
-        // Autenticación
-        document.getElementById('authBtn').addEventListener('click', async () => {
-            await signInWithPopup(auth, provider).catch(err => console.error(err));
-        });
-
-        // Catálogo y Modal (La lógica que ya funcionaba)
         let products = [];
-        const cleanUrl = (url) => url ? url.trim().replace('dl=0', 'raw=1').replace('www.dropbox.com', 'dl.dropboxusercontent.com') : "https://via.placeholder.com/400";
+        let cart = []; 
+        let currentProduct = null;
+        let currentModalFilter = 'todos';
+
+        const cleanUrl = (url) => {
+            if (!url) return "https://via.placeholder.com/400?text=PRODUCTOS+LS";
+            return url.trim().replace('dl=0', 'raw=1').replace('www.dropbox.com', 'dl.dropboxusercontent.com');
+        };
 
         onSnapshot(query(collection(db, "perfumes"), orderBy("name", "asc")), (snap) => {
             products = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -82,28 +267,136 @@
 
         function renderGrid() {
             const grid = document.getElementById('catalogGrid');
-            grid.innerHTML = products.map(p => `
+            grid.innerHTML = products.map(p => {
+                const itemsFromThisProduct = cart.filter(item => item.pId === p.id).length;
+                return `
                 <div class="product-card" onclick="openModal('${p.id}')">
+                    ${itemsFromThisProduct > 0 ? `<div class="badge-count">${itemsFromThisProduct}</div>` : ''}
                     <img src="${cleanUrl(p.img)}">
-                    <h3 class="text-[9px] font-black uppercase italic truncate px-2">${p.name}</h3>
+                    <h3 class="text-[9px] font-black uppercase italic tracking-tighter mb-1 truncate px-2">${p.name}</h3>
                     <p class="text-[11px] font-bold text-black">$${p.priceNew || '---'}</p>
-                </div>`).join('');
+                </div>
+            `}).join('');
             lucide.createIcons();
         }
 
         window.openModal = (id) => {
-            const p = products.find(x => x.id === id);
-            document.getElementById('modalTitle').innerText = p.name;
-            document.getElementById('productModal').classList.add('active');
-            document.getElementById('variantsContainer').innerHTML = (p.variants || []).map(v => `
-                <div class="variant-card">
-                    <img src="${cleanUrl(v.img || p.img)}" class="w-12 h-12">
-                    <div><h4 class="font-black text-[10px]">${v.title}</h4><p class="font-black">$${v.priceNew}</p></div>
-                </div>`).join('');
+            currentProduct = products.find(p => p.id === id);
+            document.getElementById('modalTitle').innerText = currentProduct.name;
+            const modal = document.getElementById('productModal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+            filterModalVariants('todos');
+            document.body.style.overflow = 'hidden';
         };
 
-        window.closeModal = () => document.getElementById('productModal').classList.remove('active');
+        window.closeModal = () => {
+            const modal = document.getElementById('productModal');
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                document.body.style.overflow = 'auto';
+                renderGrid();
+            }, 400);
+        };
+
+        window.filterModalVariants = (cat) => {
+            currentModalFilter = cat;
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`m-btn-${cat}`).classList.add('active');
+            renderVariants();
+        };
+
+        window.toggleVariant = (vId) => {
+            const variant = currentProduct.variants.find(v => (v.id || (v.title + v.size)) === vId);
+            const existingIndex = cart.findIndex(item => item.pId === currentProduct.id && item.vId === vId);
+
+            if (existingIndex > -1) {
+                cart.splice(existingIndex, 1);
+            } else {
+                cart.push({
+                    pId: currentProduct.id,
+                    vId: vId,
+                    pName: currentProduct.name,
+                    vName: variant.title,
+                    size: variant.size,
+                    price: parseFloat(variant.priceNew) || 0,
+                    wa: currentProduct.whatsapp || "584120000000"
+                });
+            }
+            renderVariants();
+            updateCartUI();
+        };
+
+        function renderVariants() {
+            const container = document.getElementById('variantsContainer');
+            let variants = currentProduct.variants || [];
+            
+            if (currentModalFilter !== 'todos') {
+                variants = variants.filter(v => (v.gender || '').toLowerCase() === currentModalFilter);
+            }
+
+            container.innerHTML = variants.map(v => {
+                const vId = v.id || (v.title + v.size);
+                const isSelected = cart.some(item => item.pId === currentProduct.id && item.vId === vId);
+                
+                return `
+                <div class="variant-card ${isSelected ? 'selected' : ''}" onclick="toggleVariant('${vId}')">
+                    <img src="${cleanUrl(v.img || currentProduct.img)}" class="w-12 h-12 object-contain rounded-lg">
+                    <div class="flex-1">
+                        <h4 class="font-black italic uppercase text-[10px] leading-tight">${v.title}</h4>
+                        <div class="flex gap-2 items-center mt-0.5">
+                            <span class="text-[8px] font-bold text-gray-400 uppercase tracking-widest">${v.size}</span>
+                            <span class="text-[8px] font-extrabold px-1.5 py-0.5 bg-gray-100 rounded text-gray-600 uppercase">${v.gender || 'Unisex'}</span>
+                        </div>
+                        <p class="text-sm font-black mt-1">$${v.priceNew}</p>
+                    </div>
+                    <div class="selector-dot"></div>
+                </div>
+            `}).join('');
+        }
+
+        function updateCartUI() {
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            const count = cart.length;
+            const bar = document.getElementById('cartBar');
+            const badge = document.getElementById('cartCountBadge');
+
+            if (count > 0) {
+                bar.style.display = 'flex';
+                badge.innerText = count;
+                badge.classList.remove('hidden');
+                document.getElementById('cartBarCount').innerText = `${count} ${count === 1 ? 'producto' : 'productos'} seleccionado(s)`;
+                document.getElementById('cartBarTotal').innerText = `$${total.toFixed(2)}`;
+            } else {
+                bar.style.display = 'none';
+                badge.classList.add('hidden');
+            }
+            lucide.createIcons();
+        }
+
+        window.sendOrder = () => {
+            if (cart.length === 0) return;
+
+            const targetPhone = cart[0].wa;
+            
+            let message = `¡Hola! 👋 Quisiera comprar estos perfumes en *PRODUCTOS LS*:\n\n`;
+            
+            cart.forEach((item, i) => {
+                message += `🔹 *${item.pName}*\n`;
+                message += `   Variante: ${item.vName} (${item.size})\n`;
+                message += `   Precio: $${item.price}\n\n`;
+            });
+
+            const total = cart.reduce((sum, item) => sum + item.price, 0);
+            message += `━━━━━━━━━━━━━━\n`;
+            message += `✅ *TOTAL DEL PEDIDO: $${total.toFixed(2)}*\n\n`;
+            message += `¿Están disponibles?`;
+
+            window.open(`https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`, '_blank');
+        };
     </script>
 </body>
 </html>
 
+  
