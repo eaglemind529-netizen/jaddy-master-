@@ -1,0 +1,88 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Panel | PRODUCTOS LS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="bg-gray-100 p-6 pb-20">
+    <div class="max-w-4xl mx-auto">
+        <header class="flex justify-between items-center mb-8">
+            <h1 class="text-2xl font-black italic">PANEL DE CONTROL ADMIN</h1>
+            <button onclick="toggleForm()" class="bg-black text-white px-4 py-2 rounded-xl text-[10px] font-black uppercase">Nuevo Cliente +</button>
+        </header>
+
+        <!-- Formulario para crear Cliente con acceso -->
+        <div id="clientForm" class="hidden bg-white p-6 rounded-2xl shadow-sm border border-gray-200 mb-8">
+            <h2 class="font-black uppercase mb-4 italic">Registrar Cliente con Acceso</h2>
+            <div class="grid grid-cols-2 gap-4">
+                <input type="text" id="cName" placeholder="Nombre completo" class="p-3 border rounded-lg text-sm">
+                <input type="email" id="cEmail" placeholder="Correo electrónico (Acceso)" class="p-3 border rounded-lg text-sm">
+                <input type="text" id="cID" placeholder="Cédula" class="p-3 border rounded-lg text-sm">
+                <input type="tel" id="cPhone" placeholder="Teléfono" class="p-3 border rounded-lg text-sm">
+                <input type="text" id="cLocation" placeholder="Ubicación" class="p-3 border rounded-lg text-sm">
+                <input type="text" id="cJob" placeholder="Ocupación / Trabajo" class="col-span-2 p-3 border rounded-lg text-sm">
+                <button onclick="saveClient()" class="col-span-2 bg-black text-white py-3 rounded-lg font-bold text-xs uppercase">Crear Cliente y Acceso</button>
+            </div>
+        </div>
+
+        <div class="grid gap-4" id="adminGrid">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200 text-center text-gray-400">
+                No hay clientes registrados aún.
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCrjjeOoXPOtJDXDfrHLOA4Ny0QW2zfVWk",
+            authDomain: "apps-d45d6.firebaseapp.com",
+            projectId: "apps-d45d6",
+            storageBucket: "apps-d45d6.firebasestorage.app",
+            messagingSenderId: "502648373937",
+            appId: "1:502648373937:web:8c3beaa2a6c9289a4d9890"
+        };
+
+        const db = getFirestore(initializeApp(firebaseConfig));
+
+        window.toggleForm = () => document.getElementById('clientForm').classList.toggle('hidden');
+
+        window.saveClient = async () => {
+            const data = {
+                name: document.getElementById('cName').value,
+                email: document.getElementById('cEmail').value, // Guardamos el correo
+                id: document.getElementById('cID').value,
+                phone: document.getElementById('cPhone').value,
+                location: document.getElementById('cLocation').value,
+                job: document.getElementById('cJob').value,
+                status: 'activo', // Para controlarlo luego
+                createdAt: new Date().toISOString()
+            };
+            await addDoc(collection(db, "clientes"), data);
+            alert("Cliente creado y acceso registrado.");
+            toggleForm();
+        };
+
+        onSnapshot(collection(db, "clientes"), (snap) => {
+            const grid = document.getElementById('adminGrid');
+            grid.innerHTML = snap.docs.map(doc => {
+                const c = doc.data();
+                return `
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                    <h3 class="font-black italic uppercase">${c.name}</h3>
+                    <p class="text-[10px] text-blue-600 uppercase font-bold tracking-widest">${c.email}</p>
+                    <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">${c.id} • ${c.phone}</p>
+                    <p class="text-xs mt-2 italic">${c.job} - ${c.location}</p>
+                </div>`;
+            }).join('');
+        });
+    </script>
+</body>
+</html>
+
+```
