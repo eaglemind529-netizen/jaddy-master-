@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -58,6 +57,7 @@
                     <span class="text-neutral-600 text-xs">-</span>
                     <input type="date" id="filterEnd" class="bg-transparent border-none p-0 outline-none">
                     <button onclick="applyFilters()" class="bg-orange-500 text-black font-black px-3 py-1 rounded-lg text-[9px] uppercase">Filtrar</button>
+                    <button onclick="clearFilters()" class="bg-white/10 hover:bg-white/20 text-white font-black px-3 py-1 rounded-lg text-[9px] uppercase transition-all">Limpiar</button>
                 </div>
             </div>
         </header>
@@ -179,14 +179,52 @@
         window.applyFilters = () => {
             const s = document.getElementById('filterStart').value;
             const e = document.getElementById('filterEnd').value;
-            filters.start = s ? new Date(s + 'T00:00:00') : null;
-            filters.end = e ? new Date(e + 'T23:59:59') : null;
+            
+            if (s) {
+                const parts = s.split('-');
+                filters.start = new Date(parts[0], parts[1] - 1, parts[2], 0, 0, 0);
+            } else {
+                filters.start = null;
+            }
+
+            if (e) {
+                const parts = e.split('-');
+                filters.end = new Date(parts[0], parts[1] - 1, parts[2], 23, 59, 59);
+            } else {
+                filters.end = null;
+            }
+
             updateUI();
         };
 
+        window.clearFilters = () => {
+            document.getElementById('filterStart').value = '';
+            document.getElementById('filterEnd').value = '';
+            filters.start = null;
+            filters.end = null;
+            updateUI();
+        };
+
+        function parseItemDate(item) {
+            let dVal = item.createdAt?.toDate() || item.date || item.fecha;
+            if (!dVal) return null;
+            if (dVal instanceof Date) return dVal;
+            let parsed = new Date(dVal);
+            if (!isNaN(parsed)) return parsed;
+            
+            if (typeof dVal === 'string' && dVal.length >= 10) {
+                const p = dVal.substring(0, 10).split('-');
+                if (p.length === 3) {
+                    return new Date(p[0], p[1] - 1, p[2], 12, 0, 0);
+                }
+            }
+            return null;
+        }
+
         function updateUI() {
             const checkFilter = (item) => {
-                const date = item.createdAt?.toDate() || (item.date ? new Date(item.date + 'T12:00:00') : new Date());
+                const date = parseItemDate(item);
+                if (!date || isNaN(date)) return true; 
                 if (filters.start && date < filters.start) return false;
                 if (filters.end && date > filters.end) return false;
                 return true;
@@ -194,25 +232,20 @@
 
             const valBeats = store.ventas.filter(checkFilter).reduce((s, i) => s + (i.isCredit ? (i.amountPaid || 0) : (i.amount || 0)), 0);
             const valVip = store.vip.filter(checkFilter).reduce((s, i) => s + (i.abono || 0), 0);
-            
-            // CORRECCIÓN CLAVE: Se calcula la suma correcta usando los montos de la colección "otrosIngresos"
             const valOthers = store.otros.filter(checkFilter).reduce((s, i) => s + (i.amount || 0), 0);
             const valGastos = store.gastos.filter(checkFilter).reduce((s, i) => s + (i.amount || 0), 0);
 
             const totalIn = valBeats + valVip + valOthers;
             const net = totalIn - valGastos;
 
-            // Actualizar UI Principal
             document.getElementById('totalGrossIncomes').innerText = `$${totalIn.toLocaleString()}`;
             document.getElementById('totalExpenses').innerText = `$${valGastos.toLocaleString()}`;
             document.getElementById('netBalance').innerText = `$${net.toLocaleString()}`;
 
-            // Actualizar Desglose
             document.getElementById('totalBeats').innerText = `$${valBeats.toLocaleString()}`;
             document.getElementById('totalVip').innerText = `$${(valVip + valOthers).toLocaleString()}`;
             document.getElementById('totalExpSmall').innerText = `$${valGastos.toLocaleString()}`;
 
-            // Meta
             const percent = store.meta > 0 ? Math.min((totalIn / store.meta) * 100, 100) : 0;
             const bar = document.getElementById('goalBar');
             const panel = document.getElementById('metaPanel');
@@ -233,11 +266,10 @@
                 bar.style.background = "linear-gradient(90deg, #ff5e00, #ff9e00)";
             }
 
-            // Historial
             const combined = [
-                ...store.ventas.map(v => ({ label: v.beatName, amount: (v.isCredit ? v.amountPaid : v.amount), type: 'in', cat: 'BEAT', date: v.createdAt?.toDate() })),
-                ...store.otros.map(o => ({ label: o.description || 'Otro Ingreso', amount: o.amount, type: 'in', cat: 'OTROS', date: o.createdAt?.toDate() || (o.date ? new Date(o.date + 'T12:00:00') : null) })),
-                ...store.gastos.map(g => ({ label: g.reason, amount: g.amount, type: 'out', cat: 'GASTO', date: g.createdAt?.toDate() }))
+                ...store.ventas.map(v => ({ label: v.beatName || v.customerName || 'Venta Beat', amount: (v.isCredit ? v.amountPaid : v.amount), type: 'in', cat: 'BEAT', date: parseItemDate(v) })),
+                ...store.otros.map(o => ({ label: o.description || 'Otro Ingreso', amount: o.amount, type: 'in', cat: 'OTROS', date: parseItemDate(o) })),
+                ...store.gastos.map(g => ({ label: g.reason || 'Gasto', amount: g.amount, type: 'out', cat: 'GASTO', date: parseItemDate(g) }))
             ].filter(x => x.date && checkFilter(x)).sort((a,b) => b.date - a.date).slice(0, 15);
 
             document.getElementById('globalHistory').innerHTML = combined.map(h => `
@@ -258,7 +290,6 @@
             lucide.createIcons();
         }
 
-        // Suscripciones a Firebase
         onSnapshot(collection(db, "ventas"), s => {
             store.ventas = s.docs.map(d => ({ id: d.id, ...d.data() }));
             updateUI();
@@ -267,7 +298,6 @@
             store.vip = s.docs.map(d => ({ id: d.id, ...d.data() }));
             updateUI();
         });
-        // CORRECCIÓN CLAVE: Se cambió "otros_ingresos" a "otrosIngresos" para alinearse perfectamente con tu index.html
         onSnapshot(collection(db, "otrosIngresos"), s => {
             store.otros = s.docs.map(d => ({ id: d.id, ...d.data() }));
             updateUI();
@@ -282,4 +312,3 @@
 </body>
 </html>
 
-```
