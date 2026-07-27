@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -19,9 +18,14 @@
         }
         .animate-entrada { animation: fadeInDown 0.8s ease-out forwards; }
         .animate-logo { animation: pulseLogo 3s ease-in-out infinite; }
+        
+        /* Estilos personalizados para el slider de audio */
+        input[type="range"] {
+            accent-color: #f97316;
+        }
     </style>
 </head>
-<body class="pb-24">
+<body class="pb-32">
 
     <!-- Pantalla de Login -->
     <div id="authScreen" class="fixed inset-0 z-50 bg-black flex items-center justify-center p-6">
@@ -31,22 +35,22 @@
             </div>
             
             <h2 class="text-xl font-black uppercase italic text-orange-500 mb-6 tracking-widest">Acceso Artista VIP</h2>
-            <input type="email" id="artistEmail" placeholder="Correo registrado en el sistema" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 mb-4 text-white text-center">
-            <button id="accessBtn" class="w-full bg-orange-600 py-4 rounded-xl font-black uppercase text-white hover:bg-orange-500 transition-all">Ingresar al Portal</button>
+            <input type="email" id="artistEmail" placeholder="Correo registrado en el sistema" class="w-full bg-white/5 p-4 rounded-xl border border-white/10 mb-4 text-white text-center focus:outline-none focus:border-orange-500 transition-all">
+            <button id="accessBtn" class="w-full bg-orange-600 py-4 rounded-xl font-black uppercase text-white hover:bg-orange-500 transition-all shadow-lg shadow-orange-600/20">Ingresar al Portal</button>
             <p id="errorMsg" class="text-red-500 text-[10px] mt-4 hidden">Correo no encontrado en la base de artistas.</p>
         </div>
     </div>
 
     <!-- Contenido VIP -->
     <div id="vipContent" class="hidden">
-        <nav class="p-4 border-b border-white/5 bg-black/80 backdrop-blur-2xl">
-            <div class="max-w-5xl mx-auto flex justify-between items-center">
-                <h1 class="text-orange-500 font-black italic uppercase tracking-tighter" id="welcomeMsg">Mis Pistas</h1>
+        <nav class="p-4 border-b border-white/5 bg-black/80 backdrop-blur-2xl sticky top-0 z-40">
+            <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+                <h1 class="text-orange-500 font-black italic uppercase tracking-tighter text-[11px] sm:text-sm text-center sm:text-left leading-tight" id="welcomeMsg">Mis Pistas</h1>
                 <div class="flex items-center gap-3">
-                    <button onclick="window.copyLink()" class="text-white bg-white/5 p-2 rounded-lg hover:bg-orange-600 transition-colors">
-                        <i data-lucide="share-2" class="w-4 h-4"></i>
+                    <button onclick="window.copyLink()" class="text-white bg-white/5 p-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-1.5 text-xs font-semibold">
+                        <i data-lucide="share-2" class="w-4 h-4"></i> Compartir
                     </button>
-                    <button onclick="location.reload()" class="text-[9px] font-bold text-neutral-400 uppercase">Salir</button>
+                    <button onclick="location.reload()" class="text-[10px] font-bold text-neutral-400 hover:text-white uppercase transition-colors">Salir</button>
                 </div>
             </div>
         </nav>
@@ -56,26 +60,115 @@
     </div>
 
     <!-- Mensaje de confirmación copiado -->
-    <div id="toast" class="hidden fixed bottom-20 left-1/2 -translate-x-1/2 bg-orange-600 text-white px-4 py-2 rounded-full text-[10px] font-bold uppercase z-50">
+    <div id="toast" class="hidden fixed bottom-28 left-1/2 -translate-x-1/2 bg-orange-600 text-white px-4 py-2 rounded-full text-[10px] font-bold uppercase z-50 shadow-2xl">
         ¡Enlace copiado al portapapeles!
     </div>
 
-    <div id="playerContainer" class="fixed bottom-0 left-0 right-0 bg-neutral-900 border-t border-white/10 p-4 flex flex-col items-center gap-2 hidden z-50">
-        <div class="flex items-center justify-between w-full max-w-lg">
-            <span id="nowPlaying" class="text-[10px] font-bold text-white uppercase truncate w-1/2">...</span>
-            <button onclick="document.getElementById('playerContainer').classList.add('hidden')" class="text-neutral-500"><i data-lucide="x" class="w-4 h-4"></i></button>
+    <!-- Reproductor Moderno Flotante -->
+    <div id="playerContainer" class="fixed bottom-4 left-4 right-4 max-w-xl mx-auto bg-neutral-900/90 backdrop-blur-xl border border-white/10 p-4 rounded-2xl shadow-2xl flex flex-col gap-3 hidden z-50">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center gap-3 overflow-hidden">
+                <div class="w-10 h-10 rounded-xl bg-orange-600/20 border border-orange-500/30 flex items-center justify-center shrink-0 text-orange-500">
+                    <i data-lucide="disc" class="w-5 h-5 animate-spin"></i>
+                </div>
+                <div class="truncate">
+                    <span class="text-[9px] uppercase tracking-wider text-orange-500 font-bold block">Reproduciendo pista</span>
+                    <span id="nowPlaying" class="text-xs font-black text-white uppercase truncate block">...</span>
+                </div>
+            </div>
+            <button onclick="window.closePlayer()" class="text-neutral-400 hover:text-white bg-white/5 p-1.5 rounded-lg transition-colors">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
         </div>
-        <audio id="audioPlayer" controls class="w-full max-w-lg h-10"></audio>
+
+        <!-- Barra de Progreso y Tiempos -->
+        <div class="flex flex-col gap-1">
+            <div class="flex justify-between text-[9px] text-neutral-400 font-mono">
+                <span id="currentTime">0:00</span>
+                <span id="durationTime">0:00</span>
+            </div>
+            <input type="range" id="progressBar" value="0" max="100" class="w-full h-1.5 bg-neutral-800 rounded-lg appearance-none cursor-pointer">
+        </div>
+
+        <!-- Controles Centrales -->
+        <div class="flex items-center justify-center gap-4 pt-1">
+            <button onclick="window.skipTime(-5)" class="text-neutral-400 hover:text-white transition-colors">
+                <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+            </button>
+            <button id="playPauseBtn" onclick="window.togglePlayPause()" class="w-11 h-11 bg-orange-600 hover:bg-orange-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-orange-600/30 transition-all scale-100 active:scale-95">
+                <i data-lucide="play" class="w-5 h-5 fill-current ml-0.5" id="playPauseIcon"></i>
+            </button>
+            <button onclick="window.skipTime(5)" class="text-neutral-400 hover:text-white transition-colors">
+                <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+            </button>
+        </div>
+        
+        <audio id="audioPlayer" class="hidden"></audio>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
+        const audioPlayer = document.getElementById('audioPlayer');
+        const progressBar = document.getElementById('progressBar');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationTimeEl = document.getElementById('durationTime');
+        const playPauseIcon = document.getElementById('playPauseIcon');
+
+        // Formatear segundos a MM:SS
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+        }
+
+        audioPlayer.ontimeupdate = () => {
+            if (audioPlayer.duration) {
+                const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+                progressBar.value = progress;
+                currentTimeEl.innerText = formatTime(audioPlayer.currentTime);
+            }
+        };
+
+        audioPlayer.onloadedmetadata = () => {
+            durationTimeEl.innerText = formatTime(audioPlayer.duration);
+        };
+
+        progressBar.oninput = () => {
+            const time = (progressBar.value / 100) * audioPlayer.duration;
+            audioPlayer.currentTime = time;
+        };
+
+        window.togglePlayPause = () => {
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                playPauseIcon.setAttribute('data-lucide', 'pause');
+            } else {
+                audioPlayer.pause();
+                playPauseIcon.setAttribute('data-lucide', 'play');
+            }
+            lucide.createIcons();
+        };
+
+        window.skipTime = (seconds) => {
+            audioPlayer.currentTime += seconds;
+        };
+
+        window.closePlayer = () => {
+            audioPlayer.pause();
+            document.getElementById('playerContainer').classList.add('hidden');
+        };
+
         // Funcionalidad de Compartir Enlace
         window.copyLink = () => {
             const url = window.location.href;
+            document.execCommand('copy');
             navigator.clipboard.writeText(url).then(() => {
+                const toast = document.getElementById('toast');
+                toast.classList.remove('hidden');
+                setTimeout(() => toast.classList.add('hidden'), 2000);
+            }).catch(() => {
                 const toast = document.getElementById('toast');
                 toast.classList.remove('hidden');
                 setTimeout(() => toast.classList.add('hidden'), 2000);
@@ -89,58 +182,74 @@
         const db = getFirestore(initializeApp(firebaseConfig));
 
         window.playTrack = (title, url) => {
-            const player = document.getElementById('audioPlayer');
             document.getElementById('nowPlaying').innerText = title;
-            player.src = url;
+            audioPlayer.src = url;
             document.getElementById('playerContainer').classList.remove('hidden');
-            player.play();
+            audioPlayer.play();
+            playPauseIcon.setAttribute('data-lucide', 'pause');
+            lucide.createIcons();
         };
 
         document.getElementById('accessBtn').onclick = async () => {
             const email = document.getElementById('artistEmail').value.trim().toLowerCase();
             if (!email) return;
 
-            const q = query(collection(db, 'artistasVIP'), where("email", "==", email));
-            const snap = await getDocs(q);
+            try {
+                const q = query(collection(db, 'artistasVIP'), where("email", "==", email));
+                const snap = await getDocs(q);
 
-            if (!snap.empty) {
-                const artistData = snap.docs[0].data();
-                document.getElementById('authScreen').classList.add('hidden');
-                document.getElementById('vipContent').classList.remove('hidden');
-                document.getElementById('welcomeMsg').innerText = `Hola, ${artistData.artistName}`;
-                loadPersonalBeats(artistData.artistName);
-            } else {
+                if (!snap.empty) {
+                    const artistData = snap.docs[0].data();
+                    document.getElementById('authScreen').classList.add('hidden');
+                    document.getElementById('vipContent').classList.remove('hidden');
+                    document.getElementById('welcomeMsg').innerText = `Hola, ${artistData.artistName}, bienvenido a jaddymusicrecords`;
+                    loadPersonalBeats(artistData.artistName);
+                } else {
+                    document.getElementById('errorMsg').classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('errorMsg').innerText = "Error de conexión con la base de datos.";
                 document.getElementById('errorMsg').classList.remove('hidden');
             }
         };
 
         async function loadPersonalBeats(artistName) {
-            const q = query(collection(db, 'beats'), where("assignedTo", "==", artistName));
-            const snap = await getDocs(q);
-            const list = document.getElementById('vipList');
+            try {
+                const q = query(collection(db, 'beats'), where("assignedTo", "==", artistName));
+                const snap = await getDocs(q);
+                const list = document.getElementById('vipList');
 
-            if (snap.empty) {
-                list.innerHTML = '<p class="text-neutral-600 text-center col-span-full">No hay pistas asignadas para ti todavía.</p>';
-                return;
-            }
+                if (snap.empty) {
+                    list.innerHTML = '<p class="text-neutral-600 text-center col-span-full">No hay pistas asignadas para ti todavía.</p>';
+                    return;
+                }
 
-            list.innerHTML = snap.docs.map(doc => {
-                const b = doc.data();
-                return `
-                    <div class="bg-[#0a0a0a] border border-orange-500/20 p-5 rounded-2xl">
-                        <h3 class="text-white font-black uppercase text-sm">${b.title}</h3>
-                        <div class="flex flex-col gap-2 mt-4">
-                            <button onclick="window.playTrack('${b.title}', '${b.url}')" class="bg-neutral-800 py-2 rounded-lg text-white text-[10px] font-black uppercase hover:bg-neutral-700">Escuchar</button>
-                            <a href="${b.url}" download target="_blank" class="bg-blue-600 py-2 rounded-lg text-white text-[10px] font-black uppercase text-center hover:bg-blue-500">Descargar</a>
+                list.innerHTML = snap.docs.map(doc => {
+                    const b = doc.data();
+                    return `
+                        <div class="bg-[#0a0a0a] border border-orange-500/20 p-5 rounded-2xl flex flex-col justify-between hover:border-orange-500/40 transition-all">
+                            <div>
+                                <span class="text-[9px] text-orange-500 font-bold uppercase tracking-widest block mb-1">Beat VIP</span>
+                                <h3 class="text-white font-black uppercase text-sm">${b.title}</h3>
+                            </div>
+                            <div class="flex flex-col gap-2 mt-6">
+                                <button onclick="window.playTrack('${b.title}', '${b.url}')" class="bg-orange-600/10 border border-orange-500/30 py-2.5 rounded-xl text-orange-400 text-[10px] font-black uppercase hover:bg-orange-600 hover:text-white transition-all flex items-center justify-center gap-1.5">
+                                    <i data-lucide="play" class="w-3.5 h-3.5 fill-current"></i> Escuchar
+                                </button>
+                                <a href="${b.url}" download target="_blank" class="bg-neutral-800 py-2.5 rounded-xl text-neutral-300 text-[10px] font-black uppercase text-center hover:bg-neutral-700 hover:text-white transition-all flex items-center justify-center gap-1.5">
+                                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Descargar
+                                </a>
+                            </div>
                         </div>
-                    </div>
-                `;
-            }).join('');
-            lucide.createIcons();
+                    `;
+                }).join('');
+                lucide.createIcons();
+            } catch (err) {
+                console.error(err);
+            }
         }
     </script>
 </body>
 </html>
-
-```
 
