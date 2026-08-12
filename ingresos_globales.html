@@ -133,9 +133,15 @@
 
         <!-- HISTORIAL -->
         <div class="glass-panel p-6">
-            <h3 class="text-xs font-black uppercase italic mb-6 flex items-center gap-2 text-neutral-400 tracking-widest">
-                <i data-lucide="list" class="w-4 h-4 text-orange-500"></i> Movimientos Recientes
-            </h3>
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xs font-black uppercase italic flex items-center gap-2 text-neutral-400 tracking-widest">
+                    <i data-lucide="list" class="w-4 h-4 text-orange-500"></i> Movimientos Recientes
+                </h3>
+                <button onclick="toggleSortMode()" id="sortButton" class="bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5">
+                    <i data-lucide="arrow-down-up" class="w-3.5 h-3.5 text-orange-500"></i>
+                    Ordenar: Por Fecha
+                </button>
+            </div>
             <div id="globalHistory" class="space-y-2">
                 <!-- Se llena dinámicamente -->
             </div>
@@ -160,6 +166,7 @@
 
         let store = { ventas: [], vip: [], otros: [], gastos: [], meta: 1000 };
         let filters = { start: null, end: null };
+        let sortByAmount = false; // Estado para alternar el orden
 
         async function init() {
             const snap = await getDoc(doc(db, "configuracion", "meta_mensual"));
@@ -173,6 +180,19 @@
         window.updateGoal = async (val) => {
             store.meta = parseFloat(val) || 0;
             await setDoc(doc(db, "configuracion", "meta_mensual"), { valor: store.meta });
+            updateUI();
+        };
+
+        window.toggleSortMode = () => {
+            sortByAmount = !sortByAmount;
+            const btn = document.getElementById('sortButton');
+            if (sortByAmount) {
+                btn.innerHTML = `<i data-lucide="arrow-down-up" class="w-3.5 h-3.5 text-orange-500"></i> Ordenar: Mayor Monto`;
+                btn.classList.add('border-orange-500/50', 'bg-orange-500/10', 'text-orange-400');
+            } else {
+                btn.innerHTML = `<i data-lucide="arrow-down-up" class="w-3.5 h-3.5 text-orange-500"></i> Ordenar: Por Fecha`;
+                btn.classList.remove('border-orange-500/50', 'bg-orange-500/10', 'text-orange-400');
+            }
             updateUI();
         };
 
@@ -270,7 +290,14 @@
                 ...store.ventas.map(v => ({ label: v.beatName || v.customerName || 'Venta Beat', amount: (v.isCredit ? v.amountPaid : v.amount), type: 'in', cat: 'BEAT', date: parseItemDate(v) })),
                 ...store.otros.map(o => ({ label: o.description || 'Otro Ingreso', amount: o.amount, type: 'in', cat: 'OTROS', date: parseItemDate(o) })),
                 ...store.gastos.map(g => ({ label: g.reason || 'Gasto', amount: g.amount, type: 'out', cat: 'GASTO', date: parseItemDate(g) }))
-            ].filter(x => x.date && checkFilter(x)).sort((a,b) => b.date - a.date).slice(0, 15);
+            ].filter(x => x.date && checkFilter(x));
+
+            // Ordenar según el modo seleccionado (por monto de mayor a menor, o por fecha más reciente)
+            if (sortByAmount) {
+                combined.sort((a, b) => b.amount - a.amount);
+            } else {
+                combined.sort((a, b) => b.date - a.date);
+            }
 
             document.getElementById('globalHistory').innerHTML = combined.map(h => `
                 <div class="flex justify-between items-center p-4 bg-white/[0.02] rounded-2xl border border-white/[0.05] hover:bg-white/[0.04] transition-all">
@@ -311,4 +338,6 @@
     </script>
 </body>
 </html>
+
+
 
