@@ -34,20 +34,142 @@
             50% { box-shadow: 0 0 15px rgba(16, 185, 129, 0.3); border-color: #10b981; }
             100% { box-shadow: 0 0 0px rgba(16, 185, 129, 0); }
         }
+        .modal-overlay { background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); }
     </style>
 </head>
 <body class="p-6">
 
-    <div class="max-w-5xl mx-auto space-y-6">
-        <!-- HEADER CON BOTÓN DE EGRESOS -->
-        <header class="flex justify-between items-center glass-panel p-6">
+    <!-- MENÚ LATERAL / SIDEBAR -->
+    <div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden fixed inset-0 z-50 bg-black/60 backdrop-blur-sm transition-opacity"></div>
+    <div id="sidebarMenu" class="fixed top-0 left-0 bottom-0 w-72 bg-[#0e0e0e] border-r border-white/10 z-50 transform -translate-x-full transition-transform duration-300 flex flex-col p-6 shadow-2xl">
+        <div class="flex justify-between items-center mb-8 pb-4 border-b border-white/5">
             <div>
-                <h1 class="text-2xl font-black italic uppercase tracking-tighter leading-none">Jaddy <span class="text-orange-500">Studio</span></h1>
-                <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mt-1">Control de Finanzas Global</p>
+                <h2 class="text-lg font-black italic uppercase tracking-tighter text-white">Jaddy <span class="text-orange-500">Studio</span></h2>
+                <p class="text-[9px] font-bold text-neutral-500 uppercase tracking-widest mt-0.5">Menú Principal</p>
+            </div>
+            <button onclick="toggleSidebar()" class="text-neutral-400 hover:text-white p-2 rounded-xl bg-white/5 cursor-pointer">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
+        </div>
+
+        <div class="space-y-2 flex-1">
+            <button onclick="toggleSidebar(); openArtistsSummaryModal()" class="w-full flex items-center gap-3 px-4 py-3 bg-white/5 hover:bg-orange-600/20 text-neutral-200 hover:text-orange-400 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer">
+                <i data-lucide="users" class="w-4 h-4 text-orange-500"></i> Artistas (Gastos / Servicios)
+            </button>
+            <button onclick="window.location.href='egresos.html'" class="w-full flex items-center gap-3 px-4 py-3 bg-white/5 hover:bg-red-600/20 text-neutral-200 hover:text-red-400 rounded-xl font-black text-xs uppercase tracking-wider transition-all cursor-pointer">
+                <i data-lucide="minus-circle" class="w-4 h-4 text-red-500"></i> Egresos Generales
+            </button>
+        </div>
+
+        <div class="pt-4 border-t border-white/5 text-[9px] text-neutral-600 font-bold uppercase tracking-widest text-center">
+            Jaddy Studio System v2.5
+        </div>
+    </div>
+
+    <!-- MODAL RESUMEN DE GASTOS / PAGOS POR ARTISTA -->
+    <div id="artistsSummaryModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+        <div class="glass-panel p-6 sm:p-8 w-full max-w-2xl max-h-[85vh] flex flex-col border-orange-500/30">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-lg font-black uppercase italic tracking-tight text-orange-500">Gastos y Pagos por Artista</h2>
+                    <p class="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mt-0.5">Total gastado por cada artista en servicios del estudio</p>
+                </div>
+                <button onclick="document.getElementById('artistsSummaryModal').classList.add('hidden')" class="bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white p-2 rounded-xl transition-all cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div id="artistsSummaryList" class="overflow-y-auto space-y-3 pr-1 flex-1">
+                <!-- Se llena dinámicamente -->
+            </div>
+
+            <button onclick="document.getElementById('artistsSummaryModal').classList.add('hidden')" class="w-full mt-6 py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer">
+                Cerrar
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL DETALLE / FACTURA DE INGRESOS -->
+    <div id="incomeDetailModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+        <div class="glass-panel p-6 sm:p-8 w-full max-w-2xl max-h-[85vh] flex flex-col border-emerald-500/30">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-lg font-black uppercase italic tracking-tight text-emerald-400">Historial Detallado de Ingresos</h2>
+                    <p class="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mt-0.5">Desglose completo de entradas de dinero</p>
+                </div>
+                <button onclick="document.getElementById('incomeDetailModal').classList.add('hidden')" class="bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white p-2 rounded-xl transition-all cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="flex justify-between items-center bg-white/[0.02] p-4 rounded-2xl border border-white/5 mb-4">
+                <span class="text-[10px] font-black text-neutral-400 uppercase">Total Acumulado Filtrado</span>
+                <span id="modalTotalIncomeVal" class="text-xl font-black italic text-emerald-400">$0.00</span>
+            </div>
+
+            <div id="incomeDetailList" class="overflow-y-auto space-y-2 pr-1 flex-1">
+                <!-- Se llena dinámicamente -->
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button onclick="window.sendIncomeWhatsApp()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-black font-black rounded-xl text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <i data-lucide="share-2" class="w-4 h-4"></i> Enviar a WhatsApp
+                </button>
+                <button onclick="document.getElementById('incomeDetailModal').classList.add('hidden')" class="py-3 px-6 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL INVERSIÓN / GASTOS GENERALES -->
+    <div id="artistInvestmentModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay">
+        <div class="glass-panel p-6 sm:p-8 w-full max-w-2xl max-h-[85vh] flex flex-col border-red-500/30">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 id="modalInvestmentTitle" class="text-lg font-black uppercase italic tracking-tight text-red-400">Inversión y Gastos</h2>
+                    <p class="text-[10px] text-neutral-500 uppercase font-bold tracking-widest mt-0.5">Resumen de egresos del estudio</p>
+                </div>
+                <button onclick="document.getElementById('artistInvestmentModal').classList.add('hidden')" class="bg-white/5 hover:bg-white/10 text-neutral-400 hover:text-white p-2 rounded-xl transition-all cursor-pointer">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+            
+            <div class="flex justify-between items-center bg-white/[0.02] p-4 rounded-2xl border border-white/5 mb-4">
+                <span class="text-[10px] font-black text-neutral-400 uppercase">Total Gastado</span>
+                <span id="modalTotalInvestmentVal" class="text-xl font-black italic text-red-400">$0.00</span>
+            </div>
+
+            <div id="artistInvestmentList" class="overflow-y-auto space-y-2 pr-1 flex-1">
+                <!-- Se llena dinámicamente -->
+            </div>
+
+            <div class="flex gap-3 mt-6">
+                <button onclick="window.sendInvestmentWhatsApp()" class="flex-1 py-3 bg-red-600 hover:bg-red-500 text-white font-black rounded-xl text-[10px] uppercase tracking-widest transition-all flex items-center justify-center gap-2 cursor-pointer">
+                    <i data-lucide="share-2" class="w-4 h-4"></i> Enviar a WhatsApp
+                </button>
+                <button onclick="document.getElementById('artistInvestmentModal').classList.add('hidden')" class="py-3 px-6 bg-white/5 hover:bg-white/10 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all cursor-pointer">
+                    Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-5xl mx-auto space-y-6">
+        <!-- HEADER CON BOTÓN DE MENÚ LATERAL Y EGRESOS -->
+        <header class="flex justify-between items-center glass-panel p-6">
+            <div class="flex items-center gap-4">
+                <!-- Botón de Tres Rayitas (Menú hamburguesa) -->
+                <button onclick="toggleSidebar()" class="bg-white/5 hover:bg-white/10 text-white p-2.5 rounded-xl border border-white/10 transition-all cursor-pointer flex items-center justify-center">
+                    <i data-lucide="menu" class="w-5 h-5 text-orange-500"></i>
+                </button>
+                <div>
+                    <h1 class="text-2xl font-black italic uppercase tracking-tighter leading-none">Jaddy <span class="text-orange-500">Studio</span></h1>
+                    <p class="text-[10px] font-bold text-neutral-500 uppercase tracking-widest mt-1">Control de Finanzas Global</p>
+                </div>
             </div>
             <div class="flex gap-3">
-                <!-- Botón de Egresos restaurado -->
-                <button onclick="window.location.href='egresos.html'" class="bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-xl border border-red-500/20 transition-all flex items-center gap-2 font-black text-[10px] uppercase tracking-widest">
+                <button onclick="window.location.href='egresos.html'" class="bg-red-500/10 hover:bg-red-500/20 text-red-500 px-4 py-2 rounded-xl border border-red-500/20 transition-all flex items-center gap-2 font-black text-[10px] uppercase tracking-widest cursor-pointer">
                     <i data-lucide="minus-circle" class="w-4 h-4"></i>
                     Egresos
                 </button>
@@ -56,28 +178,38 @@
                     <input type="date" id="filterStart" class="bg-transparent border-none p-0 outline-none">
                     <span class="text-neutral-600 text-xs">-</span>
                     <input type="date" id="filterEnd" class="bg-transparent border-none p-0 outline-none">
-                    <button onclick="applyFilters()" class="bg-orange-500 text-black font-black px-3 py-1 rounded-lg text-[9px] uppercase">Filtrar</button>
-                    <button onclick="clearFilters()" class="bg-white/10 hover:bg-white/20 text-white font-black px-3 py-1 rounded-lg text-[9px] uppercase transition-all">Limpiar</button>
+                    <button onclick="applyFilters()" class="bg-orange-500 text-black font-black px-3 py-1 rounded-lg text-[9px] uppercase cursor-pointer">Filtrar</button>
+                    <button onclick="clearFilters()" class="bg-white/10 hover:bg-white/20 text-white font-black px-3 py-1 rounded-lg text-[9px] uppercase transition-all cursor-pointer">Limpiar</button>
                 </div>
             </div>
         </header>
 
         <!-- INDICADORES CLAVE: INGRESOS, EGRESOS, CAJA REAL -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="card-stat bg-emerald-500/5 border-emerald-500/20">
-                <div class="flex items-center gap-2 mb-2">
-                    <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i>
-                    <p class="text-[9px] font-black text-neutral-500 uppercase tracking-widest">Total Recibido (Ingresos)</p>
+            <div class="card-stat bg-emerald-500/5 border-emerald-500/20 relative group">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-4 h-4 text-emerald-500"></i>
+                        <p class="text-[9px] font-black text-neutral-500 uppercase tracking-widest">Total Recibido (Ingresos)</p>
+                    </div>
                 </div>
-                <h2 id="totalGrossIncomes" class="text-3xl font-black italic text-emerald-400">$0.00</h2>
+                <h2 id="totalGrossIncomes" class="text-3xl font-black italic text-emerald-400 mb-4">$0.00</h2>
+                <button onclick="openIncomeDetail()" class="w-full py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                    <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Ver Historial de Ingresos
+                </button>
             </div>
 
-            <div class="card-stat bg-red-500/5 border-red-500/20">
-                <div class="flex items-center gap-2 mb-2">
-                    <i data-lucide="trending-down" class="w-4 h-4 text-red-500"></i>
-                    <p class="text-[9px] font-black text-neutral-500 uppercase tracking-widest">Total Pagado (Egresos)</p>
+            <div class="card-stat bg-red-500/5 border-red-500/20 relative group">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="trending-down" class="w-4 h-4 text-red-500"></i>
+                        <p class="text-[9px] font-black text-neutral-500 uppercase tracking-widest">Total Pagado (Egresos)</p>
+                    </div>
                 </div>
-                <h2 id="totalExpenses" class="text-3xl font-black italic text-red-400">$0.00</h2>
+                <h2 id="totalExpenses" class="text-3xl font-black italic text-red-400 mb-4">$0.00</h2>
+                <button onclick="openArtistInvestmentModal()" class="w-full py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-1.5 transition-all cursor-pointer">
+                    <i data-lucide="user-minus" class="w-3.5 h-3.5"></i> Ver Egresos Totales
+                </button>
             </div>
 
             <div id="balanceCard" class="card-stat bg-white/5 border-white/10">
@@ -133,14 +265,21 @@
 
         <!-- HISTORIAL -->
         <div class="glass-panel p-6">
-            <div class="flex justify-between items-center mb-6">
+            <div class="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
                 <h3 class="text-xs font-black uppercase italic flex items-center gap-2 text-neutral-400 tracking-widest">
-                    <i data-lucide="list" class="w-4 h-4 text-orange-500"></i> Movimientos Recientes
+                    <i data-lucide="list" class="w-4 h-4 text-orange-500"></i> Movimientos Recientes (Todos)
                 </h3>
-                <button onclick="toggleSortMode()" id="sortButton" class="bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10 px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5">
-                    <i data-lucide="arrow-down-up" class="w-3.5 h-3.5 text-orange-500"></i>
-                    Ordenar: Por Fecha
-                </button>
+                <div class="flex items-center gap-3 w-full sm:w-auto">
+                    <!-- BARRA DE BÚSQUEDA CON LUPA -->
+                    <div class="relative flex-1 sm:w-64">
+                        <i data-lucide="search" class="w-4 h-4 text-neutral-500 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="searchMovement" oninput="updateUI()" placeholder="Buscar por nombre..." class="w-full bg-black/50 border border-white/10 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-neutral-500 outline-none focus:border-orange-500 transition-all">
+                    </div>
+                    <button onclick="toggleSortMode()" id="sortButton" class="bg-white/5 hover:bg-white/10 text-neutral-300 border border-white/10 px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shrink-0 cursor-pointer">
+                        <i data-lucide="arrow-down-up" class="w-3.5 h-3.5 text-orange-500"></i>
+                        Ordenar
+                    </button>
+                </div>
             </div>
             <div id="globalHistory" class="space-y-2">
                 <!-- Se llena dinámicamente -->
@@ -166,7 +305,10 @@
 
         let store = { ventas: [], vip: [], otros: [], gastos: [], meta: 1000 };
         let filters = { start: null, end: null };
-        let sortByAmount = false; // Estado para alternar el orden
+        let sortByAmount = false;
+        let cachedIncomes = [];
+        let cachedInvestments = [];
+        let currentSearchArtist = "";
 
         async function init() {
             const snap = await getDoc(doc(db, "configuracion", "meta_mensual"));
@@ -176,6 +318,75 @@
             }
             lucide.createIcons();
         }
+
+        // Control del Menú Lateral (Sidebar)
+        window.toggleSidebar = () => {
+            const sidebar = document.getElementById('sidebarMenu');
+            const overlay = document.getElementById('sidebarOverlay');
+            sidebar.classList.toggle('-translate-x-full');
+            overlay.classList.toggle('hidden');
+        };
+
+        // Modal de Resumen de lo que ha pagado cada artista por servicios (Ventas / Beats / VIP)
+        window.openArtistsSummaryModal = () => {
+            const checkFilter = (item) => {
+                const date = parseItemDate(item);
+                if (!date || isNaN(date)) return true; 
+                if (filters.start && date < filters.start) return false;
+                if (filters.end && date > filters.end) return false;
+                return true;
+            };
+
+            let artistPayments = {};
+
+            // Agrupar ventas de beats por cliente / artista
+            store.ventas.filter(checkFilter).forEach(v => {
+                let name = (v.customerName || v.beatName || 'Sin Nombre').trim().toUpperCase();
+                let amt = parseFloat(v.isCredit ? v.amountPaid : v.amount) || 0;
+                if (!artistPayments[name]) artistPayments[name] = { total: 0, items: [] };
+                artistPayments[name].total += amt;
+                artistPayments[name].items.push({ desc: `Producción / Beat: ${v.beatName || 'Servicio'}`, amount: amt });
+            });
+
+            // Agrupar abonos VIP por artista
+            store.vip.filter(checkFilter).forEach(v => {
+                let name = (v.artistName || 'Artista VIP').trim().toUpperCase();
+                let amt = parseFloat(v.abono) || 0;
+                if (!artistPayments[name]) artistPayments[name] = { total: 0, items: [] };
+                artistPayments[name].total += amt;
+                artistPayments[name].items.push({ desc: `Membresía VIP (${v.plan || 'Plan'})`, amount: amt });
+            });
+
+            const summaryList = document.getElementById('artistsSummaryList');
+            const entries = Object.entries(artistPayments).sort((a,b) => b[1].total - a[1].total);
+
+            if (entries.length === 0) {
+                summaryList.innerHTML = '<p class="text-center text-xs text-neutral-500 py-6 uppercase font-bold">No hay registros de pagos por artista en este periodo</p>';
+            } else {
+                summaryList.innerHTML = entries.map(([artist, data]) => `
+                    <div class="bg-white/[0.02] p-4 rounded-2xl border border-white/[0.05] space-y-2">
+                        <div class="flex justify-between items-center border-b border-white/5 pb-2">
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="user" class="w-4 h-4 text-orange-500"></i>
+                                <span class="text-xs font-black uppercase text-white tracking-wider">${artist}</span>
+                            </div>
+                            <span class="text-sm font-black italic text-emerald-400">Total Pagado: $${data.total.toLocaleString()}</span>
+                        </div>
+                        <div class="space-y-1 pl-6">
+                            ${data.items.map(it => `
+                                <div class="flex justify-between text-[10px] text-neutral-400 uppercase">
+                                    <span>• ${it.desc}</span>
+                                    <span class="font-bold text-white">+$${it.amount.toLocaleString()}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('artistsSummaryModal').classList.remove('hidden');
+            lucide.createIcons();
+        };
 
         window.updateGoal = async (val) => {
             store.meta = parseFloat(val) || 0;
@@ -187,10 +398,10 @@
             sortByAmount = !sortByAmount;
             const btn = document.getElementById('sortButton');
             if (sortByAmount) {
-                btn.innerHTML = `<i data-lucide="arrow-down-up" class="w-3.5 h-3.5 text-orange-500"></i> Ordenar: Mayor Monto`;
+                btn.innerHTML = `<i data-lucide="arrow-down-up" class="w-3.5 h-3.5 text-orange-500"></i> Mayor Monto`;
                 btn.classList.add('border-orange-500/50', 'bg-orange-500/10', 'text-orange-400');
             } else {
-                btn.innerHTML = `<i data-lucide="arrow-down-up" class="w-3.5 h-3.5 text-orange-500"></i> Ordenar: Por Fecha`;
+                btn.innerHTML = `<i data-lucide="arrow-down-up" class="w-3.5 h-3.5 text-orange-500"></i> Ordenar`;
                 btn.classList.remove('border-orange-500/50', 'bg-orange-500/10', 'text-orange-400');
             }
             updateUI();
@@ -226,9 +437,15 @@
         };
 
         function parseItemDate(item) {
-            let dVal = item.createdAt?.toDate() || item.date || item.fecha;
-            if (!dVal) return null;
-            if (dVal instanceof Date) return dVal;
+            let dVal = item.createdAt?.toDate ? item.createdAt.toDate() : (item.createdAt || item.date || item.fecha);
+            if (!dVal) return new Date();
+            if (dVal instanceof Date) return isNaN(dVal) ? new Date() : dVal;
+            
+            if (typeof dVal === 'number') {
+                let pDate = new Date(dVal);
+                return isNaN(pDate) ? new Date() : pDate;
+            }
+
             let parsed = new Date(dVal);
             if (!isNaN(parsed)) return parsed;
             
@@ -238,8 +455,164 @@
                     return new Date(p[0], p[1] - 1, p[2], 12, 0, 0);
                 }
             }
-            return null;
+            return new Date();
         }
+
+        window.openIncomeDetail = () => {
+            const checkFilter = (item) => {
+                const date = parseItemDate(item);
+                if (!date || isNaN(date)) return true; 
+                if (filters.start && date < filters.start) return false;
+                if (filters.end && date > filters.end) return false;
+                return true;
+            };
+
+            const filteredBeats = store.ventas.filter(checkFilter).map(v => ({
+                label: v.beatName || v.customerName || 'Venta de Beat',
+                sub: v.isCredit ? 'Venta a Crédito (Abonado)' : 'Pago Completo',
+                amount: v.isCredit ? (v.amountPaid || 0) : (v.amount || 0),
+                cat: 'BEAT',
+                date: parseItemDate(v)
+            }));
+
+            const filteredVip = store.vip.filter(checkFilter).map(v => ({
+                label: v.artistName || 'Artista VIP',
+                sub: `Plan: ${v.plan || 'VIP'}`,
+                amount: v.abono || 0,
+                cat: 'VIP',
+                date: parseItemDate(v)
+            }));
+
+            const filteredOthers = store.otros.filter(checkFilter).map(o => ({
+                label: o.description || 'Otro Ingreso',
+                sub: 'Ingreso Extra',
+                amount: o.amount || 0,
+                cat: 'OTROS',
+                date: parseItemDate(v)
+            }));
+
+            cachedIncomes = [...filteredBeats, ...filteredVip, ...filteredOthers].sort((a,b) => b.date - a.date);
+            const totalSum = cachedIncomes.reduce((s, i) => s + i.amount, 0);
+
+            document.getElementById('modalTotalIncomeVal').innerText = `$${totalSum.toLocaleString()}`;
+            
+            const detailList = document.getElementById('incomeDetailList');
+            if (cachedIncomes.length === 0) {
+                detailList.innerHTML = '<p class="text-center text-xs text-neutral-500 py-6 uppercase font-bold">No hay ingresos registrados en este periodo</p>';
+            } else {
+                detailList.innerHTML = cachedIncomes.map(inc => `
+                    <div class="flex justify-between items-center p-3.5 bg-white/[0.02] rounded-2xl border border-white/[0.05]">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                            <div>
+                                <p class="text-[11px] font-black uppercase tracking-tight text-white">${inc.label}</p>
+                                <p class="text-[9px] text-neutral-500 font-bold uppercase mt-0.5">${inc.sub} • ${inc.cat} • ${inc.date.toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        <p class="text-sm font-black italic text-emerald-400">+$${inc.amount.toLocaleString()}</p>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('incomeDetailModal').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.openArtistInvestmentModal = () => {
+            currentSearchArtist = document.getElementById('searchMovement')?.value.toLowerCase().trim() || "";
+            
+            const checkFilter = (item) => {
+                const date = parseItemDate(item);
+                if (!date || isNaN(date)) return true; 
+                if (filters.start && date < filters.start) return false;
+                if (filters.end && date > filters.end) return false;
+                return true;
+            };
+
+            let expenses = store.gastos.filter(checkFilter).map(g => ({
+                label: g.reason || g.artistName || 'Gasto General',
+                sub: g.category || 'Inversión / Operación',
+                amount: g.amount || 0,
+                date: parseItemDate(g)
+            }));
+
+            if (currentSearchArtist) {
+                expenses = expenses.filter(e => e.label.toLowerCase().includes(currentSearchArtist));
+                document.getElementById('modalInvestmentTitle').innerText = `Egresos en: "${currentSearchArtist.toUpperCase()}"`;
+            } else {
+                document.getElementById('modalInvestmentTitle').innerText = `Egresos Totales`;
+            }
+
+            cachedInvestments = expenses.sort((a,b) => b.date - a.date);
+            const totalSum = cachedInvestments.reduce((s, i) => s + i.amount, 0);
+
+            document.getElementById('modalTotalInvestmentVal').innerText = `$${totalSum.toLocaleString()}`;
+            
+            const listContainer = document.getElementById('artistInvestmentList');
+            if (cachedInvestments.length === 0) {
+                listContainer.innerHTML = `<p class="text-center text-xs text-neutral-500 py-6 uppercase font-bold">No hay egresos registrados${currentSearchArtist ? ' para este concepto' : ''}</p>`;
+            } else {
+                listContainer.innerHTML = cachedInvestments.map(inv => `
+                    <div class="flex justify-between items-center p-3.5 bg-white/[0.02] rounded-2xl border border-white/[0.05]">
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 rounded-full bg-red-500"></div>
+                            <div>
+                                <p class="text-[11px] font-black uppercase tracking-tight text-white">${inv.label}</p>
+                                <p class="text-[9px] text-neutral-500 font-bold uppercase mt-0.5">${inv.sub} • ${inv.date.toLocaleDateString()}</p>
+                            </div>
+                        </div>
+                        <p class="text-sm font-black italic text-red-400">-$${inv.amount.toLocaleString()}</p>
+                    </div>
+                `).join('');
+            }
+
+            document.getElementById('artistInvestmentModal').classList.remove('hidden');
+            lucide.createIcons();
+        };
+
+        window.sendIncomeWhatsApp = () => {
+            if (cachedIncomes.length === 0) {
+                alert("No hay ingresos para compartir.");
+                return;
+            }
+
+            const totalSum = cachedIncomes.reduce((s, i) => s + i.amount, 0);
+            let msg = `📊 *REPORTE DE INGRESOS - JADDY STUDIO*\n\n`;
+            msg += `💰 *Total Recibido:* $${totalSum.toLocaleString()}\n`;
+            msg += `────────────────────────\n\n`;
+            
+            cachedIncomes.forEach((inc, idx) => {
+                msg += `${idx + 1}. *${inc.label}*\n`;
+                msg += `   • Categoría: ${inc.cat} (${inc.sub})\n`;
+                msg += `   • Fecha: ${inc.date.toLocaleDateString()}\n`;
+                msg += `   • Monto: *+$${inc.amount.toLocaleString()}*\n\n`;
+            });
+
+            const encoded = encodeURIComponent(msg);
+            window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+        };
+
+        window.sendInvestmentWhatsApp = () => {
+            if (cachedInvestments.length === 0) {
+                alert("No hay egresos para compartir.");
+                return;
+            }
+
+            const totalSum = cachedInvestments.reduce((s, i) => s + i.amount, 0);
+            let msg = `📉 *REPORTE DE EGRESOS - JADDY STUDIO*\n\n`;
+            msg += `💸 *Total Pagado:* $${totalSum.toLocaleString()}\n`;
+            msg += `────────────────────────\n\n`;
+            
+            cachedInvestments.forEach((inv, idx) => {
+                msg += `${idx + 1}. *${inv.label}*\n`;
+                msg += `   • Detalle: ${inv.sub}\n`;
+                msg += `   • Fecha: ${inv.date.toLocaleDateString()}\n`;
+                msg += `   • Monto: *-$${inv.amount.toLocaleString()}*\n\n`;
+            });
+
+            const encoded = encodeURIComponent(msg);
+            window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+        };
 
         function updateUI() {
             const checkFilter = (item) => {
@@ -268,7 +641,6 @@
 
             const percent = store.meta > 0 ? Math.min((totalIn / store.meta) * 100, 100) : 0;
             const bar = document.getElementById('goalBar');
-            const panel = document.getElementById('metaPanel');
             const balanceCard = document.getElementById('balanceCard');
 
             bar.style.width = `${percent}%`;
@@ -286,13 +658,19 @@
                 bar.style.background = "linear-gradient(90deg, #ff5e00, #ff9e00)";
             }
 
-            const combined = [
-                ...store.ventas.map(v => ({ label: v.beatName || v.customerName || 'Venta Beat', amount: (v.isCredit ? v.amountPaid : v.amount), type: 'in', cat: 'BEAT', date: parseItemDate(v) })),
-                ...store.otros.map(o => ({ label: o.description || 'Otro Ingreso', amount: o.amount, type: 'in', cat: 'OTROS', date: parseItemDate(o) })),
-                ...store.gastos.map(g => ({ label: g.reason || 'Gasto', amount: g.amount, type: 'out', cat: 'GASTO', date: parseItemDate(g) }))
-            ].filter(x => x.date && checkFilter(x));
+            const searchQuery = document.getElementById('searchMovement')?.value.toLowerCase().trim() || "";
 
-            // Ordenar según el modo seleccionado (por monto de mayor a menor, o por fecha más reciente)
+            let combined = [
+                ...store.ventas.map(v => ({ label: v.beatName || v.customerName || 'Venta Beat', amount: (v.isCredit ? (v.amountPaid || 0) : (v.amount || 0)), type: 'in', cat: 'BEAT', date: parseItemDate(v) })),
+                ...store.vip.map(v => ({ label: v.artistName || 'Abono VIP', amount: v.abono || 0, type: 'in', cat: 'VIP', date: parseItemDate(v) })),
+                ...store.otros.map(o => ({ label: o.description || 'Otro Ingreso', amount: o.amount || 0, type: 'in', cat: 'OTROS', date: parseItemDate(v) })),
+                ...store.gastos.map(g => ({ label: g.reason || 'Gasto', amount: g.amount || 0, type: 'out', cat: 'GASTO', date: parseItemDate(v) }))
+            ];
+
+            if (searchQuery) {
+                combined = combined.filter(item => item.label.toLowerCase().includes(searchQuery));
+            }
+
             if (sortByAmount) {
                 combined.sort((a, b) => b.amount - a.amount);
             } else {
@@ -312,7 +690,7 @@
                         ${h.type === 'in' ? '+' : '-'}$${h.amount.toLocaleString()}
                     </p>
                 </div>
-            `).join('');
+            `).join('') || '<p class="text-center text-xs text-neutral-500 py-4 font-bold uppercase">No se encontraron movimientos</p>';
 
             lucide.createIcons();
         }
@@ -331,6 +709,7 @@
         });
         onSnapshot(collection(db, "gastos"), s => {
             store.gastos = s.docs.map(d => ({ id: d.id, ...d.data() }));
+            updateURL = true; // placeholder
             updateUI();
         });
 
@@ -338,6 +717,4 @@
     </script>
 </body>
 </html>
-
-
 
