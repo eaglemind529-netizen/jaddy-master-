@@ -160,12 +160,20 @@
                 </form>
             </section>
 
-            <div class="flex items-center justify-between mb-8">
-                <h2 class="text-xl font-black italic uppercase tracking-tighter text-white">Gestión de Catálogo</h2>
-                <span id="counter" class="text-[10px] font-bold bg-white/5 px-3 py-1 rounded-full text-neutral-400">--- PISTAS</span>
+            <!-- Pestañas de Selección de Catálogo -->
+            <div class="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
+                <div class="flex gap-3">
+                    <button onclick="window.switchTab('marketplace')" id="tabMarketplace" class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-orange-600 text-white shadow-lg shadow-orange-900/20">
+                        <i data-lucide="music" class="w-4 h-4"></i> Marketplace Público (<span id="counterMarketplace">0</span>)
+                    </button>
+                    <button onclick="window.switchTab('vip')" id="tabVip" class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-white/5 text-neutral-400 hover:text-white border border-white/5">
+                        <i data-lucide="star" class="w-4 h-4"></i> Portal VIP (<span id="counterVip">0</span>)
+                    </button>
+                </div>
             </div>
             
-            <div id="beatsList" class="flex flex-col gap-3"></div>
+            <!-- Contenedor Dinámico de la Pestaña Activa -->
+            <div id="activeTabContainer" class="flex flex-col gap-3"></div>
         </main>
     </div>
 
@@ -188,6 +196,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         let beats = [];
+        let currentTab = 'marketplace'; // Pestaña inicial por defecto
 
         signInAnonymously(auth).then(async () => {
             onSnapshot(collection(db, 'beats'), (snap) => {
@@ -208,6 +217,21 @@
                 }
             });
         }
+
+        window.switchTab = (tab) => {
+            currentTab = tab;
+            const btnMarket = document.getElementById('tabMarketplace');
+            const btnVip = document.getElementById('tabVip');
+
+            if (tab === 'marketplace') {
+                btnMarket.className = "flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-orange-600 text-white shadow-lg shadow-orange-900/20";
+                btnVip.className = "flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-white/5 text-neutral-400 hover:text-white border border-white/5";
+            } else {
+                btnVip.className = "flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-orange-600 text-white shadow-lg shadow-orange-900/20";
+                btnMarket.className = "flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-white/5 text-neutral-400 hover:text-white border border-white/5";
+            }
+            render();
+        };
 
         window.toggleForm = () => {
             document.getElementById('beatForm').classList.toggle('hidden');
@@ -237,10 +261,8 @@
             config.style.pointerEvents = (saleType === 'contado') ? 'none' : 'auto';
         };
 
-        function render() {
-            document.getElementById('counter').innerText = `${beats.length} PISTAS TOTALES`;
-            const list = document.getElementById('beatsList');
-            list.innerHTML = beats.map(b => `
+        function renderBeatCard(b) {
+            return `
                 <div class="bg-[#0a0a0a] border border-white/5 p-4 rounded-2xl flex flex-col md:flex-row items-center gap-4 hover:border-orange-500/20 transition-all ${!b.visible ? 'opacity-40' : ''}">
                     <div class="flex items-center gap-4 w-full md:w-auto flex-1">
                         <div class="w-10 h-10 bg-white/5 rounded-lg flex items-center justify-center text-orange-500 shrink-0">
@@ -269,7 +291,25 @@
                         <button onclick="window.deleteBeat('${b.id}')" class="p-2 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg transition-all"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
                     </div>
                 </div>
-            `).join('');
+            `;
+        }
+
+        function render() {
+            const marketplaceBeats = beats.filter(b => b.targetPortal !== 'vip');
+            const vipBeats = beats.filter(b => b.targetPortal === 'vip');
+
+            document.getElementById('counterMarketplace').innerText = marketplaceBeats.length;
+            document.getElementById('counterVip').innerText = vipBeats.length;
+
+            const container = document.getElementById('activeTabContainer');
+            const activeBeats = currentTab === 'marketplace' ? marketplaceBeats : vipBeats;
+
+            if (activeBeats.length === 0) {
+                container.innerHTML = `<div class="p-8 bg-white/5 border border-white/5 rounded-2xl text-center text-xs text-neutral-500 uppercase font-bold">No hay pistas registradas en esta sección</div>`;
+            } else {
+                container.innerHTML = activeBeats.map(renderBeatCard).join('');
+            }
+
             lucide.createIcons();
         }
 
