@@ -60,8 +60,8 @@
 
     <div id="app">
         <nav class="p-4 border-b border-white/5 bg-black/80 backdrop-blur-2xl sticky top-0 z-[60]">
-            <div class="max-w-5xl mx-auto flex justify-between items-center">
-                <div class="flex items-center gap-6">
+            <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                <div class="flex items-center justify-between w-full md:w-auto">
                     <div class="flex items-center gap-3">
                         <div class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-700 rounded-xl flex items-center justify-center shadow-lg">
                             <i data-lucide="disc" class="text-black animate-spin-slow w-6 h-6"></i>
@@ -73,14 +73,18 @@
                     </div>
                 </div>
                 
-                <div class="flex items-center gap-2">
-                    <a href="artistas.html" class="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg font-black text-[9px] uppercase tracking-widest transition-all">
+                <!-- Barra de botones con scroll horizontal en móvil si es necesario -->
+                <div class="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 justify-start md:justify-end no-scrollbar">
+                    <a href="artistas.html" class="flex items-center gap-2 px-3 py-2 bg-white/5 hover:bg-white/10 text-white rounded-lg font-black text-[9px] uppercase tracking-widest transition-all shrink-0">
                         <i data-lucide="users" class="w-3.5 h-3.5"></i> ARTISTAS
                     </a>
-                    <a href="portal_vip.html" class="flex items-center gap-2 px-3 py-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all border border-orange-500/10">
+                    <a href="portal_vip.html" class="flex items-center gap-2 px-3 py-2 bg-orange-500/10 hover:bg-orange-500/20 text-orange-500 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all border border-orange-500/10 shrink-0">
                         <i data-lucide="star" class="w-3.5 h-3.5"></i> PORTAL VIP
                     </a>
-                    <button onclick="window.prepareCreate()" class="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest shadow-lg active:scale-95 transition-all">
+                    <button onclick="window.openMessageModal()" class="flex items-center gap-2 px-3 py-2 bg-purple-600/20 hover:bg-purple-600/30 text-purple-400 border border-purple-500/20 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all shrink-0">
+                        <i data-lucide="send" class="w-3.5 h-3.5"></i> NOTIFICAR
+                    </button>
+                    <button onclick="window.prepareCreate()" class="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg font-black text-[9px] uppercase tracking-widest shadow-lg active:scale-95 transition-all shrink-0">
                         <i data-lucide="plus" class="w-3.5 h-3.5"></i> AGREGAR BEAT
                     </button>
                 </div>
@@ -88,6 +92,49 @@
         </nav>
 
         <main class="max-w-5xl mx-auto p-4 pt-8 pb-40">
+            <!-- Modal de Mensajería y Notificaciones -->
+            <section id="msgModal" class="hidden bg-[#0a0a0a] border border-purple-500/30 p-6 rounded-3xl shadow-2xl mb-8 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 rounded-full blur-2xl pointer-events-none"></div>
+                <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-3">
+                    <h2 class="text-sm font-black uppercase italic tracking-tighter text-white flex items-center gap-2">
+                        <i data-lucide="bell" class="text-purple-400 w-4 h-4"></i> Centro de Mensajería y Notificaciones
+                    </h2>
+                    <button onclick="window.openMessageModal()" class="text-neutral-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                
+                <form id="msgForm" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <label class="text-[9px] font-bold text-purple-400 uppercase px-1">Destinatario</label>
+                            <select id="msgTarget" onchange="window.toggleMsgTargetFields()" required>
+                                <option value="all_market">📢 Todo el Marketplace Público</option>
+                                <option value="all_vip">⭐ Todos los Artistas VIP</option>
+                                <option value="single_artist">👤 Artista VIP Específico</option>
+                            </select>
+                            
+                            <div id="msgArtistContainer" class="hidden">
+                                <label class="text-[9px] font-bold text-purple-400 uppercase px-1 mt-2 block">Seleccionar Artista</label>
+                                <select id="msgRecipientArtist">
+                                    <option value="">Cargando artistas...</option>
+                                </select>
+                            </div>
+
+                            <input type="text" id="msgTitle" placeholder="Título de la notificación" required>
+                        </div>
+
+                        <div class="space-y-4">
+                            <label class="text-[9px] font-bold text-purple-400 uppercase px-1">Contenido del Mensaje</label>
+                            <textarea id="msgBody" placeholder="Escribe tu mensaje, actualización o enlace de la pista..." rows="4" class="text-sm" required></textarea>
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitMsgBtn" class="w-full bg-purple-600 py-4 rounded-xl font-black uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 hover:bg-purple-500 transition-all shadow-lg shadow-purple-900/20 text-white">
+                        <i data-lucide="send" class="w-4 h-4"></i> ENVIAR NOTIFICACIÓN
+                    </button>
+                </form>
+            </section>
+
+            <!-- Formulario de Configuración de Pista (Restaurado y Funcional) -->
             <section id="beatForm" class="hidden bg-[#0a0a0a] border border-white/5 p-6 rounded-3xl shadow-2xl mb-8">
                 <div class="flex justify-between items-center mb-6 border-b border-white/5 pb-3">
                     <h2 id="formTitle" class="text-sm font-black uppercase italic tracking-tighter text-white flex items-center gap-2">
@@ -161,14 +208,21 @@
             </section>
 
             <!-- Pestañas de Selección de Catálogo -->
-            <div class="flex items-center justify-between mb-6 border-b border-white/5 pb-4">
-                <div class="flex gap-3">
-                    <button onclick="window.switchTab('marketplace')" id="tabMarketplace" class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-orange-600 text-white shadow-lg shadow-orange-900/20">
+            <div class="flex flex-col md:flex-row items-center justify-between mb-6 border-b border-white/5 pb-4 gap-4">
+                <div class="flex gap-3 w-full md:w-auto">
+                    <button onclick="window.switchTab('marketplace')" id="tabMarketplace" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-orange-600 text-white shadow-lg shadow-orange-900/20">
                         <i data-lucide="music" class="w-4 h-4"></i> Marketplace Público (<span id="counterMarketplace">0</span>)
                     </button>
-                    <button onclick="window.switchTab('vip')" id="tabVip" class="flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-white/5 text-neutral-400 hover:text-white border border-white/5">
+                    <button onclick="window.switchTab('vip')" id="tabVip" class="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-white/5 text-neutral-400 hover:text-white border border-white/5">
                         <i data-lucide="star" class="w-4 h-4"></i> Portal VIP (<span id="counterVip">0</span>)
                     </button>
+                </div>
+
+                <!-- Filtro de Búsqueda de Artistas (Sólo visible en Portal VIP) -->
+                <div id="vipFilterContainer" class="hidden w-full md:w-72">
+                    <select id="filterArtist" onchange="window.render()" class="text-xs">
+                        <option value="">Filtrar por artista (Todos)</option>
+                    </select>
                 </div>
             </div>
             
@@ -196,6 +250,7 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
         let beats = [];
+        let artistsList = [];
         let currentTab = 'marketplace'; // Pestaña inicial por defecto
 
         signInAnonymously(auth).then(async () => {
@@ -208,27 +263,103 @@
 
         async function loadArtists() {
             const snap = await getDocs(collection(db, 'artistasVIP'));
-            const select = document.getElementById('assignedTo');
-            select.innerHTML = '<option value="">Seleccionar Artista</option>';
+            artistsList = [];
             snap.forEach(d => {
                 const a = d.data();
-                if(a.status !== 'archived') {
-                    select.innerHTML += `<option value="${a.artistName}">${a.artistName}</option>`;
+                if(a.status !== 'archived' && a.artistName) {
+                    artistsList.push(a.artistName);
                 }
             });
+
+            const selectAssigned = document.getElementById('assignedTo');
+            if(selectAssigned) selectAssigned.innerHTML = '<option value="">Seleccionar Artista</option>';
+
+            const selectFilter = document.getElementById('filterArtist');
+            if(selectFilter) selectFilter.innerHTML = '<option value="">Filtrar por artista (Todos)</option>';
+
+            const selectMsgArtist = document.getElementById('msgRecipientArtist');
+            if (selectMsgArtist) {
+                selectMsgArtist.innerHTML = '<option value="">Seleccionar Artista VIP</option>';
+            }
+
+            artistsList.forEach(name => {
+                if(selectAssigned) selectAssigned.innerHTML += `<option value="${name}">${name}</option>`;
+                if(selectFilter) selectFilter.innerHTML += `<option value="${name}">${name}</option>`;
+                if (selectMsgArtist) {
+                    selectMsgArtist.innerHTML += `<option value="${name}">${name}</option>`;
+                }
+            });
+        }
+
+        // Control de apertura y cierre del modal de mensajes
+        window.openMessageModal = () => {
+            const modal = document.getElementById('msgModal');
+            if(modal) {
+                modal.classList.toggle('hidden');
+                if(!modal.classList.contains('hidden')) {
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+                lucide.createIcons();
+            }
+        };
+
+        window.toggleMsgTargetFields = () => {
+            const target = document.getElementById('msgTarget').value;
+            const container = document.getElementById('msgArtistContainer');
+            if(container) {
+                container.classList.toggle('hidden', target !== 'single_artist');
+            }
+        };
+
+        const msgFormElement = document.getElementById('msgForm');
+        if(msgFormElement) {
+            msgFormElement.onsubmit = async (e) => {
+                e.preventDefault();
+                const target = document.getElementById('msgTarget').value;
+                const artistName = document.getElementById('msgRecipientArtist').value;
+                const title = document.getElementById('msgTitle').value;
+                const body = document.getElementById('msgBody').value;
+
+                if(target === 'single_artist' && !artistName) {
+                    alert('Por favor selecciona un artista específico.');
+                    return;
+                }
+
+                const notificationData = {
+                    target: target,
+                    recipientArtist: target === 'single_artist' ? artistName : (target === 'all_vip' ? 'ALL_VIP' : 'ALL_MARKET'),
+                    title: title,
+                    body: body,
+                    createdAt: serverTimestamp(),
+                    read: false
+                };
+
+                try {
+                    await addDoc(collection(db, 'notifications'), notificationData);
+                    alert('¡Notificación enviada con éxito!');
+                    msgFormElement.reset();
+                    window.openMessageModal();
+                } catch (error) {
+                    console.error("Error al enviar notificación:", error);
+                    alert('Hubo un error al enviar el mensaje.');
+                }
+            };
         }
 
         window.switchTab = (tab) => {
             currentTab = tab;
             const btnMarket = document.getElementById('tabMarketplace');
             const btnVip = document.getElementById('tabVip');
+            const vipFilterContainer = document.getElementById('vipFilterContainer');
 
             if (tab === 'marketplace') {
-                btnMarket.className = "flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-orange-600 text-white shadow-lg shadow-orange-900/20";
-                btnVip.className = "flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-white/5 text-neutral-400 hover:text-white border border-white/5";
+                if(btnMarket) btnMarket.className = "flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-orange-600 text-white shadow-lg shadow-orange-900/20";
+                if(btnVip) btnVip.className = "flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-white/5 text-neutral-400 hover:text-white border border-white/5";
+                if(vipFilterContainer) vipFilterContainer.classList.add('hidden');
             } else {
-                btnVip.className = "flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-orange-600 text-white shadow-lg shadow-orange-900/20";
-                btnMarket.className = "flex items-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-white/5 text-neutral-400 hover:text-white border border-white/5";
+                if(btnVip) btnVip.className = "flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-orange-600 text-white shadow-lg shadow-orange-900/20";
+                if(btnMarket) btnMarket.className = "flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider transition-all bg-white/5 text-neutral-400 hover:text-white border border-white/5";
+                if(vipFilterContainer) vipFilterContainer.classList.remove('hidden');
             }
             render();
         };
@@ -240,7 +371,8 @@
 
         window.togglePortalFields = () => {
             const portal = document.getElementById('targetPortal').value;
-            document.getElementById('artistContainer').classList.toggle('hidden', portal !== 'vip');
+            const container = document.getElementById('artistContainer');
+            if(container) container.classList.toggle('hidden', portal !== 'vip');
         };
 
         window.prepareCreate = () => {
@@ -257,8 +389,10 @@
         window.toggleCreditFields = () => {
             const saleType = document.getElementById('saleType').value;
             const config = document.getElementById('creditConfig');
-            config.style.opacity = (saleType === 'contado') ? '0.3' : '1';
-            config.style.pointerEvents = (saleType === 'contado') ? 'none' : 'auto';
+            if(config) {
+                config.style.opacity = (saleType === 'contado') ? '0.3' : '1';
+                config.style.pointerEvents = (saleType === 'contado') ? 'none' : 'auto';
+            }
         };
 
         function renderBeatCard(b) {
@@ -294,20 +428,32 @@
             `;
         }
 
-        function render() {
+        window.render = function() {
             const marketplaceBeats = beats.filter(b => b.targetPortal !== 'vip');
-            const vipBeats = beats.filter(b => b.targetPortal === 'vip');
+            let vipBeats = beats.filter(b => b.targetPortal === 'vip');
 
-            document.getElementById('counterMarketplace').innerText = marketplaceBeats.length;
-            document.getElementById('counterVip').innerText = vipBeats.length;
+            const counterMarket = document.getElementById('counterMarketplace');
+            const counterVip = document.getElementById('counterVip');
+            if(counterMarket) counterMarket.innerText = marketplaceBeats.length;
+            if(counterVip) counterVip.innerText = vipBeats.length;
+
+            if (currentTab === 'vip') {
+                const filterSelect = document.getElementById('filterArtist');
+                const selectedArtist = filterSelect ? filterSelect.value : '';
+                if (selectedArtist) {
+                    vipBeats = vipBeats.filter(b => b.assignedTo === selectedArtist);
+                }
+            }
 
             const container = document.getElementById('activeTabContainer');
-            const activeBeats = currentTab === 'marketplace' ? marketplaceBeats : vipBeats;
+            if(container) {
+                const activeBeats = currentTab === 'marketplace' ? marketplaceBeats : vipBeats;
 
-            if (activeBeats.length === 0) {
-                container.innerHTML = `<div class="p-8 bg-white/5 border border-white/5 rounded-2xl text-center text-xs text-neutral-500 uppercase font-bold">No hay pistas registradas en esta sección</div>`;
-            } else {
-                container.innerHTML = activeBeats.map(renderBeatCard).join('');
+                if (activeBeats.length === 0) {
+                    container.innerHTML = `<div class="p-8 bg-white/5 border border-white/5 rounded-2xl text-center text-xs text-neutral-500 uppercase font-bold">No hay pistas registradas en esta sección</div>`;
+                } else {
+                    container.innerHTML = activeBeats.map(renderBeatCard).join('');
+                }
             }
 
             lucide.createIcons();
@@ -344,32 +490,35 @@
             }
         };
 
-        document.getElementById('uploadForm').onsubmit = async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('editingId').value;
-            const data = {
-                title: document.getElementById('title').value,
-                producer: document.getElementById('producer').value,
-                category: document.getElementById('category').value,
-                targetPortal: document.getElementById('targetPortal').value,
-                assignedTo: document.getElementById('targetPortal').value === 'vip' ? document.getElementById('assignedTo').value : '',
-                url: document.getElementById('url').value,
-                genre: document.getElementById('genre').value,
-                whatsapp: document.getElementById('whatsapp').value,
-                description: document.getElementById('description').value,
-                saleType: document.getElementById('saleType').value,
-                price: parseFloat(document.getElementById('price').value) || 0,
-                visible: document.getElementById('isVisible').checked,
-                updatedAt: serverTimestamp()
+        const uploadFormEl = document.getElementById('uploadForm');
+        if(uploadFormEl) {
+            uploadFormEl.onsubmit = async (e) => {
+                e.preventDefault();
+                const id = document.getElementById('editingId').value;
+                const data = {
+                    title: document.getElementById('title').value,
+                    producer: document.getElementById('producer').value,
+                    category: document.getElementById('category').value,
+                    targetPortal: document.getElementById('targetPortal').value,
+                    assignedTo: document.getElementById('targetPortal').value === 'vip' ? document.getElementById('assignedTo').value : '',
+                    url: document.getElementById('url').value,
+                    genre: document.getElementById('genre').value,
+                    whatsapp: document.getElementById('whatsapp').value,
+                    description: document.getElementById('description').value,
+                    saleType: document.getElementById('saleType').value,
+                    price: parseFloat(document.getElementById('price').value) || 0,
+                    visible: document.getElementById('isVisible').checked,
+                    updatedAt: serverTimestamp()
+                };
+                
+                if(id) {
+                    await updateDoc(doc(db, 'beats', id), data);
+                } else {
+                    await addDoc(collection(db, 'beats'), { ...data, createdAt: serverTimestamp() });
+                }
+                window.toggleForm();
             };
-            
-            if(id) {
-                await updateDoc(doc(db, 'beats', id), data);
-            } else {
-                await addDoc(collection(db, 'beats'), { ...data, createdAt: serverTimestamp() });
-            }
-            window.toggleForm();
-        };
+        }
     </script>
 </body>
 </html>
