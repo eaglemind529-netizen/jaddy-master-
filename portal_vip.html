@@ -28,7 +28,7 @@
 <body class="pb-32">
 
     <!-- Pantalla de Login -->
-    <div id="authScreen" class="fixed inset-0 z-50 bg-black flex items-center justify-center p-6">
+    <div id="authScreen" class="fixed inset-0 z-50 bg-black flex items-center justify-center p-6 hidden">
         <div class="max-w-sm w-full bg-[#0a0a0a] p-8 border border-white/10 rounded-3xl text-center animate-entrada">
             <div class="w-32 h-32 mx-auto mb-6 rounded-2xl overflow-hidden border border-orange-500/20 shadow-2xl flex items-center justify-center bg-black animate-logo">
                 <img src="https://i.imgur.com/8NlMhQc.png" alt="Logotipo Jaddy Music Records" class="w-full h-full object-cover">
@@ -50,7 +50,7 @@
                     <button onclick="window.copyLink()" class="text-white bg-white/5 p-2 rounded-lg hover:bg-orange-600 transition-colors flex items-center gap-1.5 text-xs font-semibold">
                         <i data-lucide="share-2" class="w-4 h-4"></i> Compartir
                     </button>
-                    <button onclick="location.reload()" class="text-[10px] font-bold text-neutral-400 hover:text-white uppercase transition-colors">Salir</button>
+                    <button onclick="window.logout()" class="text-[10px] font-bold text-neutral-400 hover:text-white uppercase transition-colors">Salir</button>
                 </div>
             </div>
         </nav>
@@ -89,6 +89,21 @@
                 <div id="usedList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
             </div>
         </main>
+    </div>
+
+    <!-- Modal / Alerta Flotante Emergente para Nuevas Notificaciones -->
+    <div id="popupModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 hidden animate-entrada">
+        <div class="max-w-md w-full bg-[#111] border border-purple-500/40 p-6 rounded-3xl shadow-2xl relative">
+            <div class="absolute -top-3 -right-3 bg-purple-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-lg">
+                <i data-lucide="bell" class="w-4 h-4"></i>
+            </div>
+            <span class="text-[9px] uppercase tracking-widest text-purple-400 font-bold block mb-1">Nuevo Mensaje de Jaddy Studio</span>
+            <h3 id="popupTitle" class="text-white font-black uppercase text-base mb-3">Título de la Notificación</h3>
+            <p id="popupBody" class="text-xs text-neutral-300 whitespace-pre-line mb-6 max-h-48 overflow-y-auto">Cuerpo del mensaje...</p>
+            <button onclick="window.closePopup()" class="w-full bg-purple-600 hover:bg-purple-500 text-white py-3 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-lg shadow-purple-600/30">
+                Entendido
+            </button>
+        </div>
     </div>
 
     <!-- Mensaje de confirmación copiado -->
@@ -149,8 +164,17 @@
         const playPauseIcon = document.getElementById('playPauseIcon');
 
         let currentArtistName = "";
+        let lastNotifCount = null;
 
-        // Cambiar entre pestañas de pistas
+        window.addEventListener('DOMContentLoaded', async () => {
+            const savedEmail = localStorage.getItem('jaddy_vip_email');
+            if (savedEmail) {
+                await authenticateArtist(savedEmail, true);
+            } else {
+                document.getElementById('authScreen').classList.remove('hidden');
+            }
+        });
+
         window.switchTab = (tab) => {
             const sectionAvailable = document.getElementById('sectionAvailable');
             const sectionUsed = document.getElementById('sectionUsed');
@@ -170,7 +194,6 @@
             }
         };
 
-        // Formatear segundos a MM:SS
         function formatTime(seconds) {
             const minutes = Math.floor(seconds / 60);
             const remainingSeconds = Math.floor(seconds % 60);
@@ -214,7 +237,10 @@
             document.getElementById('playerContainer').classList.add('hidden');
         };
 
-        // Funcionalidad de Compartir Enlace
+        window.closePopup = () => {
+            document.getElementById('popupModal').classList.add('hidden');
+        };
+
         window.copyLink = () => {
             const url = window.location.href;
             document.execCommand('copy');
@@ -227,6 +253,11 @@
                 toast.classList.remove('hidden');
                 setTimeout(() => toast.classList.add('hidden'), 2000);
             });
+        };
+
+        window.logout = () => {
+            localStorage.removeItem('jaddy_vip_email');
+            location.reload();
         };
 
         const firebaseConfig = { 
@@ -244,7 +275,6 @@
             lucide.createIcons();
         };
 
-        // Marcar pista como usada o disponible
         window.toggleTrackStatus = async (docId, currentStatus) => {
             try {
                 const trackRef = doc(db, 'beats', docId);
@@ -255,10 +285,7 @@
             }
         };
 
-        document.getElementById('accessBtn').onclick = async () => {
-            const email = document.getElementById('artistEmail').value.trim().toLowerCase();
-            if (!email) return;
-
+        async function authenticateArtist(email, isAutoLogin = false) {
             try {
                 const q = query(collection(db, 'artistasVIP'), where("email", "==", email));
                 const snap = await getDocs(q);
@@ -266,31 +293,65 @@
                 if (!snap.empty) {
                     const artistData = snap.docs[0].data();
                     currentArtistName = artistData.artistName;
+                    
+                    localStorage.setItem('jaddy_vip_email', email);
+
                     document.getElementById('authScreen').classList.add('hidden');
                     document.getElementById('vipContent').classList.remove('hidden');
                     document.getElementById('welcomeMsg').innerText = `Hola, ${currentArtistName}, bienvenido a jaddymusicrecords`;
                     
-                    // Cargar pistas del artista
                     loadPersonalBeats(currentArtistName);
 
-                    // Escuchar notificaciones en tiempo real para este artista
                     onSnapshot(query(collection(db, 'notifications'), orderBy('createdAt', 'desc')), (notifSnap) => {
                         const notifications = notifSnap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                         renderNotifications(notifications, currentArtistName);
                     });
 
                 } else {
-                    document.getElementById('errorMsg').classList.remove('hidden');
+                    if (!isAutoLogin) {
+                        document.getElementById('errorMsg').classList.remove('hidden');
+                    } else {
+                        localStorage.removeItem('jaddy_vip_email');
+                        document.getElementById('authScreen').classList.remove('hidden');
+                    }
                 }
             } catch (err) {
                 console.error(err);
-                document.getElementById('errorMsg').innerText = "Error de conexión con la base de datos.";
-                document.getElementById('errorMsg').classList.remove('hidden');
+                if (!isAutoLogin) {
+                    document.getElementById('errorMsg').innerText = "Error de conexión con la base de datos.";
+                    document.getElementById('errorMsg').classList.remove('hidden');
+                } else {
+                    document.getElementById('authScreen').classList.remove('hidden');
+                }
             }
+        }
+
+        document.getElementById('accessBtn').onclick = async () => {
+            const email = document.getElementById('artistEmail').value.trim().toLowerCase();
+            if (!email) return;
+            await authenticateArtist(email, false);
         };
 
+        function playNotificationSound() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.4);
+            } catch (e) {
+                console.log("Audio not allowed yet");
+            }
+        }
+
         function renderNotifications(notifications, artistName) {
-            // Filtrar las notificaciones generales para 'ALL_VIP' o las dirigidas específicamente a este artista por su nombre
             const myNotifications = notifications.filter(n => n.recipientArtist === 'ALL_VIP' || n.recipientArtist === artistName);
             
             const counterEl = document.getElementById('notifCounter');
@@ -300,8 +361,24 @@
 
             if (myNotifications.length === 0) {
                 listEl.innerHTML = `<div class="p-4 bg-white/5 border border-white/5 rounded-xl text-center text-xs text-neutral-500 uppercase font-bold">No hay notificaciones nuevas</div>`;
+                lastNotifCount = 0;
                 return;
             }
+
+            if (lastNotifCount !== null && myNotifications.length > lastNotifCount) {
+                const latest = myNotifications[0];
+                document.getElementById('popupTitle').innerText = latest.title;
+                document.getElementById('popupBody').innerText = latest.body;
+                document.getElementById('popupModal').classList.remove('hidden');
+                playNotificationSound();
+            } else if (lastNotifCount === null && myNotifications.length > 0) {
+                const latest = myNotifications[0];
+                document.getElementById('popupTitle').innerText = latest.title;
+                document.getElementById('popupBody').innerText = latest.body;
+                document.getElementById('popupModal').classList.remove('hidden');
+            }
+
+            lastNotifCount = myNotifications.length;
 
             listEl.innerHTML = myNotifications.map(n => `
                 <div class="bg-black/40 border border-purple-500/20 p-4 rounded-xl flex items-start gap-3">
