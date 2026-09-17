@@ -27,13 +27,22 @@
 <body>
 
     <div id="app">
-        <!-- Modales -->
+        <!-- Notificación personalizada (Reemplazo de alert) -->
+        <div id="customModal" class="hidden fixed inset-0 z-[70] flex items-center justify-center p-4 modal-overlay">
+            <div class="glass-card p-6 rounded-[2rem] border-orange-500/30 border w-full max-w-sm text-center">
+                <h3 id="customModalTitle" class="text-lg font-black uppercase italic tracking-tighter text-orange-500 mb-2">Aviso</h3>
+                <p id="customModalText" class="text-xs text-neutral-300 mb-6"></p>
+                <button onclick="closeCustomModal()" class="w-full py-3 bg-orange-600 rounded-xl text-[10px] font-black uppercase tracking-widest text-white">ENTENDIDO</button>
+            </div>
+        </div>
+
+        <!-- Modales de estadísticas, abonos, edición e historial -->
         <div id="statsModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 modal-overlay">
             <div class="glass-card p-8 rounded-[2.5rem] border-orange-500/30 border w-full max-w-sm">
                 <h2 class="text-xl font-black uppercase italic tracking-tighter text-orange-500 mb-6">Estadísticas Negocio</h2>
                 <div class="space-y-6">
                     <div>
-                        <p class="text-[10px] text-neutral-500 font-bold uppercase">Ingreso Mensual Esperado</p>
+                        <p class="text-[10px] text-neutral-500 font-bold uppercase">Total Membresías Acordadas</p>
                         <p id="statTotalEsperado" class="text-3xl font-black text-blue-500">$0</p>
                     </div>
                     <div class="grid grid-cols-2 gap-4">
@@ -42,7 +51,7 @@
                             <p id="statTotalArtistas" class="text-xl font-black text-white">0</p>
                         </div>
                         <div class="bg-white/5 p-4 rounded-2xl text-center">
-                            <p class="text-[8px] text-neutral-500 uppercase">Recaudado</p>
+                            <p class="text-[8px] text-neutral-500 uppercase">Total Recaudado</p>
                             <p id="statTotalRecaudado" class="text-xl font-black text-emerald-500">$0</p>
                         </div>
                     </div>
@@ -53,7 +62,7 @@
 
         <div id="quickAbonoModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 modal-overlay">
             <div class="glass-card p-8 rounded-[2.5rem] border-orange-500/30 border w-full max-w-sm">
-                <h2 class="text-xl font-black uppercase italic tracking-tighter text-orange-500 mb-2">Registrar Pago</h2>
+                <h2 class="text-xl font-black uppercase italic tracking-tighter text-orange-500 mb-2">Registrar Pago Manual</h2>
                 <p id="abonoTargetName" class="text-[10px] font-bold text-neutral-400 uppercase tracking-widest mb-6"></p>
                 <input type="hidden" id="quickAbonoId">
                 <input type="number" id="quickAbonoAmount" placeholder="Monto $" class="mb-4">
@@ -90,6 +99,20 @@
             </div>
         </div>
 
+        <!-- Modal de Archivo / Papelera para Restaurar -->
+        <div id="archivedModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 modal-overlay">
+            <div class="glass-card p-8 rounded-[2.5rem] border-purple-500/30 border w-full max-w-xl">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-black uppercase italic tracking-tighter text-purple-400">Artistas Archivados / Papelera</h2>
+                    <button onclick="document.getElementById('archivedModal').classList.add('hidden')" class="text-neutral-500 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+                </div>
+                <div id="archivedList" class="max-h-96 overflow-y-auto space-y-3 mb-6">
+                    <p class="text-xs text-neutral-500 text-center py-6">Cargando eliminados...</p>
+                </div>
+                <button onclick="document.getElementById('archivedModal').classList.add('hidden')" class="w-full py-3 bg-white/5 rounded-xl text-[10px] font-black uppercase tracking-widest">CERRAR</button>
+            </div>
+        </div>
+
         <nav class="p-5 border-b border-white/5 bg-black/80 backdrop-blur-2xl sticky top-0 z-50">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
                 <div class="flex items-center gap-4">
@@ -101,11 +124,14 @@
                         <p class="text-[8px] font-bold text-orange-500 uppercase tracking-widest mt-1">GESTIÓN DE MEMBRESÍAS VIP</p>
                     </div>
                 </div>
-                <div class="flex gap-2">
-                    <button onclick="window.openStats()" class="px-5 py-2.5 bg-white/5 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-white/10 transition-all">
+                <div class="flex gap-2 flex-wrap justify-end">
+                    <button onclick="window.openArchivedModal()" class="px-4 py-2.5 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-purple-600 hover:text-white transition-all">
+                        <i data-lucide="folder-archive" class="w-4 h-4"></i> ARCHIVADOS <span id="archivedCountBadge" class="bg-purple-500 text-black px-1.5 py-0.5 rounded-full text-[9px] font-black">0</span>
+                    </button>
+                    <button onclick="window.openStats()" class="px-4 py-2.5 bg-white/5 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-white/10 transition-all">
                         <i data-lucide="trending-up" class="w-4 h-4"></i> ESTADÍSTICA
                     </button>
-                    <button onclick="openCreateForm()" class="px-5 py-2.5 bg-orange-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
+                    <button onclick="openCreateForm()" class="px-4 py-2.5 bg-orange-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest flex items-center gap-2">
                         <i data-lucide="user-plus" class="w-4 h-4"></i> NUEVO ARTISTA VIP
                     </button>
                 </div>
@@ -152,23 +178,29 @@
         const db = getFirestore(app);
         const artistasRef = collection(db, 'artistasVIP');
 
+        window.showModalMsg = (title, text) => {
+            document.getElementById('customModalTitle').innerText = title;
+            document.getElementById('customModalText').innerText = text;
+            document.getElementById('customModal').classList.remove('hidden');
+        };
+        window.closeCustomModal = () => document.getElementById('customModal').classList.add('hidden');
+
         window.openStats = async () => {
             const snap = await getDocs(artistasRef);
-            let totalAbonado = 0;
+            let totalRecaudado = 0;
             let totalEsperado = 0;
             let count = 0;
             snap.forEach(docSnap => {
                 const a = docSnap.data();
-                // --- FILTRO DE SEGURIDAD EN ESTADÍSTICAS ---
-                // Solo procesamos si es un artista válido y no está archivado
                 if (a.plan && a.artistName && a.status !== 'archived') { 
-                    totalAbonado += (parseFloat(a.abono) || 0);
+                    // El total recaudado suma estrictamente los abonos realizados de manera manual
+                    totalRecaudado += (parseFloat(a.abono) || 0);
                     totalEsperado += (parseFloat(a.costo) || 0);
                     count++;
                 }
             });
             document.getElementById('statTotalArtistas').innerText = count;
-            document.getElementById('statTotalRecaudado').innerText = '$' + totalAbonado.toLocaleString();
+            document.getElementById('statTotalRecaudado').innerText = '$' + totalRecaudado.toLocaleString();
             document.getElementById('statTotalEsperado').innerText = '$' + totalEsperado.toLocaleString();
             document.getElementById('statsModal').classList.remove('hidden');
         };
@@ -176,13 +208,24 @@
         onSnapshot(query(artistasRef, orderBy('updatedAt', 'desc')), (snap) => {
             const list = document.getElementById('artistsList');
             list.innerHTML = '';
+            let archivedCount = 0;
+            
             snap.forEach(docSnap => {
                 const a = docSnap.data();
                 const id = docSnap.id;
                 
-                if (!a.plan || !a.artistName || a.status === 'archived') return;
+                if (!a.plan || !a.artistName) return;
+
+                if (a.status === 'archived') {
+                    archivedCount++;
+                    return;
+                }
                 
-                const deuda = (parseFloat(a.costo) || 0) - (parseFloat(a.abono) || 0);
+                // Cálculo preciso: Saldo pendiente = Mensualidad - Abonado manual
+                const costoTotal = parseFloat(a.costo) || 0;
+                const totalAbonado = parseFloat(a.abono) || 0;
+                const deuda = costoTotal - totalAbonado;
+
                 list.innerHTML += `
                     <div class="glass-card p-6 rounded-[2rem] border border-white/5">
                         <div class="flex justify-between mb-4">
@@ -190,36 +233,159 @@
                                 <i data-lucide="crown" class="text-orange-500 w-5 h-5"></i>
                             </div>
                             <div class="flex gap-2">
-                                 <button onclick="window.archivarArtista('${id}')" class="w-8 h-8 flex items-center justify-center bg-neutral-800/50 text-neutral-400 rounded-lg hover:bg-neutral-700 hover:text-white transition-all"><i data-lucide="folder-archive" class="w-4 h-4"></i></button>
-                                 <button onclick="window.editArtista('${id}')" class="w-8 h-8 flex items-center justify-center bg-white/5 text-neutral-400 rounded-lg hover:bg-orange-600 hover:text-white transition-all"><i data-lucide="edit" class="w-4 h-4"></i></button>
-                                 <button onclick="window.verHistorial('${id}')" class="w-8 h-8 flex items-center justify-center bg-blue-600/20 text-blue-500 rounded-lg hover:bg-blue-600 hover:text-white transition-all"><i data-lucide="list" class="w-4 h-4"></i></button>
-                                 <button onclick="window.openQuickAbono('${id}', '${a.artistName}')" class="w-8 h-8 flex items-center justify-center bg-emerald-600/20 text-emerald-500 rounded-lg hover:bg-emerald-600 hover:text-white transition-all"><i data-lucide="dollar-sign" class="w-4 h-4"></i></button>
+                                 <button onclick="window.archivarArtista('${id}')" title="Archivar" class="w-8 h-8 flex items-center justify-center bg-neutral-800/50 text-neutral-400 rounded-lg hover:bg-neutral-700 hover:text-white transition-all"><i data-lucide="folder-archive" class="w-4 h-4"></i></button>
+                                 <button onclick="window.editArtista('${id}')" title="Editar" class="w-8 h-8 flex items-center justify-center bg-white/5 text-neutral-400 rounded-lg hover:bg-orange-600 hover:text-white transition-all"><i data-lucide="edit" class="w-4 h-4"></i></button>
+                                 <button onclick="window.verHistorial('${id}')" title="Historial" class="w-8 h-8 flex items-center justify-center bg-blue-600/20 text-blue-500 rounded-lg hover:bg-blue-600 hover:text-white transition-all"><i data-lucide="list" class="w-4 h-4"></i></button>
+                                 <button onclick="window.openQuickAbono('${id}', '${a.artistName}')" title="Registrar Pago" class="w-8 h-8 flex items-center justify-center bg-emerald-600/20 text-emerald-500 rounded-lg hover:bg-emerald-600 hover:text-white transition-all"><i data-lucide="dollar-sign" class="w-4 h-4"></i></button>
                             </div>
                         </div>
                         <h3 class="font-black uppercase italic text-lg text-white">${a.artistName}</h3>
-                        <p class="text-[9px] text-orange-500 font-bold uppercase mb-1">${a.plan} | $${a.costo || 0}</p>
+                        <p class="text-[9px] text-orange-500 font-bold uppercase mb-1">${a.plan} | Mensualidad: $${costoTotal}</p>
                         <p class="text-[8px] text-neutral-500 font-bold uppercase mb-6">${a.email || ''}</p>
                         <div class="grid grid-cols-2 gap-3 text-center">
-                            <div class="bg-black/40 p-3 rounded-2xl"><p class="text-[8px] text-neutral-500">Abonado</p><p class="text-sm font-black text-emerald-500">$${a.abono || 0}</p></div>
-                            <div class="bg-black/40 p-3 rounded-2xl"><p class="text-[8px] text-neutral-500">Saldo</p><p class="text-sm font-black text-orange-500">$${deuda > 0 ? deuda : 0}</p></div>
+                            <div class="bg-black/40 p-3 rounded-2xl"><p class="text-[8px] text-neutral-500">Abonado (Manual)</p><p class="text-sm font-black text-emerald-500">$${totalAbonado}</p></div>
+                            <div class="bg-black/40 p-3 rounded-2xl"><p class="text-[8px] text-neutral-500">Saldo Pendiente</p><p class="text-sm font-black text-orange-500">$${deuda > 0 ? deuda : 0}</p></div>
                         </div>
                     </div>`;
             });
+            document.getElementById('archivedCountBadge').innerText = archivedCount;
             lucide.createIcons();
         });
 
-        window.archivarArtista = async (id) => { if(confirm("¿Archivar este artista?")) { await updateDoc(doc(db, 'artistasVIP', id), { status: 'archived' }); } };
-        window.editArtista = async (id) => { const snap = await getDoc(doc(db, 'artistasVIP', id)); const data = snap.data(); document.getElementById('editId').value = id; document.getElementById('editName').value = data.artistName; document.getElementById('editEmail').value = data.email || ''; document.getElementById('editPhone').value = data.phone || ''; document.getElementById('editPlan').value = data.plan; document.getElementById('editLimit').value = data.limit; document.getElementById('editCosto').value = data.costo; document.getElementById('editArtistModal').classList.remove('hidden'); };
-        window.saveEdit = async () => { const id = document.getElementById('editId').value; await updateDoc(doc(db, 'artistasVIP', id), { artistName: document.getElementById('editName').value, email: document.getElementById('editEmail').value, phone: document.getElementById('editPhone').value, plan: document.getElementById('editPlan').value, limit: parseInt(document.getElementById('editLimit').value), costo: parseFloat(document.getElementById('editCosto').value), updatedAt: serverTimestamp() }); document.getElementById('editArtistModal').classList.add('hidden'); };
-        window.verHistorial = async (id) => { const snap = await getDoc(doc(db, 'artistasVIP', id)); const data = snap.data(); const list = document.getElementById('historialList'); let historial = data.historialPagos || []; if (historial.length === 0 && (data.abono > 0)) { historial = [{ monto: data.abono, fecha: 'Abono Inicial' }]; } list.innerHTML = historial.map(p => `<div class="flex justify-between py-2 border-b border-white/5"><span class="text-neutral-400">${p.fecha}</span><span class="font-black text-emerald-500">$${p.monto}</span></div>`).join('') || '<p class="text-neutral-500">No hay pagos registrados</p>'; document.getElementById('historialModal').classList.remove('hidden'); };
+        window.openArchivedModal = async () => {
+            const snap = await getDocs(artistasRef);
+            const archivedContainer = document.getElementById('archivedList');
+            archivedContainer.innerHTML = '';
+            let found = 0;
+
+            snap.forEach(docSnap => {
+                const a = docSnap.data();
+                const id = docSnap.id;
+                if (a.status === 'archived' && a.artistName) {
+                    found++;
+                    archivedContainer.innerHTML += `
+                        <div class="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/5">
+                            <div>
+                                <h4 class="font-black text-white text-sm uppercase">${a.artistName}</h4>
+                                <p class="text-[9px] text-purple-400 uppercase font-bold">${a.plan || 'Sin plan'} - $${a.costo || 0}</p>
+                                <p class="text-[8px] text-neutral-500">${a.email || ''}</p>
+                            </div>
+                            <button onclick="window.restaurarArtista('${id}')" class="px-4 py-2 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-purple-500 transition-all flex items-center gap-1.5">
+                                <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> RESTAURAR
+                            </button>
+                        </div>
+                    `;
+                }
+            });
+
+            if (found === 0) {
+                archivedContainer.innerHTML = `<p class="text-xs text-neutral-500 text-center py-8 uppercase font-bold">No hay artistas archivados en este momento</p>`;
+            }
+            lucide.createIcons();
+            document.getElementById('archivedModal').classList.remove('hidden');
+        };
+
+        window.archivarArtista = async (id) => { 
+            await updateDoc(doc(db, 'artistasVIP', id), { status: 'archived', updatedAt: serverTimestamp() }); 
+            showModalMsg("Archivado", "El artista ha sido enviado a la papelera correctamente.");
+        };
+
+        window.restaurarArtista = async (id) => {
+            await updateDoc(doc(db, 'artistasVIP', id), { status: 'active', updatedAt: serverTimestamp() });
+            document.getElementById('archivedModal').classList.add('hidden');
+            showModalMsg("Restaurado", "El artista ha sido reactivado y devuelto al panel principal.");
+        };
+
+        window.editArtista = async (id) => { 
+            const snap = await getDoc(doc(db, 'artistasVIP', id)); 
+            const data = snap.data(); 
+            document.getElementById('editId').value = id; 
+            document.getElementById('editName').value = data.artistName; 
+            document.getElementById('editEmail').value = data.email || ''; 
+            document.getElementById('editPhone').value = data.phone || ''; 
+            document.getElementById('editPlan').value = data.plan; 
+            document.getElementById('editLimit').value = data.limit; 
+            document.getElementById('editCosto').value = data.costo; 
+            document.getElementById('editArtistModal').classList.remove('hidden'); 
+        };
+
+        window.saveEdit = async () => { 
+            const id = document.getElementById('editId').value; 
+            await updateDoc(doc(db, 'artistasVIP', id), { 
+                artistName: document.getElementById('editName').value, 
+                email: document.getElementById('editEmail').value, 
+                phone: document.getElementById('editPhone').value, 
+                plan: document.getElementById('editPlan').value, 
+                limit: parseInt(document.getElementById('editLimit').value), 
+                costo: parseFloat(document.getElementById('editCosto').value), 
+                updatedAt: serverTimestamp() 
+            }); 
+            document.getElementById('editArtistModal').classList.add('hidden'); 
+            showModalMsg("Éxito", "Los datos del artista fueron actualizados.");
+        };
+
+        window.verHistorial = async (id) => { 
+            const snap = await getDoc(doc(db, 'artistasVIP', id)); 
+            const data = snap.data(); 
+            const list = document.getElementById('historialList'); 
+            let historial = data.historialPagos || []; 
+            if (historial.length === 0 && (data.abono > 0)) { 
+                historial = [{ monto: data.abono, fecha: 'Abono Inicial' }]; 
+            } 
+            list.innerHTML = historial.map(p => `<div class="flex justify-between py-2 border-b border-white/5"><span class="text-neutral-400">${p.fecha}</span><span class="font-black text-emerald-500">$${p.monto}</span></div>`).join('') || '<p class="text-neutral-500">No hay pagos registrados</p>'; 
+            document.getElementById('historialModal').classList.remove('hidden'); 
+        };
+
         window.openCreateForm = () => { document.getElementById('saveArtistForm').reset(); document.getElementById('artistForm').classList.toggle('hidden'); };
         window.closeForm = () => document.getElementById('artistForm').classList.add('hidden');
-        window.openQuickAbono = (id, name) => { document.getElementById('quickAbonoId').value = id; document.getElementById('abonoTargetName').innerText = name; document.getElementById('quickAbonoDate').valueAsDate = new Date(); document.getElementById('quickAbonoModal').classList.remove('hidden'); };
+        
+        window.openQuickAbono = (id, name) => { 
+            document.getElementById('quickAbonoId').value = id; 
+            document.getElementById('abonoTargetName').innerText = name; 
+            document.getElementById('quickAbonoDate').valueAsDate = new Date(); 
+            document.getElementById('quickAbonoModal').classList.remove('hidden'); 
+        };
+        
         window.closeQuickAbono = () => document.getElementById('quickAbonoModal').classList.add('hidden');
-        window.saveQuickAbono = async () => { const id = document.getElementById('quickAbonoId').value; const amount = parseFloat(document.getElementById('quickAbonoAmount').value) || 0; const rawDate = document.getElementById('quickAbonoDate').value; const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('es-ES') : new Date().toLocaleDateString('es-ES'); const docRef = doc(db, 'artistasVIP', id); const snap = await getDoc(docRef); const newAbono = (parseFloat(snap.data().abono) || 0) + amount; await updateDoc(docRef, { abono: newAbono, historialPagos: arrayUnion({ monto: amount, fecha: formattedDate }), updatedAt: serverTimestamp() }); closeQuickAbono(); };
-        document.getElementById('saveArtistForm').onsubmit = async (e) => { e.preventDefault(); const fechaActual = new Date().toLocaleDateString('es-ES'); const data = { artistName: document.getElementById('artistName').value, email: document.getElementById('artistEmail').value, phone: document.getElementById('artistPhone').value, plan: document.getElementById('plan').value, limit: parseInt(document.getElementById('limit').value), costo: parseFloat(document.getElementById('totalCost').value), abono: parseFloat(document.getElementById('initialDeposit').value) || 0, historialPagos: [{monto: parseFloat(document.getElementById('initialDeposit').value) || 0, fecha: fechaActual}], status: 'active', updatedAt: serverTimestamp() }; await addDoc(artistasRef, data); closeForm(); location.reload(); };
+        
+        window.saveQuickAbono = async () => { 
+            const id = document.getElementById('quickAbonoId').value; 
+            const amount = parseFloat(document.getElementById('quickAbonoAmount').value) || 0; 
+            const rawDate = document.getElementById('quickAbonoDate').value; 
+            const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('es-ES') : new Date().toLocaleDateString('es-ES'); 
+            const docRef = doc(db, 'artistasVIP', id); 
+            const snap = await getDoc(docRef); 
+            const newAbono = (parseFloat(snap.data().abono) || 0) + amount; 
+            await updateDoc(docRef, { 
+                abono: newAbono, 
+                historialPagos: arrayUnion({ monto: amount, fecha: formattedDate }), 
+                updatedAt: serverTimestamp() 
+            }); 
+            closeQuickAbono(); 
+            showModalMsg("Pago Registrado", `Se acreditó el monto de $${amount} correctamente.`);
+        };
+
+        document.getElementById('saveArtistForm').onsubmit = async (e) => { 
+            e.preventDefault(); 
+            const fechaActual = new Date().toLocaleDateString('es-ES'); 
+            const initialDep = parseFloat(document.getElementById('initialDeposit').value) || 0;
+            const data = { 
+                artistName: document.getElementById('artistName').value, 
+                email: document.getElementById('artistEmail').value, 
+                phone: document.getElementById('artistPhone').value, 
+                plan: document.getElementById('plan').value, 
+                limit: parseInt(document.getElementById('limit').value), 
+                costo: parseFloat(document.getElementById('totalCost').value), 
+                abono: initialDep, 
+                historialPagos: initialDep > 0 ? [{monto: initialDep, fecha: fechaActual}] : [], 
+                status: 'active', 
+                updatedAt: serverTimestamp() 
+            }; 
+            await addDoc(artistasRef, data); 
+            closeForm(); 
+            location.reload(); 
+        };
     </script>
 </body>
 </html>
-
 ```
