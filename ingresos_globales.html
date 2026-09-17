@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -289,7 +290,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, getDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDIaAvpJZrJjQUKsh6KGD7gALJNskto8A8",
@@ -311,10 +312,14 @@
         let currentSearchArtist = "";
 
         async function init() {
-            const snap = await getDoc(doc(db, "configuracion", "meta_mensual"));
-            if (snap.exists()) {
-                store.meta = snap.data().valor;
-                document.getElementById('monthlyGoal').value = store.meta;
+            try {
+                const snap = await getDoc(doc(db, "configuracion", "meta_mensual"));
+                if (snap.exists()) {
+                    store.meta = snap.data().valor;
+                    document.getElementById('monthlyGoal').value = store.meta;
+                }
+            } catch (err) {
+                console.warn("Firebase config notice:", err);
             }
             lucide.createIcons();
         }
@@ -345,7 +350,7 @@
                 let amt = parseFloat(v.isCredit ? v.amountPaid : v.amount) || 0;
                 if (!artistPayments[name]) artistPayments[name] = { total: 0, items: [] };
                 artistPayments[name].total += amt;
-                artistPayments[name].items.push({ desc: `Producción / Beat: ${v.beatName || 'Servicio'}`, amount: amt });
+                artistPayments[name].items.push({ id: v.id, collection: 'ventas', desc: `Producción / Beat: ${v.beatName || 'Servicio'}`, amount: amt });
             });
 
             // Agrupar abonos VIP por artista
@@ -354,7 +359,7 @@
                 let amt = parseFloat(v.abono) || 0;
                 if (!artistPayments[name]) artistPayments[name] = { total: 0, items: [] };
                 artistPayments[name].total += amt;
-                artistPayments[name].items.push({ desc: `Membresía VIP (${v.plan || 'Plan'})`, amount: amt });
+                artistPayments[name].items.push({ id: v.id, collection: 'artistasVIP', desc: `Membresía VIP (${v.plan || 'Plan'})`, amount: amt });
             });
 
             const summaryList = document.getElementById('artistsSummaryList');
@@ -372,11 +377,13 @@
                             </div>
                             <span class="text-sm font-black italic text-emerald-400">Total Pagado: $${data.total.toLocaleString()}</span>
                         </div>
-                        <div class="space-y-1 pl-6">
+                        <div class="space-y-2 pl-2">
                             ${data.items.map(it => `
-                                <div class="flex justify-between text-[10px] text-neutral-400 uppercase">
-                                    <span>• ${it.desc}</span>
-                                    <span class="font-bold text-white">+$${it.amount.toLocaleString()}</span>
+                                <div class="flex justify-between items-center text-[10px] text-neutral-400 uppercase bg-black/20 p-2 rounded-xl">
+                                    <span>• ${it.desc} (<b class="text-white">+$${it.amount.toLocaleString()}</b>)</span>
+                                    <button onclick="window.deleteRecord('${it.collection}', '${it.id}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 px-2 py-1 rounded-lg text-[9px] font-black transition-all flex items-center gap-1 cursor-pointer">
+                                        <i data-lucide="trash-2" class="w-3 h-3"></i> Borrar
+                                    </button>
                                 </div>
                             `).join('')}
                         </div>
@@ -390,7 +397,11 @@
 
         window.updateGoal = async (val) => {
             store.meta = parseFloat(val) || 0;
-            await setDoc(doc(db, "configuracion", "meta_mensual"), { valor: store.meta });
+            try {
+                await setDoc(doc(db, "configuracion", "meta_mensual"), { valor: store.meta });
+            } catch (err) {
+                console.warn("Could not save to Firebase:", err);
+            }
             updateUI();
         };
 
@@ -468,6 +479,8 @@
             };
 
             const filteredBeats = store.ventas.filter(checkFilter).map(v => ({
+                id: v.id,
+                collection: 'ventas',
                 label: v.beatName || v.customerName || 'Venta de Beat',
                 sub: v.isCredit ? 'Venta a Crédito (Abonado)' : 'Pago Completo',
                 amount: v.isCredit ? (v.amountPaid || 0) : (v.amount || 0),
@@ -476,6 +489,8 @@
             }));
 
             const filteredVip = store.vip.filter(checkFilter).map(v => ({
+                id: v.id,
+                collection: 'artistasVIP',
                 label: v.artistName || 'Artista VIP',
                 sub: `Plan: ${v.plan || 'VIP'}`,
                 amount: v.abono || 0,
@@ -484,11 +499,13 @@
             }));
 
             const filteredOthers = store.otros.filter(checkFilter).map(o => ({
+                id: o.id,
+                collection: 'otrosIngresos',
                 label: o.description || 'Otro Ingreso',
                 sub: 'Ingreso Extra',
                 amount: o.amount || 0,
                 cat: 'OTROS',
-                date: parseItemDate(v)
+                date: parseItemDate(o)
             }));
 
             cachedIncomes = [...filteredBeats, ...filteredVip, ...filteredOthers].sort((a,b) => b.date - a.date);
@@ -509,7 +526,12 @@
                                 <p class="text-[9px] text-neutral-500 font-bold uppercase mt-0.5">${inc.sub} • ${inc.cat} • ${inc.date.toLocaleDateString()}</p>
                             </div>
                         </div>
-                        <p class="text-sm font-black italic text-emerald-400">+$${inc.amount.toLocaleString()}</p>
+                        <div class="flex items-center gap-3">
+                            <p class="text-sm font-black italic text-emerald-400">+$${inc.amount.toLocaleString()}</p>
+                            <button onclick="window.deleteRecord('${inc.collection}', '${inc.id}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 p-2 rounded-xl transition-all cursor-pointer" title="Eliminar registro">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
                 `).join('');
             }
@@ -530,6 +552,8 @@
             };
 
             let expenses = store.gastos.filter(checkFilter).map(g => ({
+                id: g.id,
+                collection: 'gastos',
                 label: g.reason || g.artistName || 'Gasto General',
                 sub: g.category || 'Inversión / Operación',
                 amount: g.amount || 0,
@@ -561,7 +585,12 @@
                                 <p class="text-[9px] text-neutral-500 font-bold uppercase mt-0.5">${inv.sub} • ${inv.date.toLocaleDateString()}</p>
                             </div>
                         </div>
-                        <p class="text-sm font-black italic text-red-400">-$${inv.amount.toLocaleString()}</p>
+                        <div class="flex items-center gap-3">
+                            <p class="text-sm font-black italic text-red-400">-$${inv.amount.toLocaleString()}</p>
+                            <button onclick="window.deleteRecord('${inv.collection}', '${inv.id}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 p-2 rounded-xl transition-all cursor-pointer" title="Eliminar registro">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
                 `).join('');
             }
@@ -572,7 +601,7 @@
 
         window.sendIncomeWhatsApp = () => {
             if (cachedIncomes.length === 0) {
-                alert("No hay ingresos para compartir.");
+                console.warn("No hay ingresos para compartir.");
                 return;
             }
 
@@ -594,7 +623,7 @@
 
         window.sendInvestmentWhatsApp = () => {
             if (cachedInvestments.length === 0) {
-                alert("No hay egresos para compartir.");
+                console.warn("No hay egresos para compartir.");
                 return;
             }
 
@@ -612,6 +641,26 @@
 
             const encoded = encodeURIComponent(msg);
             window.open(`https://api.whatsapp.com/send?text=${encoded}`, '_blank');
+        };
+
+        // Función global para borrar un registro de Firebase de forma segura
+        window.deleteRecord = async (collectionName, docId) => {
+            if (confirm("¿Estás seguro de que deseas eliminar este registro del sistema?")) {
+                try {
+                    await deleteDoc(doc(db, collectionName, docId));
+                    if (!document.getElementById('artistsSummaryModal').classList.contains('hidden')) {
+                        window.openArtistsSummaryModal();
+                    }
+                    if (!document.getElementById('incomeDetailModal').classList.contains('hidden')) {
+                        window.openIncomeDetail();
+                    }
+                    if (!document.getElementById('artistInvestmentModal').classList.contains('hidden')) {
+                        window.openArtistInvestmentModal();
+                    }
+                } catch (err) {
+                    console.error("Error al eliminar el documento:", err);
+                }
+            }
         };
 
         function updateUI() {
@@ -661,10 +710,10 @@
             const searchQuery = document.getElementById('searchMovement')?.value.toLowerCase().trim() || "";
 
             let combined = [
-                ...store.ventas.map(v => ({ label: v.beatName || v.customerName || 'Venta Beat', amount: (v.isCredit ? (v.amountPaid || 0) : (v.amount || 0)), type: 'in', cat: 'BEAT', date: parseItemDate(v) })),
-                ...store.vip.map(v => ({ label: v.artistName || 'Abono VIP', amount: v.abono || 0, type: 'in', cat: 'VIP', date: parseItemDate(v) })),
-                ...store.otros.map(o => ({ label: o.description || 'Otro Ingreso', amount: o.amount || 0, type: 'in', cat: 'OTROS', date: parseItemDate(v) })),
-                ...store.gastos.map(g => ({ label: g.reason || 'Gasto', amount: g.amount || 0, type: 'out', cat: 'GASTO', date: parseItemDate(v) }))
+                ...store.ventas.map(v => ({ id: v.id, collection: 'ventas', label: v.beatName || v.customerName || 'Venta Beat', amount: (v.isCredit ? (v.amountPaid || 0) : (v.amount || 0)), type: 'in', cat: 'BEAT', date: parseItemDate(v) })),
+                ...store.vip.map(v => ({ id: v.id, collection: 'artistasVIP', label: v.artistName || 'Abono VIP', amount: v.abono || 0, type: 'in', cat: 'VIP', date: parseItemDate(v) })),
+                ...store.otros.map(o => ({ id: o.id, collection: 'otrosIngresos', label: o.description || 'Otro Ingreso', amount: o.amount || 0, type: 'in', cat: 'OTROS', date: parseItemDate(v) })),
+                ...store.gastos.map(g => ({ id: g.id, collection: 'gastos', label: g.reason || 'Gasto', amount: g.amount || 0, type: 'out', cat: 'GASTO', date: parseItemDate(v) }))
             ];
 
             if (searchQuery) {
@@ -686,9 +735,14 @@
                             <p class="text-[8px] text-neutral-500 uppercase mt-1 font-bold">${h.cat} • ${h.date.toLocaleDateString()}</p>
                         </div>
                     </div>
-                    <p class="text-sm font-black italic ${h.type === 'in' ? 'text-emerald-400' : 'text-red-400'}">
-                        ${h.type === 'in' ? '+' : '-'}$${h.amount.toLocaleString()}
-                    </p>
+                    <div class="flex items-center gap-4">
+                        <p class="text-sm font-black italic ${h.type === 'in' ? 'text-emerald-400' : 'text-red-400'}">
+                            ${h.type === 'in' ? '+' : '-'}$${h.amount.toLocaleString()}
+                        </p>
+                        <button onclick="window.deleteRecord('${h.collection}', '${h.id}')" class="bg-red-500/10 hover:bg-red-500/20 text-red-400 p-2 rounded-xl transition-all cursor-pointer" title="Eliminar registro">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
                 </div>
             `).join('') || '<p class="text-center text-xs text-neutral-500 py-4 font-bold uppercase">No se encontraron movimientos</p>';
 
@@ -709,7 +763,6 @@
         });
         onSnapshot(collection(db, "gastos"), s => {
             store.gastos = s.docs.map(d => ({ id: d.id, ...d.data() }));
-            updateURL = true; // placeholder
             updateUI();
         });
 
@@ -717,4 +770,4 @@
     </script>
 </body>
 </html>
-
+```
